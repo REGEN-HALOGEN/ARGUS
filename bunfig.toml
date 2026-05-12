@@ -1,0 +1,6 @@
+[install]
+peer = false
+production = false
+
+[install.scopes]
+"@argus" = { }

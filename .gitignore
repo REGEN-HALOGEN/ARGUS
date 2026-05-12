@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.bun/
+bun.lockb
+
+# Build outputs
+dist/
+.next/
+.turbo/
+out/
+build/
+.vercel/
+.cache/
+.temp/
+temp/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+
+# Docker
+docker/data/
+
+# Misc
+*.tsbuildinfo
+*.log
+logs/
+*.tmp
+*.bak
+
+# Local/Sensitive files
+creds.txt
+instructions.md
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal

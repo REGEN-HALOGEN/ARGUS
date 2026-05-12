@@ -1,0 +1,37 @@
+{
+  "name": "argus",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ARGUS — AI-powered Relationship Graph for Understanding Security Threats",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "dev:web": "bun run --filter @argus/web dev",
+    "dev:api": "bun run --filter @argus/api dev",
+    "build": "bun run --filter '*' build",
+    "build:web": "bun run --filter @argus/web build",
+    "build:api": "bun run --filter @argus/api build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "format": "biome format --write .",
+    "check": "biome check --fix .",
+    "typecheck": "bun run --filter '*' typecheck",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "docker:logs": "docker compose -f docker/docker-compose.yml logs -f",
+    "db:seed": "bun run scripts/seed.ts",
+    "db:init": "bun run scripts/init-neo4j.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^25.6.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@qdrant/js-client-rest": "^1.18.0"
+  }
+}

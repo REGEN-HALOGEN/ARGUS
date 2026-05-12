@@ -1,0 +1,27 @@
+{
+  "name": "@argus/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "build": "bun build src/index.ts --outdir ./dist --target bun",
+    "start": "bun run dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@argus/ai": "*",
+    "@argus/cache": "*",
+    "@argus/config": "*",
+    "@argus/graph": "*",
+    "@argus/types": "*",
+    "@hono/zod-validator": "^0.4.2",
+    "better-auth": "^1.2.0",
+    "better-sqlite3": "^12.10.0",
+    "hono": "^4.7.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.3"
+  }
+}

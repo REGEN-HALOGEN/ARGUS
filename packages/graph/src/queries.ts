@@ -1,0 +1,98 @@
+import type { Session, Record as Neo4jRecord } from 'neo4j-driver';
+import type { GraphNode, GraphEdge, GraphData } from '@argus/types';
+import { getSession } from './driver';
+
+// ─── Query Executor ──────────────────────────────────────────────
+
+export async function executeQuery<T = Neo4jRecord>(
+  cypher: string,
+  params: Record<string, unknown> = {},
+): Promise<T[]> {
+  const session = getSession();
+  try {
+    const result = await session.run(cypher, params);
+    return result.records as unknown as T[];
+  } finally {
+    await session.close();
+  }
+}
+
+// ─── Read-Only Query (for AI-generated Cypher) ───────────────────
+
+export async function executeReadOnlyQuery(
+  cypher: string,
+  params: Record<string, unknown> = {},
+): Promise<Neo4jRecord[]> {
+  const session = getSession();
+  try {
+    const result = await session.executeRead((tx) => tx.run(cypher, params));
+    return result.records;
+  } finally {
+    await session.close();
+  }
+}
+
+// ─── Graph Data Fetcher ──────────────────────────────────────────
+
+export async function fetchGraphData(
+  cypher: string,
+  params: Record<string, unknown> = {},
+): Promise<GraphData> {
+  const records = await executeReadOnlyQuery(cypher, params);
+
+  const nodesMap = new Map<string, GraphNode>();
+  const edgesMap = new Map<string, GraphEdge>();
+
+  for (const record of records) {
+    for (const value of record.values()) {
+      // biome-ignore lint/suspicious/noExplicitAny: Neo4j record values are untyped
+      const v = value as any;
+
+      // Node
+      if (v?.labels && v?.properties) {
+        const id = v.elementId ?? v.identity?.toString();
+        if (id && !nodesMap.has(id)) {
+          nodesMap.set(id, {
+            id,
+            type: mapLabel(v.labels[0]),
+            label: v.properties.name ?? v.properties.hostname ?? v.properties.cveId ?? id,
+            properties: v.properties,
+          });
+        }
+      }
+
+      // Relationship
+      if (v?.type && v?.startNodeElementId) {
+        const id = v.elementId ?? v.identity?.toString();
+        if (id && !edgesMap.has(id)) {
+          edgesMap.set(id, {
+            id,
+            source: v.startNodeElementId,
+            target: v.endNodeElementId,
+            type: v.type,
+            properties: v.properties ?? {},
+          });
+        }
+      }
+    }
+  }
+
+  return {
+    nodes: Array.from(nodesMap.values()),
+    edges: Array.from(edgesMap.values()),
+  };
+}
+
+// ─── Label Mapper ────────────────────────────────────────────────
+
+function mapLabel(label: string): GraphNode['type'] {
+  const mapping: Record<string, GraphNode['type']> = {
+    Asset: 'asset',
+    CVE: 'cve',
+    ThreatActor: 'threat_actor',
+    AttackTechnique: 'attack_technique',
+    CrownJewel: 'crown_jewel',
+    User: 'user',
+  };
+  return mapping[label] ?? 'asset';
+}
