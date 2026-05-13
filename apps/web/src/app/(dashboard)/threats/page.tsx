@@ -91,14 +91,14 @@ export default function ThreatsPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
-              className={`glass-card overflow-hidden transition-all duration-300 ${
+              className={`glass-card overflow-hidden transition-all duration-300 flex flex-col ${
                 expandedActor === actor.name 
                   ? 'ring-1 ring-primary-500/30 shadow-lg shadow-primary-500/10 md:col-span-2 xl:col-span-3' 
                   : 'hover:ring-1 hover:ring-primary-500/20'
               }`}
             >
               <div 
-                className="p-5 cursor-pointer group flex flex-col h-full" 
+                className="p-5 cursor-pointer group flex flex-col flex-1" 
                 onClick={() => handleExpand(actor.name)}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -135,7 +135,7 @@ export default function ThreatsPage() {
                 </div>
               </div>
 
-                <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-white/[0.04]">
+                <div className="flex items-center gap-1.5 mt-auto pt-3 border-t border-white/[0.04]">
                   <Target className="h-3 w-3 text-slate-500" />
                   <span className="text-[10px] text-slate-500">Last seen: {actor.lastSeen ? new Date(actor.lastSeen).toLocaleDateString() : 'Unknown'}</span>
                 </div>
