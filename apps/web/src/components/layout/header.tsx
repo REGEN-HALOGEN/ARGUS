@@ -6,6 +6,7 @@ import { Bell, Moon, Sun, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/components/providers/auth-provider';
 import { signOut } from '@/lib/auth';
+import { clearActiveTenantId } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 export function Header() {
@@ -16,7 +17,8 @@ export function Header() {
 
   const handleLogout = async () => {
     await signOut();
-    router.push('/login');
+    clearActiveTenantId();
+    router.replace('/login');
   };
 
   useEffect(() => {

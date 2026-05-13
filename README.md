@@ -141,6 +141,49 @@ From the root directory, you can run the following commands:
 
 ---
 
+## 📋 Changelog
+
+### 2026-05-13 — Onboarding & Authentication Revamp
+
+#### 🔴 Security Fixes
+- **Added Next.js middleware** (`apps/web/src/middleware.ts`) for server-side route protection — blocks unauthenticated access to `/dashboard`, `/admin`, `/graph`, `/analyst`, etc. before pages render
+- **Admin route verification** — middleware validates `super_admin` role via API call for `/admin/*` routes
+- **Replaced all `router.push()` with `router.replace()`** across login, onboarding, and auth provider to prevent browser back-button navigation to protected pages after logout
+- **Added `requireAuth()` middleware** to previously unprotected `/me` and `/onboarding` API routes (`apps/api/src/routes/v1/index.ts`)
+- **Removed aggressive auto-redirects** from `apiFetch` — API errors no longer trigger `window.location.assign()` which caused redirect loops; errors are thrown with metadata for callers to handle
+
+#### 🐛 Bug Fixes
+- **Fixed admin login redirect loop** — login page now fetches `/me` after sign-in to determine platform role and routes `super_admin` users directly to `/admin`, bypassing `/dashboard` entirely
+- **Fixed org registration display** — admin panel users endpoint (`GET /admin/users`) now enriches each user with their organization memberships (org name, slug, role)
+- **Fixed organization count showing 0** — admin organizations endpoint (`GET /admin/organizations`) now queries the database directly instead of using `auth.api.listOrganizations()` which was unreliable
+- **Fixed dashboard crash for users without orgs** — dashboard page now checks for active organization before making tenant-scoped API calls; shows a "No Active Organization" placeholder instead of crashing with `TENANT_REQUIRED`
+- **Fixed auth provider bounce** — `/admin` paths are now excluded from the "no org → onboarding" redirect, preventing `super_admin` users from being incorrectly bounced to onboarding
+- **Fixed localStorage leak on logout** — tenant ID is now cleared from `localStorage` on sign-out to prevent stale org context persisting across sessions
+
+#### ✨ Improvements
+- **Revamped admin panel UI** — users now display org membership badges inline; organizations section shows metadata (industry, cloud providers, asset count) and member cards with color-coded role badges
+- **Streamlined onboarding** — removed admin login card from welcome panel (admins use regular `/login`); register page now redirects to onboarding chooser instead of directly to user signup
+- **Added `clearActiveTenantId()` utility** to `apps/web/src/lib/api.ts` for proper session cleanup
+
+#### Files Changed
+| File | Change |
+|------|--------|
+| `apps/web/src/middleware.ts` | **New** — Server-side auth middleware |
+| `apps/web/src/lib/api.ts` | Removed auto-redirects, added `clearActiveTenantId()` |
+| `apps/web/src/components/providers/auth-provider.tsx` | `router.replace()`, admin path exclusion |
+| `apps/web/src/app/login/page.tsx` | Role-based routing via `/me` fetch |
+| `apps/web/src/app/(dashboard)/admin/page.tsx` | Org membership display, role badges |
+| `apps/web/src/app/(dashboard)/dashboard/page.tsx` | Active org check, no-org placeholder |
+| `apps/web/src/components/layout/header.tsx` | Clear tenant on logout |
+| `apps/web/src/components/onboarding/welcome-panel.tsx` | Removed admin card |
+| `apps/web/src/app/register/page.tsx` | Redirect to `/onboarding` chooser |
+| `apps/web/src/app/onboarding/admin/page.tsx` | `router.replace()` |
+| `apps/web/src/app/onboarding/organization/page.tsx` | `router.replace()` |
+| `apps/api/src/routes/v1/index.ts` | Added `requireAuth()` to `/me`, `/onboarding` |
+| `apps/api/src/routes/v1/admin.ts` | Enriched users/orgs with membership data |
+
+---
+
 ## 📄 License
 
 Private — All rights reserved.

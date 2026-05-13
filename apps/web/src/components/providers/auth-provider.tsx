@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from '@/lib/auth';
-import { apiFetch, getActiveTenantId, setActiveTenantId } from '@/lib/api';
+import { apiFetch, getActiveTenantId, setActiveTenantId, clearActiveTenantId } from '@/lib/api';
 
 type PlatformRole = 'super_admin';
 type OrgRole = 'org_admin' | 'operator' | 'analyst' | 'viewer';
@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // ── Redirect Logic: Authentication ──────────────────────────────
   useEffect(() => {
     if (!isPending) {
       const isPublicPath =
@@ -48,13 +49,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         pathname.startsWith('/register');
 
       if (!data?.user && !isPublicPath) {
-        router.push('/login');
+        // Not authenticated + on a protected route → replace to login
+        router.replace('/login');
       } else if (data?.user && (pathname === '/login' || pathname === '/register')) {
-        router.push('/dashboard');
+        // Already authenticated + on login/register → replace to dashboard
+        router.replace('/dashboard');
       }
     }
   }, [data, isPending, router, pathname]);
 
+  // ── Load Account Details from API ──────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
@@ -116,22 +120,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [data]);
 
+  // ── Role-Based Redirects ───────────────────────────────────────
   useEffect(() => {
     if (isPending || accountLoading || !account.user) return;
 
-    if (account.platformRole === 'super_admin' && pathname === '/dashboard') {
-      router.push('/admin');
-      return;
-    }
-
-    const storedTenantId = getActiveTenantId();
     const isSetupPath =
       pathname === '/' ||
       pathname.startsWith('/onboarding') ||
       pathname.startsWith('/login') ||
       pathname.startsWith('/register');
-    if (!account.platformRole && !account.activeOrganizationId && !storedTenantId && !isSetupPath) {
-      router.push('/onboarding');
+
+    // Super admins landing on /dashboard → redirect to /admin
+    if (account.platformRole === 'super_admin' && pathname === '/dashboard') {
+      router.replace('/admin');
+      return;
+    }
+
+    // Non-admin users trying to access /admin → redirect to dashboard
+    if (pathname.startsWith('/admin') && account.platformRole !== 'super_admin') {
+      router.replace('/dashboard');
+      return;
+    }
+
+    // Users without an org and not a platform admin → redirect to onboarding
+    // Exclude /admin paths — admin pages handle their own auth guard
+    const storedTenantId = getActiveTenantId();
+    if (
+      !account.platformRole &&
+      !account.activeOrganizationId &&
+      !storedTenantId &&
+      !isSetupPath &&
+      !pathname.startsWith('/admin')
+    ) {
+      router.replace('/onboarding');
     }
   }, [account, accountLoading, isPending, pathname, router]);
 

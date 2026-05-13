@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Building2, ShieldCheck, UserCircle2 } from 'lucide-react';
+import { ArrowRight, Building2, UserCircle2 } from 'lucide-react';
 
 export function WelcomePanel() {
   return (
@@ -34,31 +34,14 @@ export function WelcomePanel() {
           </div>
         </header>
 
-        <section id="signup" className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/6">
-              <ShieldCheck className="h-6 w-6 text-primary-300" />
-            </div>
-            <h2 className="mt-4 text-lg font-semibold text-slate-100">Admin</h2>
-            <p className="mt-2 text-sm text-slate-400">
-              Use the admin credentials to access the control plane.
-            </p>
-            <Link
-              href="/onboarding/admin"
-              className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary-300"
-            >
-              Admin login
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
+        <section id="signup" className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-white/10 bg-white/2 p-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/6">
               <UserCircle2 className="h-6 w-6 text-accent-300" />
             </div>
-            <h2 className="mt-4 text-lg font-semibold text-slate-100">User</h2>
+            <h2 className="mt-4 text-lg font-semibold text-slate-100">Individual User</h2>
             <p className="mt-2 text-sm text-slate-400">
-              Create a user account with email and password.
+              Create a user account with email and password. Your admin can invite you to an organization later.
             </p>
             <Link
               href="/onboarding/user"
@@ -75,7 +58,7 @@ export function WelcomePanel() {
             </div>
             <h2 className="mt-4 text-lg font-semibold text-slate-100">Organisation</h2>
             <p className="mt-2 text-sm text-slate-400">
-              Set up your organization workspace and seed your tenant graph.
+              Set up your organization workspace and seed your tenant graph. Includes account creation.
             </p>
             <Link
               href="/onboarding/organization"

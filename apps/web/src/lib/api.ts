@@ -11,6 +11,11 @@ export function setActiveTenantId(tenantId: string): void {
   window.localStorage.setItem(ACTIVE_TENANT_KEY, tenantId);
 }
 
+export function clearActiveTenantId(): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(ACTIVE_TENANT_KEY);
+}
+
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const headers = new Headers(options?.headers);
   headers.set('Content-Type', headers.get('Content-Type') ?? 'application/json');
@@ -31,18 +36,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   const errorMessage = json?.error?.message || json?.message || `API Error: ${res.status} ${res.statusText}`;
   const errorCode = json?.error?.code;
 
-  const shouldRedirectToLogin = res.status === 401;
-  const shouldRedirectToOnboarding = errorCode === 'TENANT_REQUIRED' || errorCode === 'TENANT_FORBIDDEN';
-
   if (!res.ok) {
-    if (typeof window !== 'undefined') {
-      if (shouldRedirectToLogin) {
-        window.location.assign('/login');
-      } else if (shouldRedirectToOnboarding) {
-        window.location.assign('/onboarding');
-      }
-    }
-
     const err = new Error(errorMessage) as Error & {
       code?: string;
       status?: number;
@@ -50,21 +44,23 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     };
     err.code = errorCode;
     err.status = res.status;
-    err.silent = shouldRedirectToLogin || shouldRedirectToOnboarding;
+    // Mark redirect-worthy errors as silent so callers can check
+    err.silent =
+      res.status === 401 ||
+      errorCode === 'TENANT_REQUIRED' ||
+      errorCode === 'TENANT_FORBIDDEN';
     throw err;
   }
 
   if (!json?.success) {
-    if (typeof window !== 'undefined' && shouldRedirectToOnboarding) {
-      window.location.assign('/onboarding');
-    }
-
-    const err = new Error(json.error?.message || 'API request failed') as Error & {
+    const err = new Error(json?.error?.message || 'API request failed') as Error & {
       code?: string;
       silent?: boolean;
     };
     err.code = errorCode;
-    err.silent = shouldRedirectToOnboarding;
+    err.silent =
+      errorCode === 'TENANT_REQUIRED' ||
+      errorCode === 'TENANT_FORBIDDEN';
     throw err;
   }
 

@@ -94,8 +94,7 @@ export default function OrganizationOnboardingPage() {
       setActiveTenantId(result.organization.id);
       // Brief delay to allow session to persist before refresh
       await new Promise(resolve => setTimeout(resolve, 300));
-      router.push('/dashboard');
-      router.refresh();
+      router.replace('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Onboarding failed');
     } finally {

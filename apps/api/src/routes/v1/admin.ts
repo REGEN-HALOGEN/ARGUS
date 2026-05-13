@@ -17,6 +17,9 @@ const SetUserRoleSchema = z.object({
   role: z.enum(['user', 'super_admin']),
 });
 
+// ─── GET /admin/users ────────────────────────────────────────────
+// Returns all platform users enriched with their organization memberships
+// so the admin panel can display "Org Owner" / "Org Member" badges.
 adminRoutes.get('/users', async (c) => {
   const query = {
     limit: c.req.query('limit') ?? '50',
@@ -31,30 +34,85 @@ adminRoutes.get('/users', async (c) => {
     query,
   });
 
-  return c.json({ success: true, data: users });
+  // Enrich each user with their organization memberships
+  const pool = getAuthDbPool();
+  const userList: any[] = users?.users ?? [];
+
+  const enrichedUsers = await Promise.all(
+    userList.map(async (user: any) => {
+      try {
+        const { rows: memberships } = await pool.query<{
+          organizationId: string;
+          orgName: string;
+          orgSlug: string;
+          role: string;
+        }>(
+          `SELECT m."organizationId", o.name AS "orgName", o.slug AS "orgSlug", m.role
+           FROM "member" m
+           LEFT JOIN "organization" o ON m."organizationId" = o.id
+           WHERE m."userId" = $1
+           ORDER BY m."createdAt" ASC`,
+          [user.id],
+        );
+
+        return {
+          ...user,
+          organizations: memberships.map((m) => ({
+            id: m.organizationId,
+            name: m.orgName,
+            slug: m.orgSlug,
+            role: m.role,
+          })),
+        };
+      } catch (err) {
+        console.error(`[ADMIN] Failed to fetch memberships for user ${user.id}:`, err);
+        return {
+          ...user,
+          organizations: [],
+        };
+      }
+    }),
+  );
+
+  return c.json({
+    success: true,
+    data: {
+      users: enrichedUsers,
+      total: users?.total ?? enrichedUsers.length,
+    },
+  });
 });
 
+// ─── GET /admin/organizations ────────────────────────────────────
+// Returns all organizations with member details.
 adminRoutes.get('/organizations', async (c) => {
   try {
     console.log('[ADMIN] Fetching organizations...');
-    const allOrganizations = await auth.api.listOrganizations({
-      headers: c.req.raw.headers,
-      query: {
-        limit: c.req.query('limit') ?? '100',
-        offset: c.req.query('offset') ?? '0',
-      },
-    });
 
-    console.log('[ADMIN] Organizations result:', {
-      isArray: Array.isArray(allOrganizations),
-      length: Array.isArray(allOrganizations) ? allOrganizations.length : 'N/A',
-      data: allOrganizations,
-    });
-
+    // Query organizations directly from the database for reliability
     const pool = getAuthDbPool();
+    const { rows: allOrganizations } = await pool.query<{
+      id: string;
+      name: string;
+      slug: string;
+      createdAt: string;
+      metadata: string | null;
+      logo: string | null;
+    }>(
+      `SELECT id, name, slug, "createdAt", metadata, logo
+       FROM "organization"
+       ORDER BY "createdAt" DESC
+       LIMIT $1 OFFSET $2`,
+      [
+        parseInt(c.req.query('limit') ?? '100', 10),
+        parseInt(c.req.query('offset') ?? '0', 10),
+      ],
+    );
+
+    console.log(`[ADMIN] Found ${allOrganizations.length} organizations`);
 
     const orgsWithMembers = await Promise.all(
-      (allOrganizations ?? []).map(async (org: { id: string }) => {
+      allOrganizations.map(async (org) => {
         try {
           const { rows: members } = await pool.query<{
             id: string;
@@ -72,10 +130,9 @@ adminRoutes.get('/organizations', async (c) => {
             [org.id],
           );
 
-          console.log(`[ADMIN] Found ${members.length} members for org ${org.id}`);
-
           return {
             ...org,
+            metadata: org.metadata ? (typeof org.metadata === 'string' ? JSON.parse(org.metadata) : org.metadata) : null,
             memberCount: members.length,
             members: members.map((m) => ({
               id: m.id,
@@ -89,6 +146,7 @@ adminRoutes.get('/organizations', async (c) => {
           console.error(`[ADMIN] Failed to fetch members for org ${org.id}:`, err);
           return {
             ...org,
+            metadata: null,
             memberCount: 0,
             members: [],
           };

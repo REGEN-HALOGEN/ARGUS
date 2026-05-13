@@ -24,8 +24,7 @@ export default function AdminLoginPage() {
         setError(error.message || 'Login failed');
       } else {
         // Redirect to admin panel directly for super_admin users
-        router.push('/admin');
-        router.refresh();
+        router.replace('/admin');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during login.');

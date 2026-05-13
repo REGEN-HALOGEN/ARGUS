@@ -11,8 +11,11 @@ import {
   Network,
   Bug,
   Zap,
+  Building2,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/components/providers/auth-provider';
+import Link from 'next/link';
 
 interface DashboardStats {
   totalAssets: number;
@@ -92,12 +95,19 @@ interface AttackPath {
 // ─── Dashboard Page ──────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const { activeOrganizationId, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [paths, setPaths] = useState<AttackPath[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Don't fetch dashboard data if auth is still loading or there's no active org
+    if (authLoading || !activeOrganizationId) {
+      setLoading(false);
+      return;
+    }
+
     async function loadData() {
       try {
         const [statsData, alertsData, pathsData] = await Promise.all([
@@ -117,7 +127,32 @@ export default function DashboardPage() {
     }
 
     loadData();
-  }, []);
+  }, [authLoading, activeOrganizationId]);
+
+  // ── No Organization State ──────────────────────────────────────
+  if (!authLoading && !activeOrganizationId) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md space-y-4">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.08]">
+            <Building2 className="h-7 w-7 text-slate-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-slate-200">No Active Organization</h2>
+          <p className="text-sm text-slate-400">
+            The dashboard requires an active organization to display data.
+            Set up your workspace to get started.
+          </p>
+          <Link
+            href="/onboarding/organization"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary-500/15 px-5 py-2.5 text-sm font-semibold text-primary-300 ring-1 ring-primary-500/30 transition hover:bg-primary-500/25"
+          >
+            <Building2 className="h-4 w-4" />
+            Set Up Organization
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const statCards = [
     { label: 'Total Assets', value: stats?.totalAssets ?? '-', change: '+0%', icon: Network, color: 'primary' },

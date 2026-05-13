@@ -1,17 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ShieldCheck, Users, UserCog, Building2 } from 'lucide-react';
+import { ShieldCheck, Users, Building2, Crown, Eye } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/components/providers/auth-provider';
 
+type UserOrg = {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+};
+
+type AdminUser = {
+  id: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  organizations?: UserOrg[];
+};
+
 type AdminUsersResponse = {
-  users?: Array<{
-    id: string;
-    name?: string;
-    email?: string;
-    role?: string;
-  }>;
+  users?: AdminUser[];
   total?: number;
 };
 
@@ -21,7 +31,6 @@ type OrganizationMember = {
   organizationId: string;
   role: string;
   user?: {
-    id: string;
     name?: string;
     email?: string;
   };
@@ -34,13 +43,56 @@ type Organization = {
   createdAt: string;
   memberCount: number;
   members: OrganizationMember[];
+  metadata?: {
+    industry?: string;
+    cloudProviders?: string[];
+    estimatedAssets?: number;
+  } | null;
 };
 
 type OrganizationsResponse = Organization[];
 
+// ─── Role Badge Component ────────────────────────────────────────
+
+function RoleBadge({ role, variant = 'platform' }: { role: string; variant?: 'platform' | 'org' }) {
+  const styles: Record<string, string> = {
+    super_admin: 'bg-primary-500/15 text-primary-300 ring-primary-500/30',
+    owner: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+    org_admin: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+    admin: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+    operator: 'bg-blue-500/15 text-blue-300 ring-blue-500/30',
+    analyst: 'bg-violet-500/15 text-violet-300 ring-violet-500/30',
+    viewer: 'bg-slate-500/15 text-slate-300 ring-slate-500/30',
+    member: 'bg-slate-500/15 text-slate-300 ring-slate-500/30',
+    user: 'bg-slate-500/15 text-slate-300 ring-slate-500/30',
+  };
+
+  const labels: Record<string, string> = {
+    super_admin: 'Platform Admin',
+    owner: 'Owner',
+    org_admin: 'Org Admin',
+    admin: 'Admin',
+    operator: 'Operator',
+    analyst: 'Analyst',
+    viewer: 'Viewer',
+    member: 'Member',
+    user: 'User',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ${styles[role] ?? styles.user}`}
+    >
+      {labels[role] ?? role}
+    </span>
+  );
+}
+
+// ─── Admin Page ──────────────────────────────────────────────────
+
 export default function AdminPage() {
   const { platformRole, loading } = useAuth();
-  const [users, setUsers] = useState<AdminUsersResponse['users']>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [error, setError] = useState('');
   const [orgsError, setOrgsError] = useState('');
@@ -84,6 +136,7 @@ export default function AdminPage() {
         </p>
       </div>
 
+      {/* ── Stats Cards ──────────────────────────────────────────── */}
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-4">
           <ShieldCheck className="h-5 w-5 text-primary-400" />
@@ -108,6 +161,7 @@ export default function AdminPage() {
         </div>
       ) : null}
 
+      {/* ── Platform Users Table ──────────────────────────────────── */}
       <div className="overflow-hidden rounded-lg border border-white/[0.06]">
         <div className="border-b border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-200">
           Platform Users
@@ -118,10 +172,25 @@ export default function AdminPage() {
               <div>
                 <p className="text-sm font-medium text-slate-200">{user.name || 'Unnamed user'}</p>
                 <p className="text-xs text-slate-500">{user.email}</p>
+                {/* Show org memberships inline */}
+                {user.organizations && user.organizations.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <Building2 className="h-3 w-3 text-slate-500" />
+                    {user.organizations.map((org) => (
+                      <span
+                        key={org.id}
+                        className="inline-flex items-center gap-1 rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-400 ring-1 ring-white/[0.06]"
+                      >
+                        {org.name}
+                        <span className="text-emerald-400">({org.role})</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-              <span className="self-center rounded-md bg-white/[0.04] px-2 py-1 text-xs text-slate-300">
-                {user.role === 'super_admin' ? 'Platform Admin' : 'User'}
-              </span>
+              <div className="flex items-center gap-2">
+                <RoleBadge role={user.role ?? 'user'} variant="platform" />
+              </div>
             </div>
           ))}
         </div>
@@ -133,6 +202,7 @@ export default function AdminPage() {
         </div>
       ) : null}
 
+      {/* ── Organizations & Members ──────────────────────────────── */}
       {organizations && organizations.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -147,6 +217,26 @@ export default function AdminPage() {
                     <div>
                       <h3 className="text-sm font-semibold text-slate-100">{org.name}</h3>
                       <p className="text-xs text-slate-500 mt-1">{org.slug}</p>
+                      {/* Show org metadata if available */}
+                      {org.metadata && (
+                        <div className="mt-1.5 flex flex-wrap gap-2">
+                          {org.metadata.industry && (
+                            <span className="inline-flex items-center rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-400 ring-1 ring-white/[0.06]">
+                              {org.metadata.industry}
+                            </span>
+                          )}
+                          {org.metadata.cloudProviders && org.metadata.cloudProviders.length > 0 && (
+                            <span className="inline-flex items-center rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-400 ring-1 ring-white/[0.06]">
+                              {org.metadata.cloudProviders.map((p) => p.toUpperCase()).join(', ')}
+                            </span>
+                          )}
+                          {org.metadata.estimatedAssets != null && (
+                            <span className="inline-flex items-center rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-400 ring-1 ring-white/[0.06]">
+                              ~{org.metadata.estimatedAssets} assets
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <span className="rounded-md bg-white/[0.04] px-2 py-1 text-xs text-slate-400">
                       {org.memberCount} member{org.memberCount !== 1 ? 's' : ''}
@@ -161,9 +251,9 @@ export default function AdminPage() {
                           <p className="text-sm text-slate-200">{member.user?.name || 'Unnamed user'}</p>
                           <p className="text-xs text-slate-500">{member.user?.email}</p>
                         </div>
-                        <span className="self-center rounded-md bg-primary-500/10 px-2 py-1 text-xs text-primary-300 ring-1 ring-primary-500/30">
-                          {member.role}
-                        </span>
+                        <div className="self-center">
+                          <RoleBadge role={member.role} variant="org" />
+                        </div>
                       </div>
                     ))
                   ) : (

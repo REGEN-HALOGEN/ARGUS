@@ -7,7 +7,7 @@ import { cveRoutes } from './cve';
 import { threatActorsRoutes } from './threat-actors';
 import { dashboardRoutes } from './dashboard';
 import { ingestionRoutes } from './ingestion';
-import { requireOrgRole, requirePlatformAdmin, requireTenant } from '../../middleware/auth';
+import { requireAuth, requireOrgRole, requirePlatformAdmin, requireTenant } from '../../middleware/auth';
 import { onboardingRoutes } from './onboarding';
 import { meRoutes } from './me';
 import { adminRoutes } from './admin';
@@ -18,7 +18,13 @@ import { organizationRoutes } from './organization';
 export const v1Routes = new Hono();
 
 v1Routes.route('/auth', authRoutes);
+
+v1Routes.use('/me', requireAuth());
+v1Routes.use('/me/*', requireAuth());
 v1Routes.route('/me', meRoutes);
+
+v1Routes.use('/onboarding', requireAuth());
+v1Routes.use('/onboarding/*', requireAuth());
 v1Routes.route('/onboarding', onboardingRoutes);
 
 v1Routes.use('/graph', requireTenant());

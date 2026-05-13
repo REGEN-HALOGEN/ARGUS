@@ -19,11 +19,31 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const { error } = await signIn.email({ email, password });
-      if (error) {
-        setError(error.message || 'Login failed');
+      const result = await signIn.email({ email, password });
+      if (result.error) {
+        setError(result.error.message || 'Login failed');
       } else {
-        router.push('/dashboard');
+        // Determine where to route the user based on their platform role.
+        // Better Auth signIn response may not include the role field,
+        // so we fetch /me to get the definitive platform role.
+        try {
+          const meRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/me`,
+            { credentials: 'include' },
+          );
+          const meJson = await meRes.json();
+          const platformRole = meJson?.data?.platformRole;
+
+          if (platformRole === 'super_admin') {
+            router.replace('/admin');
+          } else {
+            router.replace('/dashboard');
+          }
+        } catch {
+          // Fallback: try role from signIn response, otherwise dashboard
+          const role = result.data?.user?.role;
+          router.replace(role === 'super_admin' ? '/admin' : '/dashboard');
+        }
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during login.');
