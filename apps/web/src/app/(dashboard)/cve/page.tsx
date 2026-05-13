@@ -30,6 +30,21 @@ export default function CVEPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [severityFilter, setSeverityFilter] = useState<string[]>([]);
+  const [exploitFilter, setExploitFilter] = useState<boolean | null>(null);
+
+  const toggleSeverity = (sev: string) => {
+    setSeverityFilter(prev => 
+      prev.includes(sev) ? prev.filter(s => s !== sev) : [...prev, sev]
+    );
+  };
+
+  const filteredCves = cves.filter(cve => {
+    const severityMatch = severityFilter.length === 0 || severityFilter.includes(cve.severity.toLowerCase());
+    const exploitMatch = exploitFilter === null || cve.exploitedInWild === exploitFilter;
+    return severityMatch && exploitMatch;
+  });
 
   useEffect(() => {
     async function loadData() {
@@ -99,9 +114,77 @@ export default function CVEPage() {
             className="flex-1 bg-transparent text-sm text-slate-200 placeholder:text-slate-500 outline-none"
           />
         </div>
-        <button className="flex items-center gap-2 rounded-xl bg-white/[0.04] px-4 py-2.5 text-sm text-slate-400 ring-1 ring-white/[0.06] hover:bg-white/[0.06]">
-          <Filter className="h-4 w-4" /> Filter
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm ring-1 transition-all ${
+              filtersOpen || severityFilter.length > 0 || exploitFilter !== null
+                ? 'bg-primary-500/10 text-primary-400 ring-primary-500/30'
+                : 'bg-white/[0.04] text-slate-400 ring-white/[0.06] hover:bg-white/[0.06]'
+            }`}
+          >
+            <Filter className="h-4 w-4" /> Filter
+            {(severityFilter.length > 0 || exploitFilter !== null) && (
+              <span className="ml-1 h-2 w-2 rounded-full bg-primary-500" />
+            )}
+          </button>
+
+          {filtersOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setFiltersOpen(false)} 
+              />
+              <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl bg-[#0c1220]/95 p-4 ring-1 ring-white/[0.06] shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in duration-200">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Severity</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['critical', 'high', 'medium', 'low'].map(sev => (
+                        <button
+                          key={sev}
+                          onClick={() => toggleSeverity(sev)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                            severityFilter.includes(sev)
+                              ? 'bg-primary-500/20 border-primary-500/40 text-primary-300'
+                              : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:border-white/10'
+                          }`}
+                        >
+                          {sev.charAt(0).toUpperCase() + sev.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Exploit Status</h4>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setExploitFilter(exploitFilter === true ? null : true)}
+                        className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                          exploitFilter === true
+                            ? 'bg-threat-500/20 border-threat-500/40 text-threat-400'
+                            : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:border-white/10'
+                        }`}
+                      >
+                        Active Only
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSeverityFilter([]);
+                          setExploitFilter(null);
+                        }}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-300 transition-colors"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="glass-card overflow-hidden relative min-h-[400px]">
@@ -124,14 +207,14 @@ export default function CVEPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
-                {cves.length === 0 ? (
+                {filteredCves.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-5 py-8 text-center text-slate-500">
-                      No vulnerabilities found.
+                      {cves.length === 0 ? 'No vulnerabilities found.' : 'No vulnerabilities match your filters.'}
                     </td>
                   </tr>
                 ) : (
-                  cves.map((cve, i) => (
+                  filteredCves.map((cve, i) => (
                     <motion.tr key={cve.cveId} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="hover:bg-white/[0.02] cursor-pointer group">
                       <td className="px-5 py-3.5 font-mono text-sm font-medium text-primary-300">{cve.cveId}</td>
                       <td className="px-5 py-3.5">
