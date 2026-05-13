@@ -152,7 +152,15 @@ export default function CVEPage() {
                       <td className="px-5 py-3.5 text-slate-300 max-w-xs truncate">{cve.description}</td>
                       <td className="px-5 py-3.5 text-slate-400">{cve.affectedAssets}</td>
                       <td className="px-5 py-3.5">
-                        <ExternalLink className="h-3.5 w-3.5 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <a 
+                          href={`https://nvd.nist.gov/vuln/detail/${cve.cveId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center rounded p-1 hover:bg-white/[0.06] text-slate-500 hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-all"
+                          title="View on NVD"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
                       </td>
                     </motion.tr>
                   ))
