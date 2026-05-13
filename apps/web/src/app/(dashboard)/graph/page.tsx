@@ -6,7 +6,6 @@ import { Network, Filter, Download, Server, Bug, Users, Zap, Shield, Loader2 } f
 import {
   ReactFlow,
   MiniMap,
-  Controls,
   Background,
   useNodesState,
   useEdgesState,
@@ -253,7 +252,6 @@ export default function GraphPage() {
             className="bg-[#0b0f19]"
           >
             <Background color="#1e293b" gap={24} size={2} />
-            <Controls className="bg-[#0c1220]/80 border-white/[0.06] fill-slate-400 backdrop-blur-md" showInteractive={false} />
             <MiniMap 
                nodeColor={(node: any) => {
                   switch (node.data.type) {
