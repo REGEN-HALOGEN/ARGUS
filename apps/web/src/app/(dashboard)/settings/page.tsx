@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Settings as SettingsIcon,
@@ -353,7 +353,7 @@ function NotificationsPanel() {
           { key: 'criticalAlerts' as const, label: 'Critical Severity Alerts', desc: 'Immediate notification for CVSS ≥ 9.0 vulnerabilities' },
           { key: 'newCves' as const, label: 'New CVE Ingestion', desc: 'Notify when new vulnerabilities are ingested' },
           { key: 'threatActorUpdates' as const, label: 'Threat Actor Activity', desc: 'Updates on tracked APT groups' },
-          { key: 'weeklyDigest' as const, label: 'Weekly Digest', desc: 'Summary of your organization's risk posture' },
+          { key: 'weeklyDigest' as const, label: 'Weekly Digest', desc: 'Summary of your organization\u2019s risk posture' },
           { key: 'ingestionStatus' as const, label: 'Ingestion Pipeline Status', desc: 'Alerts on data pipeline failures or delays' },
         ].map((item) => (
           <div key={item.key} className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4 flex items-center justify-between">
