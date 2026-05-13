@@ -92,9 +92,10 @@ export default function OrganizationOnboardingPage() {
         }),
       });
       setActiveTenantId(result.organization.id);
-      // Brief delay to allow session to persist before refresh
-      await new Promise(resolve => setTimeout(resolve, 300));
-      router.replace('/dashboard');
+      // Hard navigation to ensure the session cookie changes from
+      // setActiveOrganization are picked up by a fresh page load.
+      // router.replace() would reuse stale useSession() cache.
+      window.location.replace('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Onboarding failed');
     } finally {

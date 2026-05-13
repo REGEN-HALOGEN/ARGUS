@@ -87,15 +87,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (cancelled) return;
 
-        if (next.activeOrganizationId) {
-          setActiveTenantId(next.activeOrganizationId);
+        // Use localStorage tenant ID as fallback if server session
+        // hasn't been updated yet (e.g. right after org creation)
+        const effectiveOrgId = next.activeOrganizationId || storedTenantId;
+
+        if (effectiveOrgId) {
+          setActiveTenantId(effectiveOrgId);
         }
 
         setAccount({
           user: next.user,
           platformRole: next.platformRole,
           orgRole: next.activeOrgRole,
-          activeOrganizationId: next.activeOrganizationId,
+          activeOrganizationId: effectiveOrgId,
           organizations: next.organizations ?? [],
         });
       } catch {
