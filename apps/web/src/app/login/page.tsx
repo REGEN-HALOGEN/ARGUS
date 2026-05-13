@@ -5,6 +5,7 @@ import { signIn } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { Shield, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { API_BASE, setActiveTenantId } from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -22,28 +23,35 @@ export default function LoginPage() {
       const result = await signIn.email({ email, password });
       if (result.error) {
         setError(result.error.message || 'Login failed');
-      } else {
-        // Determine where to route the user based on their platform role.
-        // Better Auth signIn response may not include the role field,
-        // so we fetch /me to get the definitive platform role.
-        try {
-          const meRes = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/me`,
-            { credentials: 'include' },
-          );
-          const meJson = await meRes.json();
-          const platformRole = meJson?.data?.platformRole;
+        setLoading(false);
+        return;
+      }
 
-          if (platformRole === 'super_admin') {
-            router.replace('/admin');
-          } else {
-            router.replace('/dashboard');
-          }
-        } catch {
-          // Fallback: try role from signIn response, otherwise dashboard
-          const role = result.data?.user?.role;
-          router.replace(role === 'super_admin' ? '/admin' : '/dashboard');
+      // After successful sign-in, call /me which auto-activates the
+      // user's organization (if they have one) and returns the role.
+      // This is the single source of truth for routing decisions.
+      try {
+        const meRes = await fetch(`${API_BASE}/me`, { credentials: 'include' });
+        const meJson = await meRes.json();
+        const data = meJson?.data;
+
+        // Store the active org in localStorage for the auth provider
+        if (data?.activeOrganizationId) {
+          setActiveTenantId(data.activeOrganizationId);
         }
+
+        // Route based on role
+        if (data?.platformRole === 'super_admin') {
+          router.replace('/admin');
+        } else if (data?.activeOrganizationId) {
+          router.replace('/dashboard');
+        } else {
+          // User has no org — send to onboarding
+          router.replace('/onboarding');
+        }
+      } catch {
+        // /me failed — just go to dashboard, auth provider will handle it
+        router.replace('/dashboard');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during login.');

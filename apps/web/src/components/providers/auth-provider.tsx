@@ -27,7 +27,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { data, isPending } = useSession();
+  const { data: sessionData, isPending: sessionPending } = useSession();
   const [account, setAccount] = useState<Omit<AuthContextType, 'loading'>>({
     user: null,
     platformRole: null,
@@ -35,36 +35,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     activeOrganizationId: null,
     organizations: [],
   });
-  const [accountLoading, setAccountLoading] = useState(false);
+  const [meLoading, setMeLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  // ── Redirect Logic: Authentication ──────────────────────────────
-  useEffect(() => {
-    if (!isPending) {
-      const isPublicPath =
-        pathname === '/' ||
-        pathname.startsWith('/onboarding') ||
-        pathname.startsWith('/login') ||
-        pathname.startsWith('/register');
+  // ── Paths that don't require auth or org ────────────────────────
+  const isPublicPath =
+    pathname === '/' ||
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register');
 
-      if (!data?.user && !isPublicPath) {
-        // Not authenticated + on a protected route → replace to login
-        router.replace('/login');
-      } else if (data?.user && (pathname === '/login' || pathname === '/register')) {
-        // Already authenticated + on login/register → replace to dashboard
-        router.replace('/dashboard');
-      }
+  // ── Redirect unauthenticated users away from protected routes ──
+  useEffect(() => {
+    if (sessionPending) return;
+
+    if (!sessionData?.user && !isPublicPath) {
+      router.replace('/login');
     }
-  }, [data, isPending, router, pathname]);
+  }, [sessionData, sessionPending, isPublicPath, router]);
 
-  // ── Load Account Details from API ──────────────────────────────
+  // ── Fetch /me — the single source of truth ─────────────────────
+  // /me auto-activates the user's org if they have one but the
+  // session doesn't have an active org set (fresh login).
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadAccount() {
-      const storedTenantId = getActiveTenantId();
-      if (!data?.user) {
+    if (sessionPending || !sessionData?.user) {
+      if (!sessionPending && !sessionData?.user) {
         setAccount({
           user: null,
           platformRole: null,
@@ -72,12 +68,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           activeOrganizationId: null,
           organizations: [],
         });
-        return;
       }
+      return;
+    }
 
-      setAccountLoading(true);
+    let cancelled = false;
+
+    async function loadMe() {
+      setMeLoading(true);
       try {
-        const next = await apiFetch<{
+        const me = await apiFetch<{
           user: any;
           platformRole: PlatformRole | null;
           activeOrgRole: OrgRole | null;
@@ -87,83 +87,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (cancelled) return;
 
-        // Use localStorage tenant ID as fallback if server session
-        // hasn't been updated yet (e.g. right after org creation)
-        const effectiveOrgId = next.activeOrganizationId || storedTenantId;
-
-        if (effectiveOrgId) {
-          setActiveTenantId(effectiveOrgId);
+        // Sync localStorage with the authoritative server state
+        if (me.activeOrganizationId) {
+          setActiveTenantId(me.activeOrganizationId);
         }
 
         setAccount({
-          user: next.user,
-          platformRole: next.platformRole,
-          orgRole: next.activeOrgRole,
-          activeOrganizationId: effectiveOrgId,
-          organizations: next.organizations ?? [],
+          user: me.user,
+          platformRole: me.platformRole,
+          orgRole: me.activeOrgRole,
+          activeOrganizationId: me.activeOrganizationId,
+          organizations: me.organizations ?? [],
         });
       } catch {
-        if (!cancelled) {
-          setAccount({
-            user: data.user,
-            platformRole: data.user.role === 'super_admin' ? 'super_admin' : null,
-            orgRole: null,
-            activeOrganizationId: storedTenantId,
-            organizations: [],
-          });
-        }
+        if (cancelled) return;
+        // If /me fails, use session data as fallback
+        const storedTenantId = getActiveTenantId();
+        setAccount({
+          user: sessionData.user,
+          platformRole: sessionData.user.role === 'super_admin' ? 'super_admin' : null,
+          orgRole: null,
+          activeOrganizationId: storedTenantId,
+          organizations: [],
+        });
       } finally {
-        if (!cancelled) setAccountLoading(false);
+        if (!cancelled) setMeLoading(false);
       }
     }
 
-    loadAccount();
+    loadMe();
+    return () => { cancelled = true; };
+  }, [sessionData, sessionPending]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [data]);
-
-  // ── Role-Based Redirects ───────────────────────────────────────
+  // ── Role-based redirects (only fires after /me completes) ──────
   useEffect(() => {
-    if (isPending || accountLoading || !account.user) return;
+    if (sessionPending || meLoading || !account.user) return;
 
-    const isSetupPath =
-      pathname === '/' ||
-      pathname.startsWith('/onboarding') ||
-      pathname.startsWith('/login') ||
-      pathname.startsWith('/register');
+    // Don't redirect on public/setup paths
+    if (isPublicPath) return;
 
-    // Super admins landing on /dashboard → redirect to /admin
+    // Super admin on /dashboard → go to /admin
     if (account.platformRole === 'super_admin' && pathname === '/dashboard') {
       router.replace('/admin');
       return;
     }
 
-    // Non-admin users trying to access /admin → redirect to dashboard
+    // Non-admin on /admin → go to /dashboard
     if (pathname.startsWith('/admin') && account.platformRole !== 'super_admin') {
       router.replace('/dashboard');
       return;
     }
 
-    // Users without an org and not a platform admin → redirect to onboarding
-    // Exclude /admin paths — admin pages handle their own auth guard
-    const storedTenantId = getActiveTenantId();
+    // User has no org, not an admin, and not on an admin page → onboarding
     if (
       !account.platformRole &&
       !account.activeOrganizationId &&
-      !storedTenantId &&
-      !isSetupPath &&
       !pathname.startsWith('/admin')
     ) {
       router.replace('/onboarding');
     }
-  }, [account, accountLoading, isPending, pathname, router]);
+  }, [account, meLoading, sessionPending, pathname, isPublicPath, router]);
 
-  const loading = isPending || accountLoading;
+  const loading = sessionPending || meLoading;
 
   return (
-    <AuthContext.Provider value={{ ...account, user: account.user ?? data?.user ?? null, loading }}>
+    <AuthContext.Provider value={{ ...account, user: account.user ?? sessionData?.user ?? null, loading }}>
       {loading ? (
         <div className="flex h-screen w-screen items-center justify-center bg-[#0b0f19]">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />

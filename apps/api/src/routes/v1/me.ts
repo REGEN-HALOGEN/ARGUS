@@ -7,10 +7,32 @@ export const meRoutes = new Hono();
 
 meRoutes.get('/', async (c) => {
   const session = await getAuthSession(c.req.raw.headers);
-  const activeOrganizationId = session.session.activeOrganizationId ?? null;
+  let activeOrganizationId = session.session.activeOrganizationId ?? null;
+
+  // Fetch organizations the user belongs to
   const organizations = await auth.api
     .listOrganizations({ headers: c.req.raw.headers })
     .catch(() => []);
+
+  // ── Auto-set active organization ───────────────────────────────
+  // If the user belongs to organizations but doesn't have one active
+  // (happens after fresh login — Better Auth doesn't restore it),
+  // automatically activate their first organization.
+  if (!activeOrganizationId && Array.isArray(organizations) && organizations.length > 0) {
+    const firstOrg = organizations[0];
+    try {
+      await auth.api.setActiveOrganization({
+        headers: c.req.raw.headers,
+        body: { organizationId: firstOrg.id },
+      });
+      activeOrganizationId = firstOrg.id;
+      console.log(`[ME] Auto-activated organization ${firstOrg.id} for user ${session.user.id}`);
+    } catch (err) {
+      console.error('[ME] Failed to auto-set active organization:', err);
+    }
+  }
+
+  // Fetch the user's role within the active organization
   const activeMember = activeOrganizationId
     ? await auth.api
         .getActiveMember({
