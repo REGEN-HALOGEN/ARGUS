@@ -46,6 +46,9 @@ v1Routes.route('/assets', assetsRoutes);
 v1Routes.use('/cve', requireTenant());
 v1Routes.use('/cve/*', requireTenant());
 v1Routes.route('/cve', cveRoutes);
+
+v1Routes.use('/threat-actors', requireTenant());
+v1Routes.use('/threat-actors/*', requireTenant());
 v1Routes.route('/threat-actors', threatActorsRoutes);
 
 v1Routes.use('/dashboard', requireTenant());
