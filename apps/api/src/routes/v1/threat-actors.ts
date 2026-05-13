@@ -2,25 +2,32 @@ import { Hono } from 'hono';
 import { getNeo4jDriver } from '@argus/graph';
 import { withCache } from '@argus/cache';
 
-export const threatActorsRoutes = new Hono();
+type TenantEnv = {
+  Variables: {
+    tenantId: string;
+  };
+};
+
+export const threatActorsRoutes = new Hono<TenantEnv>();
 
 // ─── List Threat Actors ──────────────────────────────────────────
 
 threatActorsRoutes.get('/', async (c) => {
-  const data = await withCache('threat-actors:list', 300, async () => {
+  const tenantId = c.get('tenantId');
+  const data = await withCache(`tenant:${tenantId}:threat-actors:list`, 300, async () => {
     const session = getNeo4jDriver().session();
     try {
       const result = await session.run(`
         MATCH (t:ThreatActor)
         OPTIONAL MATCH (t)-[:EXPLOITS]->(c:CVE)
         OPTIONAL MATCH (t)-[:USES_TECHNIQUE]->(tech:AttackTechnique)
-        OPTIONAL MATCH (t)-[:TARGETS]->(a:Asset)
+        OPTIONAL MATCH (t)-[:EXPLOITS]->(:CVE)<-[:HAS_VULNERABILITY]-(a:Asset {tenantId: $tenantId})
         RETURN t,
                count(DISTINCT c) AS cveCount,
                count(DISTINCT tech) AS techniqueCount,
                count(DISTINCT a) AS targetedAssets
         ORDER BY t.sophistication, t.name
-      `);
+      `, { tenantId });
 
       return result.records.map((r) => {
         const props = r.get('t').properties;
@@ -44,19 +51,20 @@ threatActorsRoutes.get('/', async (c) => {
 
 threatActorsRoutes.get('/:name', async (c) => {
   const name = decodeURIComponent(c.req.param('name'));
-  const data = await withCache(`threat-actors:${name}`, 300, async () => {
+  const tenantId = c.get('tenantId');
+  const data = await withCache(`tenant:${tenantId}:threat-actors:${name}`, 300, async () => {
     const session = getNeo4jDriver().session();
     try {
       const result = await session.run(
         `MATCH (t:ThreatActor {name: $name})
          OPTIONAL MATCH (t)-[:EXPLOITS]->(c:CVE)
          OPTIONAL MATCH (t)-[:USES_TECHNIQUE]->(tech:AttackTechnique)
-         OPTIONAL MATCH (t)-[:TARGETS]->(a:Asset)
+         OPTIONAL MATCH (t)-[:EXPLOITS]->(cv:CVE)<-[:HAS_VULNERABILITY]-(a:Asset {tenantId: $tenantId})
          RETURN t,
                 collect(DISTINCT c {.cveId, .severity, .cvss}) AS cves,
                 collect(DISTINCT tech {.mitreId, .name, .tactic}) AS techniques,
-                collect(DISTINCT a {.hostname, .ip, .criticality}) AS targets`,
-        { name },
+                collect(DISTINCT a {.hostname, .ip, .role, .criticality}) AS targets`,
+        { name, tenantId },
       );
 
       const record = result.records[0];
