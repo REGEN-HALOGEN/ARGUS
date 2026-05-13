@@ -116,36 +116,27 @@ export default function GraphPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [loading, setLoading] = useState(true);
+  const [rawData, setRawData] = useState<{ nodes: any[]; edges: any[] } | null>(null);
+
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [visibleTypes, setVisibleTypes] = useState<Set<string>>(
+    new Set(['asset', 'cve', 'threat_actor', 'attack_technique', 'crown_jewel'])
+  );
+
+  const toggleFilter = (type: string) => {
+    setVisibleTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  };
 
   useEffect(() => {
     async function loadGraph() {
       try {
-        const rawData = await apiFetch<any>('/graph');
-        
-        // Transform backend schema to React Flow schema
-        const flowNodes = rawData.nodes.map((n: any) => ({
-          id: n.id,
-          type: 'argus',
-          data: { type: n.type, label: n.label, properties: n.properties },
-          position: { x: 0, y: 0 },
-        }));
-
-        const flowEdges = rawData.edges.map((e: any) => ({
-          id: e.id,
-          source: e.source,
-          target: e.target,
-          label: e.type,
-          type: 'smoothstep',
-          animated: true,
-          style: { stroke: '#475569', strokeWidth: 2 },
-          labelStyle: { fill: '#94a3b8', fontSize: 10, fontWeight: 600 },
-          labelBgStyle: { fill: '#0f1523', fillOpacity: 0.8 },
-          markerEnd: { type: MarkerType.ArrowClosed, color: '#475569' },
-        }));
-
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
+        const data = await apiFetch<any>('/graph');
+        setRawData(data);
       } catch (error) {
         console.error('Failed to load graph:', error);
       } finally {
@@ -153,7 +144,42 @@ export default function GraphPage() {
       }
     }
     loadGraph();
-  }, [setNodes, setEdges]);
+  }, []);
+
+  useEffect(() => {
+    if (!rawData) return;
+
+    // Filter nodes based on selected types
+    const flowNodes = rawData.nodes
+      .filter((n: any) => visibleTypes.has(n.type))
+      .map((n: any) => ({
+        id: n.id,
+        type: 'argus',
+        data: { type: n.type, label: n.label, properties: n.properties },
+        position: { x: 0, y: 0 },
+      }));
+
+    // Filter edges to only include those between visible nodes
+    const visibleNodeIds = new Set(flowNodes.map((n: any) => n.id));
+    const flowEdges = rawData.edges
+      .filter((e: any) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target))
+      .map((e: any) => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        label: e.type,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: '#475569', strokeWidth: 2 },
+        labelStyle: { fill: '#94a3b8', fontSize: 10, fontWeight: 600 },
+        labelBgStyle: { fill: '#0f1523', fillOpacity: 0.8 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#475569' },
+      }));
+
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
+    setNodes(layoutedNodes);
+    setEdges(layoutedEdges);
+  }, [rawData, visibleTypes, setNodes, setEdges]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
@@ -162,10 +188,47 @@ export default function GraphPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-100">Graph Explorer</h1>
           <p className="text-sm text-slate-400 mt-1">Interactive attack graph visualization</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 text-sm text-slate-400 ring-1 ring-white/[0.06] hover:bg-white/[0.06]">
+        <div className="flex items-center gap-2 relative">
+          <button 
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ring-1 transition-all ${
+              filtersOpen || visibleTypes.size < 5
+                ? 'bg-primary-500/20 text-primary-300 ring-primary-500/40' 
+                : 'bg-white/[0.04] text-slate-400 ring-white/[0.06] hover:bg-white/[0.06]'
+            }`}
+          >
             <Filter className="h-4 w-4" /> Filters
+            {visibleTypes.size < 5 && (
+              <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary-500/30 text-[10px] font-bold text-primary-200">
+                {visibleTypes.size}
+              </span>
+            )}
           </button>
+          
+          {filtersOpen && (
+            <div className="absolute top-full right-0 mt-2 w-48 rounded-xl bg-[#0c1220]/95 p-3 ring-1 ring-white/[0.06] shadow-xl backdrop-blur-xl z-50">
+              <h4 className="text-xs font-semibold text-slate-200 mb-2 uppercase tracking-wider">Node Visibility</h4>
+              <div className="space-y-1">
+                {[
+                  { id: 'asset', label: 'Assets' },
+                  { id: 'crown_jewel', label: 'Crown Jewels' },
+                  { id: 'cve', label: 'Vulnerabilities' },
+                  { id: 'threat_actor', label: 'Threat Actors' },
+                  { id: 'attack_technique', label: 'Techniques' },
+                ].map((item) => (
+                  <label key={item.id} className="flex items-center gap-2 rounded-lg p-2 hover:bg-white/[0.04] cursor-pointer transition-colors">
+                    <input 
+                      type="checkbox" 
+                      checked={visibleTypes.has(item.id)}
+                      onChange={() => toggleFilter(item.id)}
+                      className="h-3.5 w-3.5 accent-primary-500 rounded border-white/10 bg-white/5" 
+                    />
+                    <span className="text-sm text-slate-300">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <button className="flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 text-sm text-slate-400 ring-1 ring-white/[0.06] hover:bg-white/[0.06]">
             <Download className="h-4 w-4" /> Export
           </button>
