@@ -58,7 +58,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-slate-200 ring-1 ring-white/[0.06] focus:outline-none focus:ring-primary-500/50 placeholder:text-slate-600 transition-all"
+              className="w-full rounded-xl bg-white/3 px-4 py-3 text-sm text-slate-200 ring-1 ring-white/6 focus:outline-none focus:ring-primary-500/50 placeholder:text-slate-600 transition-all"
               placeholder="operator@argus.local"
               required
             />
@@ -70,7 +70,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-slate-200 ring-1 ring-white/[0.06] focus:outline-none focus:ring-primary-500/50 placeholder:text-slate-600 transition-all"
+              className="w-full rounded-xl bg-white/3 px-4 py-3 text-sm text-slate-200 ring-1 ring-white/6 focus:outline-none focus:ring-primary-500/50 placeholder:text-slate-600 transition-all"
               placeholder="••••••••"
               required
             />
@@ -85,7 +85,7 @@ export default function LoginPage() {
           </button>
 
           <p className="text-center text-xs text-slate-500 mt-6">
-            Don't have an account? <Link href="/register" className="text-primary-400 hover:text-primary-300">Request Access</Link>
+            Need access? <Link href="/onboarding" className="text-primary-400 hover:text-primary-300">Choose a sign up path</Link>
           </p>
         </form>
       </div>

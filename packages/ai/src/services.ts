@@ -27,7 +27,10 @@ export async function chat(
       role: msg.role === 'user' ? 'user' : 'model',
       parts: [{ text: msg.content }],
     })),
-    systemInstruction: options.systemPrompt ?? SYSTEM_PROMPTS.SECURITY_ANALYST,
+    systemInstruction: {
+      role: 'user',
+      parts: [{ text: options.systemPrompt ?? SYSTEM_PROMPTS.SECURITY_ANALYST }],
+    },
     generationConfig: {
       maxOutputTokens: options.maxTokens ?? 4096,
       temperature: options.temperature ?? 0.3,
@@ -35,6 +38,7 @@ export async function chat(
   });
 
   const lastMessage = messages[messages.length - 1];
+  if (!lastMessage) return '';
   const result = await chat.sendMessage(lastMessage.content);
   return result.response.text();
 }
@@ -52,7 +56,10 @@ export async function* streamChat(
       role: msg.role === 'user' ? 'user' : 'model',
       parts: [{ text: msg.content }],
     })),
-    systemInstruction: options.systemPrompt ?? SYSTEM_PROMPTS.SECURITY_ANALYST,
+    systemInstruction: {
+      role: 'user',
+      parts: [{ text: options.systemPrompt ?? SYSTEM_PROMPTS.SECURITY_ANALYST }],
+    },
     generationConfig: {
       maxOutputTokens: options.maxTokens ?? 4096,
       temperature: options.temperature ?? 0.3,
@@ -60,6 +67,7 @@ export async function* streamChat(
   });
 
   const lastMessage = messages[messages.length - 1];
+  if (!lastMessage) return;
   const result = await chatSession.sendMessageStream(lastMessage.content);
 
   for await (const chunk of result.stream) {

@@ -37,6 +37,7 @@ export default function CVEPage() {
         const data = await apiFetch<CVE[]>('/cve?page=1&limit=20');
         setCves(data);
       } catch (error) {
+        if ((error as { silent?: boolean }).silent) return;
         console.error('Failed to load CVEs:', error);
       } finally {
         setLoading(false);
@@ -49,7 +50,12 @@ export default function CVEPage() {
   useEffect(() => {
     if (!searchQuery) {
       if (!loading && cves.length === 0) {
-         apiFetch<CVE[]>('/cve?page=1&limit=20').then(setCves);
+         apiFetch<CVE[]>('/cve?page=1&limit=20')
+           .then(setCves)
+           .catch((error) => {
+             if ((error as { silent?: boolean }).silent) return;
+             console.error('Failed to reload CVEs:', error);
+           });
       }
       return;
     }
@@ -60,6 +66,7 @@ export default function CVEPage() {
         const data = await apiFetch<CVE[]>(`/cve/search?q=${encodeURIComponent(searchQuery)}`);
         setCves(data);
       } catch (error) {
+        if ((error as { silent?: boolean }).silent) return;
         console.error('Search failed:', error);
       } finally {
         setIsSearching(false);

@@ -1,13 +1,19 @@
 import { z } from 'zod';
+import { loadRootEnv } from './load-root-env';
 
 // ─── Environment Schema ──────────────────────────────────────────
 
-const envSchema = z.object({
+const baseEnvSchema = z.object({
   // Application
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(4000),
   WEB_URL: z.string().url().default('http://localhost:3000'),
   API_URL: z.string().url().default('http://localhost:4000'),
+
+  // PostgreSQL (Supabase: URI from Project Settings → Database; include sslmode=require if required)
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required (Supabase Postgres or local PostgreSQL)'),
+  /** Dev-only: set "true" if pg fails with "self signed certificate in certificate chain" (some Windows / proxy setups). */
+  DATABASE_SSL_INSECURE: z.enum(['true', 'false']).optional().default('false'),
 
   // Neo4j
   NEO4J_URI: z.string().default('bolt://localhost:7687'),
@@ -26,21 +32,36 @@ const envSchema = z.object({
 
   // Better Auth
   BETTER_AUTH_SECRET: z.string().default('dev-secret-change-in-production'),
-  BETTER_AUTH_URL: z.string().url().default('http://localhost:4000'),
+  BETTER_AUTH_URL: z.string().url().default('http://localhost:4000/api/v1/auth'),
 
   // NVD
   NVD_API_KEY: z.string().optional(),
-});
 
-export type Env = z.infer<typeof envSchema>;
+  // OTX
+  OTX_API_KEY: z.string().optional(),
+
+  // Ingestion
+  INGESTION_INTERVAL_HOURS: z.coerce.number().default(6),
+  });
+
+const envSchema = baseEnvSchema.superRefine((data, ctx) => {
+    const url = data.DATABASE_URL;
+    if (url.includes('[YOUR-PASSWORD]')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Replace the placeholder in DATABASE_URL with your real Supabase database password (Project Settings → Database). Use the database password, not the anon or service_role API key. If the password contains @ # / etc., URL-encode it in the URI.',
+        path: ['DATABASE_URL'],
+      });
+    }
+  });
+
+export type Env = z.infer<typeof baseEnvSchema>;
 
 // ─── Validate Environment ────────────────────────────────────────
 
-let _env: Env | undefined;
-
 export function getEnv(): Env {
-  if (_env) return _env;
-
+  loadRootEnv();
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
@@ -52,8 +73,7 @@ export function getEnv(): Env {
     throw new Error(`❌ Invalid environment variables:\n${message}`);
   }
 
-  _env = result.data;
-  return _env;
+  return result.data;
 }
 
 // ─── Feature Flags ───────────────────────────────────────────────

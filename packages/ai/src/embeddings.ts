@@ -1,24 +1,52 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { getGeminiClient } from './client';
+import { getEnv } from '@argus/config';
 import crypto from 'crypto';
 
-const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
-export const qdrant = new QdrantClient({ url: QDRANT_URL });
+const qdrantEnv = getEnv();
+export const qdrant = new QdrantClient({
+  url: qdrantEnv.QDRANT_URL,
+  ...(qdrantEnv.QDRANT_API_KEY ? { apiKey: qdrantEnv.QDRANT_API_KEY } : {}),
+});
 
 export const COLLECTION_NAME = 'cve_embeddings';
 
+const EMBEDDING_MODEL = 'text-embedding-004';
+const EMBEDDING_URL = `https://generativelanguage.googleapis.com/v1/models/${EMBEDDING_MODEL}:embedContent`;
+
 export async function generateEmbedding(text: string): Promise<number[]> {
-  try {
-    const ai = getGeminiClient();
-    const model = ai.getGenerativeModel({ model: 'text-embedding-004' });
-    const result = await model.embedContent(text);
-    return result.embedding.values;
-  } catch (error) {
-    console.warn('[Embeddings] API failed, using fallback deterministic vector for:', text.substring(0, 20));
-    // Fallback: deterministic pseudo-random vector based on text length to allow basic testing
-    const seed = text.length;
-    return new Array(768).fill(0).map((_, i) => Math.sin(seed + i));
+  const env = getEnv();
+
+  if (!env.GEMINI_API_KEY) {
+    console.warn('[Embeddings] No GEMINI_API_KEY set, using fallback vector');
+    return fallbackVector(text);
   }
+
+  try {
+    const res = await fetch(`${EMBEDDING_URL}?key=${env.GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: `models/${EMBEDDING_MODEL}`,
+        content: { parts: [{ text }] },
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Embedding API ${res.status}: ${body.substring(0, 200)}`);
+    }
+
+    const data = await res.json();
+    return data.embedding.values;
+  } catch (error) {
+    console.warn('[Embeddings] API failed:', (error as Error).message?.substring(0, 120));
+    return fallbackVector(text);
+  }
+}
+
+function fallbackVector(text: string): number[] {
+  const seed = text.length;
+  return new Array(768).fill(0).map((_, i) => Math.sin(seed + i));
 }
 
 export async function initQdrant() {

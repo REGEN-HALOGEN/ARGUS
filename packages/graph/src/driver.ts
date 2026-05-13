@@ -14,6 +14,7 @@ export function getNeo4jDriver(): Driver {
     env.NEO4J_URI,
     neo4j.auth.basic(env.NEO4J_USER, env.NEO4J_PASSWORD),
     {
+      encrypted: 'ENCRYPTION_OFF',
       maxConnectionPoolSize: 50,
       connectionAcquisitionTimeout: 10000,
       logging: {

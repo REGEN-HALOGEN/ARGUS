@@ -20,15 +20,18 @@
     "check": "biome check --fix .",
     "typecheck": "bun run --filter '*' typecheck",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules",
-    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
-    "docker:down": "docker compose -f docker/docker-compose.yml down",
-    "docker:logs": "docker compose -f docker/docker-compose.yml logs -f",
+    "infra:docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "infra:docker:down": "docker compose -f docker/docker-compose.yml down",
+    "infra:docker:logs": "docker compose -f docker/docker-compose.yml logs -f",
     "db:seed": "bun run scripts/seed.ts",
-    "db:init": "bun run scripts/init-neo4j.ts"
+    "db:migrate:tenant": "bun run scripts/migrate-default-tenant.ts",
+    "db:init": "bun run scripts/init-neo4j.ts",
+    "db:test:pg": "bun run scripts/test-supabase.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^25.6.2",
+    "pg": "^8.13.1",
     "typescript": "^5.7.3"
   },
   "dependencies": {

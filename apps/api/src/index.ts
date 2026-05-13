@@ -1,3 +1,4 @@
+// ─── ARGUS API ───────────────────────────────────────────────────
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
@@ -16,12 +17,15 @@ const app = new Hono().basePath('/api');
 app.use('*', logger());
 app.use('*', prettyJSON());
 app.use('*', secureHeaders());
+
+const env = getEnv();
+
 app.use(
   '*',
   cors({
-    origin: ['http://localhost:3000'],
+    origin: [env.WEB_URL, 'http://localhost:3000'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
+    allowHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
     credentials: true,
   }),
 );
@@ -52,15 +56,17 @@ rootApp.get('/', (c) => {
   return c.json({
     message: 'ARGUS API Server is running',
     health: '/api/health',
-    version: 'v1'
+    version: 'v1',
   });
 });
 rootApp.route('/', app);
 
 // ─── Start Server ────────────────────────────────────────────────
 
-const env = getEnv();
 const port = env.PORT;
+
+import { startScheduler } from '@argus/ingestion';
+startScheduler();
 
 console.info(`
   ╔═══════════════════════════════════════════╗

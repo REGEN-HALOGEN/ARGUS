@@ -1,0 +1,13 @@
+{
+  "name": "@argus/ingestion",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "dependencies": {
+    "@argus/config": "workspace:*",
+    "@argus/graph": "workspace:*",
+    "@argus/ai": "workspace:*",
+    "@argus/types": "workspace:*",
+    "@argus/cache": "workspace:*"
+  }
+}

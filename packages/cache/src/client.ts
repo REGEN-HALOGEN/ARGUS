@@ -22,7 +22,7 @@ class CacheClient {
       });
       
       CacheClient.instance.on('connect', () => {
-        console.log('[Cache] Connected to Valkey');
+        console.log('[Cache] Connected to Redis / Valkey');
       });
     }
 

@@ -19,8 +19,10 @@ export async function initializeSchema(): Promise<void> {
     // Indexes
     const indexes = [
       'CREATE INDEX asset_type IF NOT EXISTS FOR (a:Asset) ON (a.type)',
+      'CREATE INDEX asset_tenant IF NOT EXISTS FOR (a:Asset) ON (a.tenantId)',
       'CREATE INDEX asset_criticality IF NOT EXISTS FOR (a:Asset) ON (a.criticality)',
       'CREATE INDEX asset_internet_facing IF NOT EXISTS FOR (a:Asset) ON (a.internetFacing)',
+      'CREATE INDEX crown_jewel_tenant IF NOT EXISTS FOR (c:CrownJewel) ON (c.tenantId)',
       'CREATE INDEX cve_severity IF NOT EXISTS FOR (c:CVE) ON (c.severity)',
       'CREATE INDEX cve_exploited IF NOT EXISTS FOR (c:CVE) ON (c.exploitedInWild)',
       'CREATE INDEX cve_cvss IF NOT EXISTS FOR (c:CVE) ON (c.cvss)',

@@ -1,4 +1,4 @@
-import type { Session, Record as Neo4jRecord } from 'neo4j-driver';
+import type { Record as Neo4jRecord } from 'neo4j-driver';
 import type { GraphNode, GraphEdge, GraphData } from '@argus/types';
 import { getSession } from './driver';
 
@@ -43,36 +43,49 @@ export async function fetchGraphData(
   const nodesMap = new Map<string, GraphNode>();
   const edgesMap = new Map<string, GraphEdge>();
 
+  // biome-ignore lint/suspicious/noExplicitAny: Neo4j entities are runtime-shaped.
+  const addNode = (v: any) => {
+    if (!v?.labels || !v?.properties) return;
+    const id = v.elementId ?? v.identity?.toString();
+    if (id && !nodesMap.has(id)) {
+      nodesMap.set(id, {
+        id,
+        type: mapLabel(v.labels[0]),
+        label: v.properties.name ?? v.properties.hostname ?? v.properties.cveId ?? id,
+        properties: v.properties,
+      });
+    }
+  };
+
+  // biome-ignore lint/suspicious/noExplicitAny: Neo4j entities are runtime-shaped.
+  const addEdge = (v: any) => {
+    if (!v?.type || !v?.startNodeElementId) return;
+    const id = v.elementId ?? v.identity?.toString();
+    if (id && !edgesMap.has(id)) {
+      edgesMap.set(id, {
+        id,
+        source: v.startNodeElementId,
+        target: v.endNodeElementId,
+        type: v.type,
+        properties: v.properties ?? {},
+      });
+    }
+  };
+
   for (const record of records) {
     for (const value of record.values()) {
       // biome-ignore lint/suspicious/noExplicitAny: Neo4j record values are untyped
       const v = value as any;
 
-      // Node
-      if (v?.labels && v?.properties) {
-        const id = v.elementId ?? v.identity?.toString();
-        if (id && !nodesMap.has(id)) {
-          nodesMap.set(id, {
-            id,
-            type: mapLabel(v.labels[0]),
-            label: v.properties.name ?? v.properties.hostname ?? v.properties.cveId ?? id,
-            properties: v.properties,
-          });
+      if (v?.segments) {
+        for (const segment of v.segments) {
+          addNode(segment.start);
+          addNode(segment.end);
+          addEdge(segment.relationship);
         }
-      }
-
-      // Relationship
-      if (v?.type && v?.startNodeElementId) {
-        const id = v.elementId ?? v.identity?.toString();
-        if (id && !edgesMap.has(id)) {
-          edgesMap.set(id, {
-            id,
-            source: v.startNodeElementId,
-            target: v.endNodeElementId,
-            type: v.type,
-            properties: v.properties ?? {},
-          });
-        }
+      } else {
+        addNode(v);
+        addEdge(v);
       }
     }
   }

@@ -11,28 +11,82 @@ import {
   Shield,
   Users,
   Settings,
+  SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
   Search,
   Command,
 } from 'lucide-react';
+import { useAuth } from '@/components/providers/auth-provider';
+
+type PlatformRole = 'super_admin';
+type OrgRole = 'org_admin' | 'operator' | 'analyst' | 'viewer';
 
 // ─── Navigation Items ────────────────────────────────────────────
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/graph', label: 'Graph Explorer', icon: Network },
-  { href: '/analyst', label: 'AI Analyst', icon: BrainCircuit },
-  { href: '/cve', label: 'CVE Intelligence', icon: Shield },
-  { href: '/threats', label: 'Threat Actors', icon: Users },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  {
+    href: '/dashboard',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    orgRoles: ['viewer', 'analyst', 'operator', 'org_admin'],
+  },
+  {
+    href: '/graph',
+    label: 'Graph Explorer',
+    icon: Network,
+    orgRoles: ['analyst', 'operator', 'org_admin'],
+  },
+  {
+    href: '/analyst',
+    label: 'AI Analyst',
+    icon: BrainCircuit,
+    orgRoles: ['viewer', 'analyst', 'operator', 'org_admin'],
+  },
+  {
+    href: '/cve',
+    label: 'CVE Intelligence',
+    icon: Shield,
+    orgRoles: ['viewer', 'analyst', 'operator', 'org_admin'],
+  },
+  {
+    href: '/threats',
+    label: 'Threat Actors',
+    icon: Users,
+    orgRoles: ['analyst', 'operator', 'org_admin'],
+  },
+  {
+    href: '/settings',
+    label: 'Settings',
+    icon: Settings,
+    orgRoles: ['viewer', 'analyst', 'operator', 'org_admin'],
+  },
+  {
+    href: '/admin',
+    label: 'Platform Admin',
+    icon: SlidersHorizontal,
+    platformRoles: ['super_admin'],
+  },
 ] as const;
+
+function canViewItem(
+  item: (typeof navItems)[number],
+  platformRole: PlatformRole | null,
+  orgRole: OrgRole | null,
+) {
+  if ('platformRoles' in item && item.platformRoles?.some((role) => role === platformRole))
+    return true;
+  if ('orgRoles' in item && item.orgRoles?.some((role) => role === orgRole)) return true;
+  return false;
+}
 
 // ─── Sidebar Component ──────────────────────────────────────────
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const { platformRole, orgRole } = useAuth();
+  const visibleItems = navItems.filter((item) => canViewItem(item, platformRole, orgRole));
 
   return (
     <motion.aside
@@ -55,7 +109,9 @@ export function Sidebar() {
               transition={{ duration: 0.15 }}
             >
               <span className="text-lg font-bold tracking-tight text-gradient-primary">ARGUS</span>
-              <p className="text-[10px] font-medium text-slate-500 leading-none mt-0.5">Security Intelligence</p>
+              <p className="text-[10px] font-medium text-slate-500 leading-none mt-0.5">
+                Security Intelligence
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -92,7 +148,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
             <Link key={item.href} href={item.href}>
@@ -133,11 +189,7 @@ export function Sidebar() {
           onClick={() => setCollapsed(!collapsed)}
           className="flex w-full items-center justify-center rounded-lg py-2 text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-slate-300"
         >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
       </div>
     </motion.aside>

@@ -14,7 +14,14 @@ export type { Asset, CVE, ThreatActor, AttackTechnique, CrownJewel, User } from 
 
 // Graph
 export { RelationshipType, GraphNodeTypeSchema, RiskScoreSchema } from './graph';
-export type { GraphNodeType, GraphNode, GraphEdge, GraphData, AttackPath, RiskScore } from './graph';
+export type {
+  GraphNodeType,
+  GraphNode,
+  GraphEdge,
+  GraphData,
+  AttackPath,
+  RiskScore,
+} from './graph';
 
 // API
 export { PaginationSchema, AIChatMessageSchema, AIChatRequestSchema } from './api';
@@ -28,3 +35,16 @@ export type {
   ThreatBrief,
   DashboardStats,
 } from './api';
+
+// Auth
+export {
+  APP_ROLES,
+  LEGACY_ORG_ROLES,
+  ORG_ROLE_ALIASES,
+  ORG_ROLES,
+  PLATFORM_ROLES,
+  isOrgRole,
+  isPlatformRole,
+  normalizeOrgRole,
+} from './auth';
+export type { AppRole, LegacyOrgRole, OrgRole, PlatformRole } from './auth';

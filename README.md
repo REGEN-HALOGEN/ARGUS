@@ -16,7 +16,7 @@
 - **🧠 AI-Native Analysis:** Powered by **Google Gemini 2.0**, ARGUS interprets complex graph data, translates natural language into Graph Cypher queries, and generates human-readable security insights.
 - **🔍 Vector Search:** Integrates **Qdrant** for semantic search across security logs, vulnerability descriptions, and threat intelligence feeds.
 - **⚡ High-Performance Architecture:** Built with **Bun**, **Next.js 15**, and **Hono** for a lightning-fast, reactive, and scalable full-stack experience.
-- **🔒 Secure Authentication:** Uses **Better Auth** with a persistent local SQLite backend, providing robust session management and access control.
+- **🔒 Secure Authentication:** Uses **Better Auth** with **PostgreSQL** (e.g. Supabase), providing robust session management and access control.
 
 ---
 
@@ -53,7 +53,7 @@ argus/
 │   ├── graph/        # Neo4j connection & query engine
 │   ├── types/        # Shared Zod schemas & TypeScript types
 │   └── ui/           # Shared design system & tokens
-├── docker/           # Infrastructure (Neo4j, Qdrant, Valkey)
+├── docker/           # Optional local Docker stack (see docker/README.md)
 └── scripts/          # Database seeding & initialization
 ```
 
@@ -65,8 +65,9 @@ argus/
 
 Ensure you have the following installed on your machine:
 - **[Bun](https://bun.sh)** (v1.3+)
-- **[Docker](https://docker.com)** & **Docker Compose**
 - **[Node.js](https://nodejs.org)** 20+ (required for Next.js compatibility)
+
+You also need a **PostgreSQL** database (recommended: [Supabase](https://supabase.com)) and reachable **Neo4j**, **Qdrant**, and **Redis-compatible cache** endpoints — either managed cloud URLs in `.env` or optional local **Docker** (see `docker/README.md`).
 
 ### 1. Clone & Install Dependencies
 
@@ -78,21 +79,21 @@ bun install
 
 ### 2. Environment Configuration
 
-Copy the example environment variables and update them (especially `GEMINI_API_KEY`):
+Copy the example environment variables and update them (especially `DATABASE_URL`, `GEMINI_API_KEY`, and service URLs for Neo4j / Qdrant / cache):
 
 ```bash
 cp .env.example .env
 ```
 
-### 3. Start Infrastructure
+### 3. Start infrastructure
 
-Launch the required databases (Neo4j, Qdrant, Valkey) using Docker Compose:
+Either configure **managed** Neo4j, Qdrant, and Redis (Valkey-compatible) URLs in `.env`, or start the **optional** local Docker stack:
 
 ```bash
-bun run docker:up
+bun run infra:docker:up
 ```
 
-*Wait a few moments for the containers to become fully healthy.*
+See `docker/README.md` and `implementation2.md` for details.
 
 ### 4. Initialize & Seed Database
 
@@ -102,6 +103,13 @@ Initialize the Neo4j schema and populate it with example security data:
 bun run db:init
 bun run db:seed
 ```
+
+Seed the Authentication database (PostgreSQL/Supabase) with default administrative and user accounts:
+
+```bash
+bun run scripts/seed-all.ts
+```
+*(This commands creates `admin@argus.local` / `user@argus.local` and an organization, saving the login details to `default.txt` locally).*
 
 ### 5. Start Development Servers
 
@@ -126,8 +134,9 @@ From the root directory, you can run the following commands:
 - `bun run lint` - Runs Biome to check for linting errors.
 - `bun run format` - Formats all codebase using Biome.
 - `bun run typecheck` - Runs TypeScript compiler checks across the monorepo.
-- `bun run docker:up` - Starts the Docker infrastructure in the background.
-- `bun run docker:down` - Stops and removes the Docker infrastructure.
+- `bun run infra:docker:up` - Starts optional local Docker (Neo4j, Qdrant, Valkey).
+- `bun run infra:docker:down` - Stops that Docker stack.
+- `bun run infra:docker:logs` - Follows Docker service logs.
 - `bun run clean` - Removes all `node_modules` for a fresh installation.
 
 ---

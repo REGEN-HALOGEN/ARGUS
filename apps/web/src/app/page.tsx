@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import { WelcomePanel } from '@/components/onboarding/welcome-panel';
 
 export default function HomePage() {
-  redirect('/dashboard');
+  return <WelcomePanel />;
 }

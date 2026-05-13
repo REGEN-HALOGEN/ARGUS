@@ -2,13 +2,19 @@ import { Hono } from 'hono';
 import { getNeo4jDriver } from '@argus/graph';
 import { withCache } from '@argus/cache';
 
-export const dashboardRoutes = new Hono();
+type TenantEnv = {
+  Variables: {
+    tenantId: string;
+  };
+};
+
+export const dashboardRoutes = new Hono<TenantEnv>();
 
 // Helper: run a count query in its own session
-async function countQuery(cypher: string): Promise<number> {
+async function countQuery(cypher: string, params?: Record<string, unknown>): Promise<number> {
   const session = getNeo4jDriver().session();
   try {
-    const result = await session.run(cypher);
+    const result = await session.run(cypher, params);
     const val = result.records[0]?.get('count');
     return typeof val === 'object' && val?.toNumber ? val.toNumber() : Number(val ?? 0);
   } finally {
@@ -19,7 +25,9 @@ async function countQuery(cypher: string): Promise<number> {
 // ─── Dashboard Stats ─────────────────────────────────────────────
 
 dashboardRoutes.get('/stats', async (c) => {
-  const data = await withCache('dashboard:stats', 30, async () => {
+  const tenantId = c.get('tenantId');
+
+  const data = await withCache(`dashboard:${tenantId}:stats`, 30, async () => {
     const [
       totalAssets,
       criticalVulnerabilities,
@@ -29,13 +37,25 @@ dashboardRoutes.get('/stats', async (c) => {
       exposedAssetsResult,
       attackPathsResult
     ] = await Promise.all([
-      countQuery('MATCH (a:Asset) RETURN count(a) AS count'),
-      countQuery("MATCH (c:CVE) WHERE c.severity = 'critical' RETURN count(c) AS count"),
+      countQuery('MATCH (a:Asset {tenantId: $tenantId}) RETURN count(a) AS count', { tenantId }),
+      countQuery(
+        "MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(c:CVE) WHERE c.severity = 'critical' RETURN count(DISTINCT c) AS count",
+        { tenantId },
+      ),
       countQuery('MATCH (t:ThreatActor) RETURN count(t) AS count'),
-      countQuery('MATCH (c:CVE) WHERE c.exploitedInWild = true RETURN count(c) AS count'),
-      countQuery('MATCH (cj:CrownJewel) RETURN count(cj) AS count'),
-      countQuery('MATCH (a:Asset {internetFacing: true})-[:HAS_VULNERABILITY]->(c:CVE {exploitedInWild: true}) RETURN count(DISTINCT a) AS count'),
-      countQuery('MATCH path = (entry:Asset {internetFacing: true})-[*1..6]->(crown:CrownJewel) RETURN count(path) AS count'),
+      countQuery(
+        'MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(c:CVE {exploitedInWild: true}) RETURN count(DISTINCT c) AS count',
+        { tenantId },
+      ),
+      countQuery('MATCH (cj:CrownJewel {tenantId: $tenantId}) RETURN count(cj) AS count', { tenantId }),
+      countQuery(
+        'MATCH (a:Asset {tenantId: $tenantId, internetFacing: true})-[:HAS_VULNERABILITY]->(c:CVE {exploitedInWild: true}) RETURN count(DISTINCT a) AS count',
+        { tenantId },
+      ),
+      countQuery(
+        'MATCH path = (entry:Asset {tenantId: $tenantId, internetFacing: true})-[*1..6]->(crown:CrownJewel {tenantId: $tenantId}) RETURN count(path) AS count',
+        { tenantId },
+      ),
     ]);
 
     // Custom Risk Engine Algorithm
@@ -70,18 +90,21 @@ dashboardRoutes.get('/stats', async (c) => {
 // ─── Recent Alerts (CVEs with exploits + threat actor activity) ──
 
 dashboardRoutes.get('/alerts', async (c) => {
-  const data = await withCache('dashboard:alerts', 30, async () => {
+  const tenantId = c.get('tenantId');
+
+  const data = await withCache(`dashboard:${tenantId}:alerts`, 30, async () => {
     const session = getNeo4jDriver().session();
     try {
       const result = await session.run(`
         MATCH (cv:CVE)
         OPTIONAL MATCH (t:ThreatActor)-[:EXPLOITS]->(cv)
-        OPTIONAL MATCH (a:Asset)-[:HAS_VULNERABILITY]->(cv)
+        OPTIONAL MATCH (a:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(cv)
         WITH cv, collect(DISTINCT t.name) AS actors, collect(DISTINCT a.hostname) AS assets
+        WHERE size(assets) > 0
         RETURN cv, actors, assets
         ORDER BY cv.cvss DESC
         LIMIT 10
-      `);
+      `, { tenantId });
 
       return result.records.map((record, i) => {
         const cve = record.get('cv').properties;
@@ -110,11 +133,13 @@ dashboardRoutes.get('/alerts', async (c) => {
 // ─── Top Attack Paths ────────────────────────────────────────────
 
 dashboardRoutes.get('/attack-paths', async (c) => {
-  const data = await withCache('dashboard:attack-paths', 30, async () => {
+  const tenantId = c.get('tenantId');
+
+  const data = await withCache(`dashboard:${tenantId}:attack-paths`, 30, async () => {
     const session = getNeo4jDriver().session();
     try {
       const result = await session.run(`
-        MATCH path = (entry:Asset {internetFacing: true})-[rels*1..6]->(crown:CrownJewel)
+        MATCH path = (entry:Asset {tenantId: $tenantId, internetFacing: true})-[rels*1..6]->(crown:CrownJewel {tenantId: $tenantId})
         WITH path, entry, crown,
              [n IN nodes(path) | COALESCE(n.hostname, n.cveId, n.name, '')] AS nodeNames,
              reduce(score = 0, n IN nodes(path) | score + COALESCE(n.cvss, 0)) AS pathRisk,
@@ -122,7 +147,7 @@ dashboardRoutes.get('/attack-paths', async (c) => {
         RETURN nodeNames, pathRisk, hops, entry.hostname AS entryPoint, crown.name AS target
         ORDER BY pathRisk DESC
         LIMIT 5
-      `);
+      `, { tenantId });
 
       return result.records.map((record, i) => {
         const nodeNames = record.get('nodeNames') as string[];

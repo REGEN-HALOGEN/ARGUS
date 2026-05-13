@@ -50,6 +50,7 @@ logs/
 
 # Local/Sensitive files
 creds.txt
+default.txt
 instructions.md
 *.db
 *.db-journal
