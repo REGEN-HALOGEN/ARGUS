@@ -8,6 +8,7 @@ import { signOut } from '@/lib/auth';
 import { clearActiveTenantId } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
+export function Header() {
   const [mounted, setMounted] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const { user, platformRole, orgRole } = useAuth();
