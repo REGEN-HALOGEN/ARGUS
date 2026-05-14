@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, LogOut, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -9,7 +9,6 @@ import { clearActiveTenantId } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 export function Header() {
-  const [mounted, setMounted] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const { user, platformRole, orgRole } = useAuth();
   const router = useRouter();
@@ -20,9 +19,7 @@ export function Header() {
     router.replace('/login');
   };
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+
 
   return (
     <motion.header

@@ -1,0 +1,36 @@
+# Use the official Bun image
+FROM oven/bun:1.1 as base
+WORKDIR /usr/src/app
+
+# Install dependencies into temp folder to cache them
+FROM base AS install
+RUN mkdir -p /temp/dev
+COPY package.json bun.lock /temp/dev/
+COPY apps/api/package.json /temp/dev/apps/api/
+COPY packages/ai/package.json /temp/dev/packages/ai/
+COPY packages/cache/package.json /temp/dev/packages/cache/
+COPY packages/config/package.json /temp/dev/packages/config/
+COPY packages/graph/package.json /temp/dev/packages/graph/
+COPY packages/ingestion/package.json /temp/dev/packages/ingestion/
+COPY packages/types/package.json /temp/dev/packages/types/
+
+RUN cd /temp/dev && bun install --frozen-lockfile
+
+# Copy everything and build
+FROM base AS prerelease
+COPY --from=install /temp/dev/node_modules node_modules
+COPY . .
+
+# Build the API
+ENV NODE_ENV=production
+RUN bun run build:api
+
+# Final image
+FROM base AS release
+COPY --from=prerelease /usr/src/app/apps/api/dist ./dist
+COPY --from=prerelease /usr/src/app/apps/api/package.json .
+COPY --from=prerelease /usr/src/app/node_modules ./node_modules
+
+# Expose the port (Render/Railway will use the PORT env var, but this is good practice)
+EXPOSE 4000
+ENTRYPOINT [ "bun", "run", "dist/index.js" ]

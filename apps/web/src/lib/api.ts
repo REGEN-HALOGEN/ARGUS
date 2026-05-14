@@ -47,8 +47,10 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     // Mark redirect-worthy errors as silent so callers can check
     err.silent =
       res.status === 401 ||
+      res.status === 500 ||
       errorCode === 'TENANT_REQUIRED' ||
-      errorCode === 'TENANT_FORBIDDEN';
+      errorCode === 'TENANT_FORBIDDEN' ||
+      errorCode === 'SESSION_ERROR';
     throw err;
   }
 

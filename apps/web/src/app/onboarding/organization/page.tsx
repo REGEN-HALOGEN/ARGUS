@@ -3,7 +3,7 @@
 import { apiFetch, setActiveTenantId } from '@/lib/api';
 import { signIn, signUp, useSession } from '@/lib/auth';
 import {
-  ArrowLeft, ArrowRight, Building2, Check, Cloud, Database, Crown,
+  ArrowLeft, ArrowRight, Building2, Check, Database, Crown,
   Loader2, Monitor, Plus, Server, Shield, Trash2, UserCircle2,
 } from 'lucide-react';
 import Link from 'next/link';

@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from '@/lib/auth';
-import { apiFetch, getActiveTenantId, setActiveTenantId, clearActiveTenantId } from '@/lib/api';
+import { apiFetch, getActiveTenantId, setActiveTenantId } from '@/lib/api';
 
 type PlatformRole = 'super_admin';
 type OrgRole = 'org_admin' | 'operator' | 'analyst' | 'viewer';

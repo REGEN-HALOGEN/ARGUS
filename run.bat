@@ -51,8 +51,9 @@ echo       Docker not in PATH - skipped. Set NEO4J_URI, QDRANT_URL, VALKEY_URL i
 goto after_docker
 
 :have_docker
-echo       Starting Docker stack: bun run infra:docker:up
-call bun run infra:docker:up
+echo       [OPTIONAL] Starting Docker stack: bun run infra:docker:up
+echo       (If this fails, ensure your .env points to cloud instances)
+call bun run infra:docker:up || echo       Skipping local Docker (using cloud config)...
 
 :after_docker
 echo.

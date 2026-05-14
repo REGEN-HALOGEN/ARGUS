@@ -141,7 +141,24 @@ From the root directory, you can run the following commands:
 
 ---
 
+## 🚀 Deployment (Hybrid Cloud)
+
+For production, we recommend a hybrid deployment strategy:
+- **Frontend (Web)**: Deploy `apps/web` to **Vercel** for optimal Edge performance.
+- **Backend (API)**: Deploy `apps/api` to **Railway** (or Render) using the provided `Dockerfile.api`. This ensures background schedulers and long-running processes remain active.
+
+See `DEPLOYMENT.md` for full instructions.
+
+---
+
 ## 📋 Changelog
+
+### 2026-05-14 — Cloud Deployment Readiness
+
+#### ✨ Improvements
+- **Hybrid Cloud Deployment Support**: Created `Dockerfile.api` to enable deploying the Bun-based Hono backend to Railway/Render.
+- **Supabase Connection Pooling**: Updated database connection strategy to use Supavisor pooler URLs (`aws-1-ap-southeast-2.pooler.supabase.com:5432`) to resolve IPv6/DNS issues and handle serverless connection limits.
+- **Deployment Documentation**: Updated deployment guides for hosting the Next.js frontend on Vercel and the API on Railway.
 
 ### 2026-05-13 — Onboarding & Authentication Revamp
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ShieldCheck, Users, Building2, Crown, Eye } from 'lucide-react';
+import { ShieldCheck, Users, Building2 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/components/providers/auth-provider';
 
@@ -54,7 +54,7 @@ type OrganizationsResponse = Organization[];
 
 // ─── Role Badge Component ────────────────────────────────────────
 
-function RoleBadge({ role, variant = 'platform' }: { role: string; variant?: 'platform' | 'org' }) {
+function RoleBadge({ role, variant: _variant = 'platform' }: { role: string; variant?: 'platform' | 'org' }) {
   const styles: Record<string, string> = {
     super_admin: 'bg-primary-500/15 text-primary-300 ring-primary-500/30',
     owner: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',

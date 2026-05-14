@@ -51,6 +51,11 @@ export const errorHandler: ErrorHandler = (err, c) => {
 
   // Unknown Error
   console.error('Unhandled error:', err);
+  console.error('  Path:', c.req.path);
+  console.error('  Method:', c.req.method);
+  if (err instanceof Error) {
+    console.error('  Stack:', err.stack);
+  }
 
   return c.json(
     {
