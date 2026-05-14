@@ -2,25 +2,24 @@
 FROM oven/bun:latest as base
 WORKDIR /usr/src/app
 
-# Install dependencies into temp folder to cache them
-FROM base as install
-RUN mkdir -p /temp/dev
-COPY package.json bun.lock /temp/dev/
-COPY apps/api/package.json /temp/dev/apps/api/
-COPY apps/web/package.json /temp/dev/apps/web/
-COPY packages/ai/package.json /temp/dev/packages/ai/
-COPY packages/cache/package.json /temp/dev/packages/cache/
-COPY packages/config/package.json /temp/dev/packages/config/
-COPY packages/graph/package.json /temp/dev/packages/graph/
-COPY packages/ingestion/package.json /temp/dev/packages/ingestion/
-COPY packages/types/package.json /temp/dev/packages/types/
-COPY packages/ui/package.json /temp/dev/packages/ui/
+FROM base AS install
 
-RUN cd /temp/dev && bun install
+# Copy package.jsons and lockfile
+COPY package.json bun.lock ./
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY packages/ai/package.json ./packages/ai/
+COPY packages/cache/package.json ./packages/cache/
+COPY packages/config/package.json ./packages/config/
+COPY packages/graph/package.json ./packages/graph/
+COPY packages/ingestion/package.json ./packages/ingestion/
+COPY packages/types/package.json ./packages/types/
+COPY packages/ui/package.json ./packages/ui/
 
-# Copy everything and build
-FROM base AS prerelease
-COPY --from=install /temp/dev/node_modules node_modules
+# Install dependencies (this will be cached by Docker)
+RUN bun install
+
+# Copy the rest of the source code
 COPY . .
 
 # Build the API
@@ -29,10 +28,12 @@ RUN bun run build:api
 
 # Final image
 FROM base AS release
-COPY --from=prerelease /usr/src/app/apps/api/dist ./dist
-COPY --from=prerelease /usr/src/app/apps/api/package.json .
-COPY --from=prerelease /usr/src/app/node_modules ./node_modules
+COPY --from=install /usr/src/app/apps/api/dist ./dist
+COPY --from=install /usr/src/app/apps/api/package.json .
+COPY --from=install /usr/src/app/node_modules ./node_modules
+# Also copy apps/api/node_modules if it exists (for unhoisted dependencies)
+COPY --from=install /usr/src/app/apps/api/node_modules ./apps/api/node_modules/
 
-# Expose the port (Render/Railway will use the PORT env var, but this is good practice)
+# Expose the port
 EXPOSE 4000
 ENTRYPOINT [ "bun", "run", "dist/index.js" ]
