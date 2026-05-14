@@ -14,7 +14,7 @@ COPY packages/graph/package.json /temp/dev/packages/graph/
 COPY packages/ingestion/package.json /temp/dev/packages/ingestion/
 COPY packages/types/package.json /temp/dev/packages/types/
 
-RUN cd /temp/dev && bun install --frozen-lockfile
+RUN cd /temp/dev && bun install
 
 # Copy everything and build
 FROM base AS prerelease
