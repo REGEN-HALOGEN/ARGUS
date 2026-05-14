@@ -3,16 +3,18 @@ FROM oven/bun:latest as base
 WORKDIR /usr/src/app
 
 # Install dependencies into temp folder to cache them
-FROM base AS install
+FROM base as install
 RUN mkdir -p /temp/dev
 COPY package.json bun.lock /temp/dev/
 COPY apps/api/package.json /temp/dev/apps/api/
+COPY apps/web/package.json /temp/dev/apps/web/
 COPY packages/ai/package.json /temp/dev/packages/ai/
 COPY packages/cache/package.json /temp/dev/packages/cache/
 COPY packages/config/package.json /temp/dev/packages/config/
 COPY packages/graph/package.json /temp/dev/packages/graph/
 COPY packages/ingestion/package.json /temp/dev/packages/ingestion/
 COPY packages/types/package.json /temp/dev/packages/types/
+COPY packages/ui/package.json /temp/dev/packages/ui/
 
 RUN cd /temp/dev && bun install
 
