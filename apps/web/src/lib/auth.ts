@@ -3,7 +3,7 @@ import { organizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 const authClient: any = createAuthClient({
-  baseURL: 'http://localhost:4000/api/v1/auth',
+  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:4000/api/v1/auth',
   plugins: [organizationClient()],
 });
 
