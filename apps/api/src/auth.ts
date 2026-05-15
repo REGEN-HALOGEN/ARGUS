@@ -5,34 +5,29 @@ import { admin, organization } from 'better-auth/plugins';
 import { adminAc } from 'better-auth/plugins/admin/access';
 import { getAuthDbPool } from './auth-db-pool';
 
-const rawBaseURL = process.env.BETTER_AUTH_URL || 'http://localhost:4000/api/v1/auth';
-const baseURL = rawBaseURL.endsWith('/api/v1/auth')
-  ? rawBaseURL
-  : `${rawBaseURL.replace(/\/+$/, '')}/api/v1/auth`;
+const env = getEnv();
 
-function trustedOrigins(): string[] {
-  const env = getEnv();
-  const extra = process.env.TRUSTED_ORIGINS ? process.env.TRUSTED_ORIGINS.split(',') : [];
-  
-  // Clean up URLs (remove trailing slashes and whitespace)
-  const origins = Array.from(new Set([
-    env.WEB_URL, 
-    'http://localhost:3000', 
-    ...extra
-  ]))
-    .filter(Boolean)
-    .map(url => url!.trim().replace(/\/+$/, ''));
+// --- NUCLEAR ORIGIN FIX ---
+// Force HTTPS and clean up URLs
+const rawBaseURL = process.env.BETTER_AUTH_URL || 'https://argusapi-production.up.railway.app/api/v1/auth';
+const baseURL = rawBaseURL.replace('http://', 'https://');
 
-  console.info(`[AUTH] Trusted Origins: ${origins.join(', ')}`);
-  return origins;
-}
+const origins = [
+  env.WEB_URL,
+  'https://argus-web.vercel.app',
+  'https://argus-web-git-main-ashwins-projects-90bc185c.vercel.app', // Hardcoded for your current deployment
+  'http://localhost:3000'
+].filter(Boolean).map(url => url!.trim().replace(/\/+$/, ''));
+
+console.info(`[AUTH] INITIALIZING WITH BASE URL: ${baseURL}`);
+console.info(`[AUTH] TRUSTING ORIGINS: ${origins.join(', ')}`);
 
 const database = getAuthDbPool();
 
 const authConfig: BetterAuthOptions = {
   database,
   baseURL,
-  trustedOrigins: trustedOrigins(),
+  trustedOrigins: origins,
   experimental: { joins: true },
   emailAndPassword: {
     enabled: true,
@@ -40,9 +35,6 @@ const authConfig: BetterAuthOptions = {
   plugins: [
     organization({
       creatorRole: 'owner',
-      afterCreateOrganization: async ({ organization }: { organization: { id: string } }) => {
-        console.info(`[AUTH] Created organization ${organization.id}`);
-      },
     }),
     admin({
       defaultRole: 'user',
@@ -56,18 +48,15 @@ const authConfig: BetterAuthOptions = {
 
 export const auth = betterAuth(authConfig) as any;
 
-// Initialize database schema on startup (non-blocking)
+// Initialize database schema on startup
 (async () => {
   try {
     const migrations = await getMigrations(authConfig);
-
     if (migrations.toBeCreated.length > 0 || migrations.toBeAdded.length > 0) {
       console.log('[AUTH] Running database migrations');
       await migrations.runMigrations();
-      console.log('[AUTH] Database migrations complete');
       return;
     }
-
     console.log('[AUTH] Database schema up to date');
   } catch (error) {
     console.error('[AUTH] Database migration failed:', error instanceof Error ? error.message : error);
