@@ -12,7 +12,8 @@ const baseURL = rawBaseURL.endsWith('/api/v1/auth')
 
 function trustedOrigins(): string[] {
   const env = getEnv();
-  return Array.from(new Set([env.WEB_URL, 'http://localhost:3000']));
+  const extra = process.env.TRUSTED_ORIGINS ? process.env.TRUSTED_ORIGINS.split(',') : [];
+  return Array.from(new Set([env.WEB_URL, 'http://localhost:3000', ...extra])).filter(Boolean);
 }
 
 const database = getAuthDbPool();
