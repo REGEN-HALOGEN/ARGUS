@@ -8,44 +8,44 @@ import { getEnv } from '@argus/config';
 import { errorHandler } from './middleware/error-handler';
 import { v1Routes } from './routes/v1';
 
-// ─── Initialize ──────────────────────────────────────────────────
-
-const app = new Hono().basePath('/api');
-
-// ─── Global Middleware ───────────────────────────────────────────
-
-app.use('*', logger());
-app.use('*', prettyJSON());
-app.use('*', secureHeaders());
-
 const env = getEnv();
 
-app.use(
+// ─── Root App (The entry point) ──────────────────────────────────
+const rootApp = new Hono();
+
+// ─── Global CORS (Must be at the very top of rootApp) ─────────────
+rootApp.use(
   '*',
   cors({
     origin: (origin) => {
-      if (!origin) return 'http://localhost:3000';
-      if (
-        origin.endsWith('.vercel.app') ||
-        origin === 'http://localhost:3000' ||
-        origin === env.WEB_URL
-      ) {
+      // Allow local development
+      if (!origin || origin === 'http://localhost:3000' || origin === 'http://localhost:4000') {
+        return origin || 'http://localhost:3000';
+      }
+      // Allow any Vercel deployment
+      if (origin.endsWith('.vercel.app') || (env.WEB_URL && origin === env.WEB_URL)) {
         return origin;
       }
       return 'http://localhost:3000';
     },
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
+    allowHeaders: ['Content-Type', 'Authorization', 'x-tenant-id', 'cookie'],
     credentials: true,
+    exposeHeaders: ['Set-Cookie'],
   }),
 );
 
-// ─── Error Handler ───────────────────────────────────────────────
+rootApp.use('*', logger());
+rootApp.use('*', prettyJSON());
+rootApp.use('*', secureHeaders());
 
+// ─── API Sub-App ─────────────────────────────────────────────────
+const app = new Hono();
+
+// ─── Error Handler ───────────────────────────────────────────────
 app.onError(errorHandler);
 
 // ─── Health Check ────────────────────────────────────────────────
-
 app.get('/health', (c) => {
   return c.json({
     status: 'healthy',
@@ -56,12 +56,9 @@ app.get('/health', (c) => {
 });
 
 // ─── API Routes ──────────────────────────────────────────────────
-
 app.route('/v1', v1Routes);
 
-// ─── Root App for Catch-all ──────────────────────────────────────
-
-const rootApp = new Hono();
+// ─── Main Route ──────────────────────────────────────────────────
 rootApp.get('/', (c) => {
   return c.json({
     message: 'ARGUS API Server is running',
@@ -69,10 +66,11 @@ rootApp.get('/', (c) => {
     version: 'v1',
   });
 });
-rootApp.route('/', app);
+
+// Mount the API app at /api
+rootApp.route('/api', app);
 
 // ─── Start Server ────────────────────────────────────────────────
-
 const port = env.PORT;
 
 import { startScheduler } from '@argus/ingestion';
