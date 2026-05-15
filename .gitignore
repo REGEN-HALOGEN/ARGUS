@@ -18,6 +18,7 @@ temp/
 .env
 .env.local
 .env.*.local
+.env.vercel
 
 # IDE
 .vscode/
