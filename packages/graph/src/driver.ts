@@ -24,7 +24,7 @@ export function getNeo4jDriver(): Driver {
 
 // ─── Session Helper ──────────────────────────────────────────────
 
-export function getSession(database = 'neo4j'): Session {
+export function getSession(database?: string): Session {
   return getNeo4jDriver().session({ database });
 }
 
