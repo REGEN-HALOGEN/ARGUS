@@ -39,6 +39,17 @@ rootApp.use('*', logger());
 rootApp.use('*', prettyJSON());
 rootApp.use('*', secureHeaders());
 
+// --- FAIL-SAFE CROSS-SITE COOKIE FIX ---
+rootApp.use('*', async (c, next) => {
+  await next();
+  const setCookie = c.res.headers.get('Set-Cookie');
+  if (setCookie && !setCookie.includes('SameSite=None')) {
+    // Force SameSite=None and Secure on all cookies
+    const fixedCookie = setCookie.replace(/SameSite=(Lax|Strict)/gi, 'SameSite=None') + (setCookie.includes('SameSite') ? '' : '; SameSite=None') + (setCookie.includes('Secure') ? '' : '; Secure');
+    c.res.headers.set('Set-Cookie', fixedCookie);
+  }
+});
+
 // ─── API Sub-App ─────────────────────────────────────────────────
 const app = new Hono();
 
