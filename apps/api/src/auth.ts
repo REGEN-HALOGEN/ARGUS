@@ -31,10 +31,8 @@ const authConfig: BetterAuthOptions = {
   experimental: { joins: true },
   advanced: {
     cookiePrefix: 'argus',
-    crossSiteCookies: true,
   },
   cookie: {
-    namePrefix: 'argus',
     attributes: {
       sameSite: 'none',
       secure: true,
