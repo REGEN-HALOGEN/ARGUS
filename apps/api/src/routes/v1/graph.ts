@@ -33,6 +33,7 @@ graphRoutes.get('/', async (c) => {
     );
     return c.json({ success: true, data });
   } catch (error) {
+    console.error('[GRAPH] Failed to fetch graph data:', error instanceof Error ? error.message : error);
     return c.json({
       success: true,
       data: { nodes: [], edges: [] },
