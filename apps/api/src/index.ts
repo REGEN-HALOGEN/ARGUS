@@ -23,7 +23,17 @@ const env = getEnv();
 app.use(
   '*',
   cors({
-    origin: [env.WEB_URL, 'http://localhost:3000'],
+    origin: (origin) => {
+      if (!origin) return 'http://localhost:3000';
+      if (
+        origin.endsWith('.vercel.app') ||
+        origin === 'http://localhost:3000' ||
+        origin === env.WEB_URL
+      ) {
+        return origin;
+      }
+      return 'http://localhost:3000';
+    },
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
     credentials: true,
