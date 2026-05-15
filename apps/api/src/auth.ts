@@ -32,12 +32,6 @@ const authConfig: BetterAuthOptions = {
   advanced: {
     cookiePrefix: 'argus',
   },
-  cookie: {
-    attributes: {
-      sameSite: 'none',
-      secure: true,
-    },
-  },
   emailAndPassword: {
     enabled: true,
   },
