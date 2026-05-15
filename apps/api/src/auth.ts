@@ -13,7 +13,18 @@ const baseURL = rawBaseURL.endsWith('/api/v1/auth')
 function trustedOrigins(): string[] {
   const env = getEnv();
   const extra = process.env.TRUSTED_ORIGINS ? process.env.TRUSTED_ORIGINS.split(',') : [];
-  return Array.from(new Set([env.WEB_URL, 'http://localhost:3000', ...extra])).filter(Boolean);
+  
+  // Clean up URLs (remove trailing slashes and whitespace)
+  const origins = Array.from(new Set([
+    env.WEB_URL, 
+    'http://localhost:3000', 
+    ...extra
+  ]))
+    .filter(Boolean)
+    .map(url => url!.trim().replace(/\/+$/, ''));
+
+  console.info(`[AUTH] Trusted Origins: ${origins.join(', ')}`);
+  return origins;
 }
 
 const database = getAuthDbPool();
