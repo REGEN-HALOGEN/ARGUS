@@ -43,10 +43,19 @@ rootApp.use('*', secureHeaders());
 rootApp.use('*', async (c, next) => {
   await next();
   const setCookie = c.res.headers.get('Set-Cookie');
-  if (setCookie && !setCookie.includes('SameSite=None')) {
-    // Force SameSite=None and Secure on all cookies
-    const fixedCookie = setCookie.replace(/SameSite=(Lax|Strict)/gi, 'SameSite=None') + (setCookie.includes('SameSite') ? '' : '; SameSite=None') + (setCookie.includes('Secure') ? '' : '; Secure');
-    c.res.headers.set('Set-Cookie', fixedCookie);
+  if (setCookie) {
+    let fixedCookie = setCookie;
+    // Replace Lax/Strict with None
+    fixedCookie = fixedCookie.replace(/SameSite=(Lax|Strict)/gi, 'SameSite=None');
+    
+    // Ensure required attributes for cross-site cookies are present
+    if (!fixedCookie.includes('SameSite=None')) fixedCookie += '; SameSite=None';
+    if (!fixedCookie.includes('Secure')) fixedCookie += '; Secure';
+    if (!fixedCookie.includes('Partitioned')) fixedCookie += '; Partitioned';
+    
+    if (fixedCookie !== setCookie) {
+      c.res.headers.set('Set-Cookie', fixedCookie);
+    }
   }
 });
 
