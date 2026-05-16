@@ -33,7 +33,7 @@ export default function UserOnboardingPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-background">
+    <div className="flex min-h-screen items-center justify-center p-4 bg-transparent">
       <div className="fixed top-6 right-6">
         <ThemeToggle />
       </div>

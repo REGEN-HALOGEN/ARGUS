@@ -2,6 +2,7 @@
 
 import { Logo } from '@/components/ui/logo';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { BackgroundRippleEffect } from '@/components/ui/background-ripple-effect';
 import { API_BASE, setActiveTenantId } from '@/lib/api';
 import { signIn } from '@/lib/auth';
 import { Loader2 } from 'lucide-react';
@@ -63,7 +64,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-background">
+    <>
+      <BackgroundRippleEffect />
+      <div className="flex min-h-screen items-center justify-center p-4 bg-transparent relative z-10">
       <div className="fixed top-6 right-6">
         <ThemeToggle />
       </div>
@@ -128,6 +131,7 @@ export default function LoginPage() {
           </p>
         </form>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export function WelcomePanel() {
   return (
-    <main className="min-h-screen px-4 py-12 bg-background">
+    <main className="min-h-screen px-4 py-12 bg-transparent">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
         <div className="flex justify-end px-2">
           <ThemeToggle />

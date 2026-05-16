@@ -263,7 +263,7 @@ export default function OrganizationOnboardingPage() {
   // ─── Render ──────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen px-4 py-10 bg-background text-foreground">
+    <main className="min-h-screen px-4 py-10 bg-transparent text-foreground">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
         <header className="flex items-center justify-between">
           <div>
