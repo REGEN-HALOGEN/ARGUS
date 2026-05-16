@@ -44,12 +44,12 @@ export function WelcomePanel() {
               </div>
             </div>
 
-            <div className="hidden md:flex items-center justify-center p-8 bg-primary-500/5 rounded-full ring-1 ring-primary-500/10 animate-pulse-soft">
+            <div className="hidden md:flex items-center justify-center p-4">
               <Logo
-                width={160}
-                height={160}
+                width={180}
+                height={180}
                 showText={false}
-                className="opacity-90 hover:opacity-100 transition-opacity drop-shadow-2xl"
+                className="opacity-95 hover:opacity-100 transition-opacity drop-shadow-2xl"
               />
             </div>
           </div>
