@@ -131,8 +131,11 @@ export async function syncNews(): Promise<SyncResult> {
           },
         );
 
-        const cleanResponse = response.replace(/```json|```/g, '').trim();
-        const parsed = JSON.parse(cleanResponse);
+        // Extract JSON using a more robust method
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON object found in response');
+        
+        const parsed = JSON.parse(jsonMatch[0]);
 
         item.summary = parsed.summary;
         const entities: string[] = parsed.entities || [];

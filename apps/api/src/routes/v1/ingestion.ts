@@ -1,4 +1,4 @@
-import { runFullSync, syncCISAKEV, syncMITRE, syncNVD } from '@argus/ingestion';
+import { runFullSync, syncCISAKEV, syncMITRE, syncNVD, syncNews } from '@argus/ingestion';
 import { Hono } from 'hono';
 
 export const ingestionRoutes = new Hono();
@@ -23,6 +23,9 @@ ingestionRoutes.post('/sync/:source', async (c) => {
       break;
     case 'mitre':
       syncFn = syncMITRE;
+      break;
+    case 'news':
+      syncFn = syncNews;
       break;
     default:
       return c.json(
