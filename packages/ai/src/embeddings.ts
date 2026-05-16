@@ -15,7 +15,32 @@ const EMBEDDING_URL = `https://generativelanguage.googleapis.com/v1/models/${EMB
 
 export async function generateEmbedding(text: string): Promise<number[]> {
   const env = getEnv();
+  const provider = env.LLM_PROVIDER;
 
+  if (provider === 'ollama') {
+    try {
+      const res = await fetch(`${env.OLLAMA_BASE_URL}/api/embeddings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: env.OLLAMA_EMBEDDING_MODEL,
+          prompt: text,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Ollama Embedding API ${res.status}: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      return data.embedding;
+    } catch (error) {
+      console.warn('[Embeddings] Ollama API failed:', (error as Error).message);
+      return fallbackVector(text);
+    }
+  }
+
+  // Gemini Fallback
   if (!env.GEMINI_API_KEY) {
     console.warn('[Embeddings] No GEMINI_API_KEY set, using fallback vector');
     return fallbackVector(text);
@@ -39,7 +64,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     const data = await res.json();
     return data.embedding.values;
   } catch (error) {
-    console.warn('[Embeddings] API failed:', (error as Error).message?.substring(0, 120));
+    console.warn('[Embeddings] Gemini API failed:', (error as Error).message?.substring(0, 120));
     return fallbackVector(text);
   }
 }

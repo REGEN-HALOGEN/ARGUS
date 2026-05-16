@@ -35,7 +35,7 @@ aiRoutes.post('/chat', zValidator('json', AIChatRequestSchema), async (c) => {
       data: {
         id: crypto.randomUUID(),
         role: 'assistant' as const,
-        content: `I apologize, but I encountered an issue: ${message}. Please ensure your Gemini API key is configured correctly.`,
+        content: `I apologize, but I encountered an issue: ${message}. Please ensure your AI configuration (Gemini or Ollama) is correct.`,
         timestamp: new Date().toISOString(),
       },
     });

@@ -30,6 +30,14 @@ const baseEnvSchema = z.object({
   // Google Gemini
   GEMINI_API_KEY: z.string().optional(),
 
+  // AI Provider
+  LLM_PROVIDER: z.enum(['gemini', 'ollama']).default('gemini'),
+
+  // Ollama
+  OLLAMA_BASE_URL: z.string().url().default('http://localhost:11434'),
+  OLLAMA_MODEL: z.string().default('llama3'),
+  OLLAMA_EMBEDDING_MODEL: z.string().default('nomic-embed-text'),
+
   // Better Auth
   BETTER_AUTH_SECRET: z.string().default('dev-secret-change-in-production'),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:4000/api/v1/auth'),
