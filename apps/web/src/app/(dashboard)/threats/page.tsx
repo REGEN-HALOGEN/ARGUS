@@ -22,7 +22,7 @@ interface ThreatActor {
 function sophBadge(s: string) {
   if (s === 'advanced') return 'bg-threat-500/15 text-threat-400 ring-threat-500/30';
   if (s === 'intermediate') return 'bg-warning-500/15 text-warning-400 ring-warning-500/30';
-  return 'bg-slate-500/15 text-slate-400 ring-slate-500/30';
+  return 'bg-slate-500/15 text-muted-foreground ring-slate-500/30';
 }
 
 export default function ThreatsPage() {
@@ -71,8 +71,10 @@ export default function ThreatsPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-100">Threat Actors</h1>
-        <p className="text-sm text-slate-400 mt-1">APT profiles and threat actor intelligence</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Threat Actors</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          APT profiles and threat actor intelligence
+        </p>
       </div>
 
       {loading ? (
@@ -80,7 +82,7 @@ export default function ThreatsPage() {
           <Loader2 className="h-8 w-8 text-primary-500 animate-spin" />
         </div>
       ) : actors.length === 0 ? (
-        <div className="glass-card p-12 text-center text-slate-500">
+        <div className="glass-card p-12 text-center text-muted-foreground/70">
           No threat actors found in the knowledge graph.
         </div>
       ) : (
@@ -107,17 +109,19 @@ export default function ThreatsPage() {
                       <Users className="h-5 w-5 text-threat-400" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-200 group-hover:text-slate-100">
+                      <h3 className="font-semibold text-foreground group-hover:text-foreground">
                         {actor.name}
                       </h3>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <Globe className="h-3 w-3 text-slate-500" />
-                        <span className="text-xs text-slate-500">{actor.country || 'Unknown'}</span>
+                        <Globe className="h-3 w-3 text-muted-foreground/70" />
+                        <span className="text-xs text-muted-foreground/70">
+                          {actor.country || 'Unknown'}
+                        </span>
                       </div>
                     </div>
                   </div>
                   <ChevronRight
-                    className={`h-4 w-4 text-slate-600 group-hover:text-slate-400 transition-all duration-300 ${expandedActor === actor.name ? 'rotate-90' : ''}`}
+                    className={`h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-all duration-300 ${expandedActor === actor.name ? 'rotate-90' : ''}`}
                   />
                 </div>
 
@@ -127,23 +131,25 @@ export default function ThreatsPage() {
                   >
                     {actor.sophistication}
                   </span>
-                  <span className="text-xs text-slate-500">{actor.motivation || 'Unknown'}</span>
+                  <span className="text-xs text-muted-foreground/70">
+                    {actor.motivation || 'Unknown'}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-white/[0.03] p-2.5 text-center">
-                    <p className="text-lg font-bold text-slate-200">{actor.techniqueCount || 0}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">ATT&CK Techniques</p>
+                  <div className="rounded-lg bg-background/40 border border-card-border text-center">
+                    <p className="text-lg font-bold text-foreground">{actor.techniqueCount || 0}</p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">ATT&CK Techniques</p>
                   </div>
-                  <div className="rounded-lg bg-white/[0.03] p-2.5 text-center">
+                  <div className="rounded-lg bg-background/40 border border-card-border text-center">
                     <p className="text-lg font-bold text-threat-400">{actor.targetedAssets || 0}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Targeted Assets</p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">Targeted Assets</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1.5 mt-auto pt-3 border-t border-white/[0.04]">
-                  <Target className="h-3 w-3 text-slate-500" />
-                  <span className="text-[10px] text-slate-500">
+                  <Target className="h-3 w-3 text-muted-foreground/70" />
+                  <span className="text-[10px] text-muted-foreground/70">
                     Last seen:{' '}
                     {actor.lastSeen ? new Date(actor.lastSeen).toLocaleDateString() : 'Unknown'}
                   </span>
@@ -164,10 +170,10 @@ export default function ThreatsPage() {
                     <div className="mt-5 space-y-6">
                       {actor.description && (
                         <div>
-                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                          <h4 className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-2">
                             Intelligence Brief
                           </h4>
-                          <p className="text-sm text-slate-300 leading-relaxed">
+                          <p className="text-sm text-muted-foreground/80 leading-relaxed">
                             {actor.description}
                           </p>
                         </div>
@@ -175,7 +181,7 @@ export default function ThreatsPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+                          <h4 className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">
                             Targeted Assets (Your Context)
                           </h4>
                           {actor.targets && actor.targets.length > 0 ? (
@@ -183,18 +189,18 @@ export default function ThreatsPage() {
                               {actor.targets.map((t, idx) => (
                                 <div
                                   key={idx}
-                                  className="flex items-center justify-between bg-[#0f1523] p-3 rounded-xl ring-1 ring-white/[0.04] hover:ring-white/[0.08] transition-all"
+                                  className="flex items-center justify-between bg-background/50 border border-card-border shadow-sm"
                                 >
                                   <div className="flex items-center gap-3">
                                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-threat-500/10 text-threat-400 ring-1 ring-threat-500/20">
                                       <Target className="h-4 w-4" />
                                     </div>
-                                    <span className="text-sm font-medium text-slate-200">
+                                    <span className="text-sm font-medium text-foreground">
                                       {t.hostname}
                                     </span>
                                   </div>
                                   {t.role && (
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-white/[0.04] px-2 py-1 rounded">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 bg-card/50 px-2 py-1 rounded">
                                       {t.role}
                                     </span>
                                   )}
@@ -202,8 +208,8 @@ export default function ThreatsPage() {
                               ))}
                             </div>
                           ) : (
-                            <div className="bg-[#0f1523] p-4 rounded-xl ring-1 ring-white/[0.04] text-center">
-                              <p className="text-sm text-slate-500">
+                            <div className="bg-background/50 border border-card-border shadow-sm">
+                              <p className="text-sm text-muted-foreground/70">
                                 No direct paths to your assets discovered.
                               </p>
                             </div>
@@ -211,7 +217,7 @@ export default function ThreatsPage() {
                         </div>
 
                         <div>
-                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+                          <h4 className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">
                             Exploited Vulnerabilities
                           </h4>
                           {actor.cves && actor.cves.length > 0 ? (
@@ -219,7 +225,7 @@ export default function ThreatsPage() {
                               {actor.cves.slice(0, 5).map((c, idx) => (
                                 <div
                                   key={idx}
-                                  className="flex items-center justify-between bg-[#0f1523] p-3 rounded-xl ring-1 ring-white/[0.04] hover:ring-white/[0.08] transition-all"
+                                  className="flex items-center justify-between bg-background/50 border border-card-border shadow-sm"
                                 >
                                   <span className="font-mono text-sm font-medium text-primary-300">
                                     {c.cveId}
@@ -233,15 +239,15 @@ export default function ThreatsPage() {
                               ))}
                               {actor.cves.length > 5 && (
                                 <div className="text-center pt-2">
-                                  <span className="text-xs font-semibold text-slate-500 hover:text-slate-400 cursor-pointer">
+                                  <span className="text-xs font-semibold text-muted-foreground/70 hover:text-muted-foreground cursor-pointer">
                                     + {actor.cves.length - 5} more known exploits
                                   </span>
                                 </div>
                               )}
                             </div>
                           ) : (
-                            <div className="bg-[#0f1523] p-4 rounded-xl ring-1 ring-white/[0.04] text-center">
-                              <p className="text-sm text-slate-500">
+                            <div className="bg-background/50 border border-card-border shadow-sm">
+                              <p className="text-sm text-muted-foreground/70">
                                 No specific CVE mapping available.
                               </p>
                             </div>

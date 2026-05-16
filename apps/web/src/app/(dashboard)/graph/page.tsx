@@ -79,10 +79,10 @@ function ArgusNode({ data }: any) {
       threat_actor: 'text-warning-400 bg-warning-500/15 ring-warning-500/30',
       attack_technique: 'text-accent-400 bg-accent-500/15 ring-accent-500/30',
       crown_jewel: 'text-success-400 bg-success-500/15 ring-success-500/30',
-    }[type as string] || 'text-slate-400 bg-slate-500/15 ring-slate-500/30';
+    }[type as string] || 'text-muted-foreground bg-slate-500/15 ring-slate-500/30';
 
   return (
-    <div className="w-[200px] rounded-xl bg-[#0f1523] ring-1 ring-white/[0.06] shadow-xl overflow-hidden">
+    <div className="w-[200px] rounded-xl bg-card border border-card-border shadow-xl overflow-hidden">
       <Handle
         type="target"
         position={Position.Left}
@@ -96,8 +96,8 @@ function ArgusNode({ data }: any) {
             <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-slate-200 truncate">{label}</p>
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider truncate mt-0.5">
+            <p className="text-xs font-semibold text-foreground truncate">{label}</p>
+            <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider truncate mt-0.5">
               {type.replace('_', ' ')}
             </p>
           </div>
@@ -181,10 +181,10 @@ export default function GraphPage() {
         label: e.type,
         type: 'smoothstep',
         animated: true,
-        style: { stroke: '#475569', strokeWidth: 2 },
-        labelStyle: { fill: '#94a3b8', fontSize: 10, fontWeight: 600 },
-        labelBgStyle: { fill: '#0f1523', fillOpacity: 0.8 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#475569' },
+        style: { stroke: 'var(--muted-foreground)', strokeWidth: 1, opacity: 0.5 },
+        labelStyle: { fill: 'var(--muted-foreground)', fontSize: 10, fontWeight: 600 },
+        labelBgStyle: { fill: 'var(--card)', fillOpacity: 0.8 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--muted-foreground)' },
       }));
 
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
@@ -203,8 +203,10 @@ export default function GraphPage() {
     >
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Graph Explorer</h1>
-          <p className="text-sm text-slate-400 mt-1">Interactive attack graph visualization</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Graph Explorer</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Interactive attack graph visualization
+          </p>
         </div>
         <div className="flex items-center gap-2 relative">
           <button
@@ -212,7 +214,7 @@ export default function GraphPage() {
             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ring-1 transition-all ${
               filtersOpen || visibleTypes.size < 5
                 ? 'bg-primary-500/20 text-primary-300 ring-primary-500/40'
-                : 'bg-white/[0.04] text-slate-400 ring-white/[0.06] hover:bg-white/[0.06]'
+                : 'bg-card/50 text-muted-foreground border border-card-border hover:bg-card/60'
             }`}
           >
             <Filter className="h-4 w-4" /> Filters
@@ -224,8 +226,8 @@ export default function GraphPage() {
           </button>
 
           {filtersOpen && (
-            <div className="absolute top-full right-0 mt-2 w-48 rounded-xl bg-[#0c1220]/95 p-3 ring-1 ring-white/[0.06] shadow-xl backdrop-blur-xl z-50">
-              <h4 className="text-xs font-semibold text-slate-200 mb-2 uppercase tracking-wider">
+            <div className="absolute top-full right-0 mt-2 w-48 rounded-xl bg-card/95 border border-card-border shadow-2xl backdrop-blur-xl z-50">
+              <h4 className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">
                 Node Visibility
               </h4>
               <div className="space-y-1">
@@ -238,7 +240,7 @@ export default function GraphPage() {
                 ].map((item) => (
                   <label
                     key={item.id}
-                    className="flex items-center gap-2 rounded-lg p-2 hover:bg-white/[0.04] cursor-pointer transition-colors"
+                    className="flex items-center gap-2 rounded-lg p-2 hover:bg-card/50 cursor-pointer transition-colors"
                   >
                     <input
                       type="checkbox"
@@ -246,13 +248,13 @@ export default function GraphPage() {
                       onChange={() => toggleFilter(item.id)}
                       className="h-3.5 w-3.5 accent-primary-500 rounded border-white/10 bg-white/5"
                     />
-                    <span className="text-sm text-slate-300">{item.label}</span>
+                    <span className="text-sm text-muted-foreground/80">{item.label}</span>
                   </label>
                 ))}
               </div>
             </div>
           )}
-          <button className="flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 text-sm text-slate-400 ring-1 ring-white/[0.06] hover:bg-white/[0.06]">
+          <button className="flex items-center gap-2 rounded-lg bg-card/50 px-3 py-2 text-sm text-muted-foreground ring-1 border border-card-border hover:bg-card/60">
             <Download className="h-4 w-4" /> Export
           </button>
         </div>
@@ -294,14 +296,14 @@ export default function GraphPage() {
                 }
               }}
               maskColor="rgba(11, 15, 25, 0.8)"
-              className="bg-[#0f1523] border-white/[0.06] rounded-xl"
+              className="bg-[#0f1523] border-card-border rounded-xl"
             />
           </ReactFlow>
         )}
 
         {/* Legend */}
-        <div className="absolute bottom-6 left-6 z-10 flex flex-col gap-2 rounded-xl bg-[#0c1220]/90 p-4 ring-1 ring-white/[0.06] backdrop-blur-md">
-          <h4 className="text-xs font-semibold text-slate-200 mb-1 uppercase tracking-wider">
+        <div className="absolute bottom-6 left-6 z-10 flex flex-col gap-2 rounded-xl bg-[#0c1220]/90 p-4 ring-1 border border-card-border backdrop-blur-md">
+          <h4 className="text-xs font-semibold text-foreground mb-1 uppercase tracking-wider">
             Node Types
           </h4>
           {[
@@ -313,7 +315,7 @@ export default function GraphPage() {
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2">
               <div className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
-              <span className="text-[11px] font-medium text-slate-400">{item.label}</span>
+              <span className="text-[11px] font-medium text-muted-foreground">{item.label}</span>
             </div>
           ))}
         </div>

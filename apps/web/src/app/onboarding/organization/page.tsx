@@ -352,7 +352,7 @@ export default function OrganizationOnboardingPage() {
                     'Continue to organization setup'
                   )}
                 </button>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground/70">
                   Already have an account?{' '}
                   <Link href="/login" className="text-emerald-300 hover:text-emerald-200">
                     Sign in
@@ -466,7 +466,7 @@ export default function OrganizationOnboardingPage() {
                         <button
                           type="button"
                           onClick={() => removeServer(srv.id)}
-                          className="text-slate-500 hover:text-threat-400 transition"
+                          className="text-muted-foreground/70 hover:text-threat-400 transition"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -535,7 +535,7 @@ export default function OrganizationOnboardingPage() {
                   <button
                     type="button"
                     onClick={addServer}
-                    className="flex items-center gap-2 rounded-lg bg-white/[0.04] px-4 py-2.5 text-sm text-muted-foreground ring-1 ring-white/[0.06] hover:bg-white/[0.06] transition w-full justify-center"
+                    className="flex items-center gap-2 rounded-lg bg-card/50 px-4 py-2.5 text-sm text-muted-foreground ring-1 border border-card-border hover:bg-card/60 transition w-full justify-center"
                   >
                     <Plus className="h-4 w-4" /> Add Server Group
                   </button>
@@ -568,7 +568,7 @@ export default function OrganizationOnboardingPage() {
                         <button
                           type="button"
                           onClick={() => removeDataStore(ds.id)}
-                          className="text-slate-500 hover:text-threat-400 transition"
+                          className="text-muted-foreground/70 hover:text-threat-400 transition"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -604,7 +604,7 @@ export default function OrganizationOnboardingPage() {
                   <button
                     type="button"
                     onClick={addDataStore}
-                    className="flex items-center gap-2 rounded-lg bg-white/[0.04] px-4 py-2.5 text-sm text-muted-foreground ring-1 ring-white/[0.06] hover:bg-white/[0.06] transition w-full justify-center"
+                    className="flex items-center gap-2 rounded-lg bg-card/50 px-4 py-2.5 text-sm text-muted-foreground ring-1 border border-card-border hover:bg-card/60 transition w-full justify-center"
                   >
                     <Plus className="h-4 w-4" /> Add Data Store
                   </button>
@@ -626,7 +626,7 @@ export default function OrganizationOnboardingPage() {
                 </div>
                 <div className="space-y-3">
                   {dataStores.length === 0 && (
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-muted-foreground/70">
                       No data stores defined. Go back and add some.
                     </p>
                   )}
@@ -657,35 +657,47 @@ export default function OrganizationOnboardingPage() {
                 <h2 className="text-xl font-semibold text-foreground">Review your workspace</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
-                    <p className="text-xs uppercase tracking-wider text-slate-500">Organization</p>
-                    <p className="mt-2 text-sm font-medium text-slate-200">{orgName}</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
+                      Organization
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-foreground">{orgName}</p>
                   </div>
                   <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
-                    <p className="text-xs uppercase tracking-wider text-slate-500">Industry</p>
-                    <p className="mt-2 text-sm font-medium text-slate-200">{industry}</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
+                      Industry
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-foreground">{industry}</p>
                   </div>
                   <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
-                    <p className="text-xs uppercase tracking-wider text-slate-500">Servers</p>
-                    <p className="mt-2 text-sm font-medium text-slate-200">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
+                      Servers
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-foreground">
                       {servers.reduce((sum, s) => sum + s.quantity, 0)} across {servers.length}{' '}
                       group(s)
                     </p>
                   </div>
                   <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
-                    <p className="text-xs uppercase tracking-wider text-slate-500">Data Stores</p>
-                    <p className="mt-2 text-sm font-medium text-slate-200">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
+                      Data Stores
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-foreground">
                       {dataStores.length} database(s)
                     </p>
                   </div>
                   <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
-                    <p className="text-xs uppercase tracking-wider text-slate-500">Crown Jewels</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
+                      Crown Jewels
+                    </p>
                     <p className="mt-2 text-sm font-medium text-amber-300">
                       {crownJewelIds.size} critical asset(s)
                     </p>
                   </div>
                   <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
-                    <p className="text-xs uppercase tracking-wider text-slate-500">Providers</p>
-                    <p className="mt-2 text-sm font-medium text-slate-200">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
+                      Providers
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-foreground">
                       {cloudProviders.length
                         ? cloudProviders.map((p) => p.toUpperCase()).join(', ')
                         : 'None'}
@@ -701,7 +713,7 @@ export default function OrganizationOnboardingPage() {
                 type="button"
                 onClick={() => setStep((s) => Math.max(0, s - 1))}
                 disabled={step === 0 || loading}
-                className="flex items-center gap-2 text-sm text-muted-foreground transition hover:text-slate-200 disabled:opacity-30"
+                className="flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground disabled:opacity-30"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>

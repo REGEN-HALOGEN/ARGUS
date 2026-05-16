@@ -122,17 +122,17 @@ export function CommandPalette() {
             className="fixed left-1/2 top-[20%] z-50 w-full max-w-lg -translate-x-1/2 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0c1220]/95 shadow-2xl backdrop-blur-xl"
           >
             {/* Search input */}
-            <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3">
-              <Search className="h-5 w-5 text-slate-400 shrink-0" />
+            <div className="flex items-center gap-3 border-b border-card-border px-4 py-3">
+              <Search className="h-5 w-5 text-muted-foreground shrink-0" />
               <input
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Search commands..."
-                className="flex-1 bg-transparent text-sm text-slate-200 placeholder:text-slate-500 outline-none"
+                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 outline-none"
               />
-              <kbd className="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-slate-500">
+              <kbd className="rounded bg-card/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground/70">
                 ESC
               </kbd>
             </div>
@@ -140,7 +140,9 @@ export function CommandPalette() {
             {/* Results */}
             <div className="max-h-72 overflow-y-auto p-2">
               {filtered.length === 0 ? (
-                <div className="py-8 text-center text-sm text-slate-500">No commands found.</div>
+                <div className="py-8 text-center text-sm text-muted-foreground/70">
+                  No commands found.
+                </div>
               ) : (
                 filtered.map((cmd, index) => (
                   <button
@@ -150,7 +152,7 @@ export function CommandPalette() {
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                       index === selectedIndex
                         ? 'bg-primary-500/12 text-primary-300'
-                        : 'text-slate-400 hover:text-slate-200'
+                        : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     <cmd.icon className="h-4 w-4 shrink-0" />
@@ -162,12 +164,12 @@ export function CommandPalette() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center gap-4 border-t border-white/[0.06] px-4 py-2.5 text-[10px] text-slate-500">
+            <div className="flex items-center gap-4 border-t border-card-border px-4 py-2.5 text-[10px] text-muted-foreground/70">
               <span className="flex items-center gap-1">
-                <kbd className="rounded bg-white/[0.06] px-1 py-0.5">↑↓</kbd> Navigate
+                <kbd className="rounded bg-card/60 px-1 py-0.5">↑↓</kbd> Navigate
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="rounded bg-white/[0.06] px-1 py-0.5">↵</kbd> Select
+                <kbd className="rounded bg-card/60 px-1 py-0.5">↵</kbd> Select
               </span>
             </div>
           </motion.div>

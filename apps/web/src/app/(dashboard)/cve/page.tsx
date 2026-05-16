@@ -20,7 +20,7 @@ function sevBadge(sev: string) {
     critical: 'bg-threat-500/15 text-threat-400 ring-threat-500/30',
     high: 'bg-orange-500/15 text-orange-400 ring-orange-500/30',
     medium: 'bg-warning-500/15 text-warning-400 ring-warning-500/30',
-    low: 'bg-slate-500/15 text-slate-400 ring-slate-500/30',
+    low: 'bg-slate-500/15 text-muted-foreground ring-slate-500/30',
   };
   return map[sev] ?? map.low;
 }
@@ -138,7 +138,7 @@ export default function CVEPage() {
               <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl bg-card p-4 ring-1 ring-card-border shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in duration-200">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+                    <h4 className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">
                       Severity
                     </h4>
                     <div className="grid grid-cols-2 gap-2">
@@ -149,7 +149,7 @@ export default function CVEPage() {
                           className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                             severityFilter.includes(sev)
                               ? 'bg-primary-500/20 border-primary-500/40 text-primary-300'
-                              : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:border-white/10'
+                              : 'bg-background/50 border border-card-border text-muted-foreground hover:border-primary-500/30'
                           }`}
                         >
                           {sev.charAt(0).toUpperCase() + sev.slice(1)}
@@ -159,7 +159,7 @@ export default function CVEPage() {
                   </div>
 
                   <div>
-                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+                    <h4 className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-3">
                       Exploit Status
                     </h4>
                     <div className="flex gap-2">
@@ -168,7 +168,7 @@ export default function CVEPage() {
                         className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                           exploitFilter === true
                             ? 'bg-threat-500/20 border-threat-500/40 text-threat-400'
-                            : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:border-white/10'
+                            : 'bg-background/50 border border-card-border text-muted-foreground hover:border-primary-500/30'
                         }`}
                       >
                         Active Only
@@ -178,7 +178,7 @@ export default function CVEPage() {
                           setSeverityFilter([]);
                           setExploitFilter(null);
                         }}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-300 transition-colors"
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground/70 hover:text-muted-foreground/80 transition-colors"
                       >
                         Reset
                       </button>

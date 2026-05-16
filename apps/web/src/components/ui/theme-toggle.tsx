@@ -15,7 +15,7 @@ export function ThemeToggle() {
   }, []);
 
   if (!mounted) {
-    return <div className="h-9 w-9 rounded-lg bg-white/[0.04] ring-1 ring-white/[0.06]" />;
+    return <div className="h-9 w-9 rounded-lg bg-card/50 ring-1 border border-card-border" />;
   }
 
   const isDark = resolvedTheme === 'dark';

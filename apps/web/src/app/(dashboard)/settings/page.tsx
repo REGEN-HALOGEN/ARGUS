@@ -69,14 +69,14 @@ function MaskedKey({ value }: { value: string }) {
   const [visible, setVisible] = useState(false);
   return (
     <div className="flex items-center gap-2 font-mono text-xs">
-      <span className="text-slate-400 select-all">
+      <span className="text-muted-foreground select-all">
         {visible
           ? value
           : value.slice(0, 4) + '•'.repeat(Math.max(value.length - 8, 4)) + value.slice(-4)}
       </span>
       <button
         onClick={() => setVisible(!visible)}
-        className="text-slate-500 hover:text-slate-300 transition-colors"
+        className="text-muted-foreground/70 hover:text-muted-foreground/80 transition-colors"
       >
         {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
       </button>
@@ -116,7 +116,7 @@ function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: (v: b
     <button
       onClick={() => onChange(!enabled)}
       className={`relative h-6 w-11 rounded-full transition-colors ${
-        enabled ? 'bg-primary-500' : 'bg-white/[0.08]'
+        enabled ? 'bg-primary-500' : 'bg-card/80'
       }`}
     >
       <span
@@ -165,11 +165,11 @@ function ApiKeysPanel() {
           { id: 'anthropic', label: 'Anthropic API Key', desc: 'Claude AI integration' },
           { id: 'openai', label: 'OpenAI API Key', desc: 'Optional — GPT fallback' },
         ].map((item) => (
-          <div key={item.id} className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4">
+          <div key={item.id} className="rounded-xl bg-background/50 border border-card-border p-4">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h4 className="text-sm font-semibold text-slate-200">{item.label}</h4>
-                <p className="text-[11px] text-slate-500">{item.desc}</p>
+                <h4 className="text-sm font-semibold text-foreground">{item.label}</h4>
+                <p className="text-[11px] text-muted-foreground/70">{item.desc}</p>
               </div>
               {(keys as any)[item.id] && <MaskedKey value={(keys as any)[item.id]} />}
             </div>
@@ -178,7 +178,7 @@ function ApiKeysPanel() {
               value={(keys as any)[item.id]}
               onChange={(e) => setKeys((prev) => ({ ...prev, [item.id]: e.target.value }))}
               placeholder={`Enter ${item.label.toLowerCase()}…`}
-              className="w-full mt-2 rounded-lg bg-white/[0.04] px-3 py-2 text-sm text-slate-300 placeholder:text-slate-600 ring-1 ring-white/[0.06] focus:outline-none focus:ring-primary-500/40 transition-all"
+              className="w-full mt-2 rounded-lg bg-card/50 px-3 py-2 text-sm text-muted-foreground/80 placeholder:text-muted-foreground/50 ring-1 border border-card-border focus:outline-none focus:ring-primary-500/40 transition-all"
             />
           </div>
         ))}
@@ -224,7 +224,7 @@ function AppearancePanel() {
                   className={`flex-1 rounded-lg py-3 text-sm font-medium capitalize transition-all ring-1 ${
                     isActive
                       ? 'bg-primary-500/15 text-primary-500 ring-primary-500/30'
-                      : 'bg-background/50 text-slate-500 ring-card-border hover:bg-background/80'
+                      : 'bg-background/50 text-muted-foreground/70 ring-card-border hover:bg-background/80'
                   }`}
                 >
                   {t}
@@ -245,7 +245,7 @@ function AppearancePanel() {
                 className={`flex-1 rounded-lg py-3 text-sm font-medium capitalize transition-all ring-1 ${
                   density === d
                     ? 'bg-primary-500/15 text-primary-500 ring-primary-500/30'
-                    : 'bg-background/50 text-slate-500 ring-card-border hover:bg-background/80'
+                    : 'bg-background/50 text-muted-foreground/70 ring-card-border hover:bg-background/80'
                 }`}
               >
                 {d}
@@ -258,7 +258,7 @@ function AppearancePanel() {
         <div className="rounded-xl bg-card/50 ring-1 ring-card-border p-4 flex items-center justify-between">
           <div>
             <h4 className="text-sm font-semibold text-foreground">Animations</h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-[11px] text-muted-foreground/70 mt-0.5">
               Enable motion and transition effects
             </p>
           </div>
@@ -282,35 +282,41 @@ function AccessControlPanel() {
       <InfoBanner text="Access control is managed per-organization. Contact your org admin to modify roles." />
       <div className="space-y-4">
         {/* Current user */}
-        <div className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4">
-          <h4 className="text-sm font-semibold text-slate-200 mb-3">Your Permissions</h4>
+        <div className="rounded-xl bg-background/50 border border-card-border p-4">
+          <h4 className="text-sm font-semibold text-foreground mb-3">Your Permissions</h4>
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-white/[0.03] p-3">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">
+            <div className="rounded-lg bg-background/40 border border-card-border">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
                 Platform Role
               </p>
-              <p className="text-sm font-semibold text-slate-200">{platformRole ?? 'Standard'}</p>
+              <p className="text-sm font-semibold text-foreground">{platformRole ?? 'Standard'}</p>
             </div>
-            <div className="rounded-lg bg-white/[0.03] p-3">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">
+            <div className="rounded-lg bg-background/40 border border-card-border">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
                 Organization Role
               </p>
-              <p className="text-sm font-semibold text-slate-200 capitalize">{orgRole ?? 'None'}</p>
+              <p className="text-sm font-semibold text-foreground capitalize">
+                {orgRole ?? 'None'}
+              </p>
             </div>
-            <div className="rounded-lg bg-white/[0.03] p-3">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Email</p>
-              <p className="text-sm text-slate-300 truncate">{user?.email ?? '—'}</p>
+            <div className="rounded-lg bg-background/40 border border-card-border">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
+                Email
+              </p>
+              <p className="text-sm text-muted-foreground/80 truncate">{user?.email ?? '—'}</p>
             </div>
-            <div className="rounded-lg bg-white/[0.03] p-3">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Name</p>
-              <p className="text-sm text-slate-300 truncate">{user?.name ?? '—'}</p>
+            <div className="rounded-lg bg-background/40 border border-card-border">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
+                Name
+              </p>
+              <p className="text-sm text-muted-foreground/80 truncate">{user?.name ?? '—'}</p>
             </div>
           </div>
         </div>
 
         {/* RBAC overview */}
-        <div className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4">
-          <h4 className="text-sm font-semibold text-slate-200 mb-3">Role Hierarchy</h4>
+        <div className="rounded-xl bg-background/50 border border-card-border p-4">
+          <h4 className="text-sm font-semibold text-foreground mb-3">Role Hierarchy</h4>
           <div className="space-y-2">
             {[
               {
@@ -329,13 +335,17 @@ function AccessControlPanel() {
                 color: 'text-primary-400 bg-primary-500/10',
               },
               { role: 'Analyst', scope: 'Read + AI', color: 'text-accent-400 bg-accent-500/10' },
-              { role: 'Viewer', scope: 'Read-only', color: 'text-slate-400 bg-slate-500/10' },
+              {
+                role: 'Viewer',
+                scope: 'Read-only',
+                color: 'text-muted-foreground bg-slate-500/10',
+              },
             ].map((r) => (
               <div
                 key={r.role}
-                className="flex items-center justify-between rounded-lg bg-white/[0.02] p-3"
+                className="flex items-center justify-between rounded-lg bg-card/30 p-3"
               >
-                <span className="text-sm font-medium text-slate-300">{r.role}</span>
+                <span className="text-sm font-medium text-muted-foreground/80">{r.role}</span>
                 <span
                   className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${r.color}`}
                 >
@@ -375,11 +385,11 @@ function DatabasePanel() {
         {connections.map((conn) => (
           <div
             key={conn.name}
-            className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4 flex items-center justify-between"
+            className="rounded-xl bg-background/50 border border-card-border p-4 flex items-center justify-between"
           >
             <div>
-              <h4 className="text-sm font-semibold text-slate-200">{conn.name}</h4>
-              <p className="text-xs text-slate-500 font-mono mt-0.5">{conn.uri}</p>
+              <h4 className="text-sm font-semibold text-foreground">{conn.name}</h4>
+              <p className="text-xs text-muted-foreground/70 font-mono mt-0.5">{conn.uri}</p>
             </div>
             <div className="flex items-center gap-2">
               <div
@@ -456,11 +466,11 @@ function NotificationsPanel() {
         ].map((item) => (
           <div
             key={item.key}
-            className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4 flex items-center justify-between"
+            className="rounded-xl bg-background/50 border border-card-border p-4 flex items-center justify-between"
           >
             <div>
-              <h4 className="text-sm font-semibold text-slate-200">{item.label}</h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
+              <h4 className="text-sm font-semibold text-foreground">{item.label}</h4>
+              <p className="text-[11px] text-muted-foreground/70 mt-0.5">{item.desc}</p>
             </div>
             <ToggleSwitch enabled={prefs[item.key]} onChange={() => toggle(item.key)} />
           </div>
@@ -509,20 +519,18 @@ export default function SettingsPage() {
                 transition={{ delay: i * 0.05 }}
                 onClick={() => setActiveSection(isActive ? null : section.id)}
                 className={`w-full text-left glass-card p-4 flex items-center gap-3 transition-all group ${
-                  isActive
-                    ? 'ring-1 ring-primary-500/30 bg-primary-500/[0.06]'
-                    : 'hover:bg-white/[0.04]'
+                  isActive ? 'ring-1 ring-primary-500/30 bg-primary-500/[0.06]' : 'hover:bg-card/50'
                 }`}
               >
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-xl ring-1 transition-all shrink-0 ${
                     isActive
                       ? 'bg-primary-500/15 ring-primary-500/30'
-                      : 'bg-white/[0.04] ring-white/[0.06] group-hover:ring-white/[0.1]'
+                      : 'bg-background/30 border border-card-border group-hover:ring-muted-foreground/20'
                   }`}
                 >
                   <section.icon
-                    className={`h-4.5 w-4.5 ${isActive ? 'text-primary-400' : 'text-slate-400'}`}
+                    className={`h-4.5 w-4.5 ${isActive ? 'text-primary-400' : 'text-muted-foreground'}`}
                   />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -537,7 +545,7 @@ export default function SettingsPage() {
                 </div>
                 <ChevronRight
                   className={`h-4 w-4 shrink-0 transition-transform ${
-                    isActive ? 'rotate-90 text-primary-400' : 'text-slate-600'
+                    isActive ? 'rotate-90 text-primary-400' : 'text-muted-foreground'
                   }`}
                 />
               </motion.button>
@@ -568,7 +576,7 @@ export default function SettingsPage() {
                 </div>
                 <button
                   onClick={() => setActiveSection(null)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-white/[0.06] hover:text-slate-300 transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground/70 hover:bg-background/40 border border-card-border hover:text-muted-foreground/80 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>

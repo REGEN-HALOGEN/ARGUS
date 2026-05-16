@@ -17,21 +17,21 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = '' }) =
         // Headers
         if (line.startsWith('### ')) {
           return (
-            <h3 key={i} className="text-lg font-bold text-slate-100 mt-4 mb-2">
+            <h3 key={i} className="text-lg font-bold text-foreground mt-4 mb-2">
               {line.replace('### ', '')}
             </h3>
           );
         }
         if (line.startsWith('## ')) {
           return (
-            <h2 key={i} className="text-xl font-bold text-slate-100 mt-6 mb-3">
+            <h2 key={i} className="text-xl font-bold text-foreground mt-6 mb-3">
               {line.replace('## ', '')}
             </h2>
           );
         }
         if (line.startsWith('# ')) {
           return (
-            <h1 key={i} className="text-2xl font-bold text-slate-100 mt-8 mb-4">
+            <h1 key={i} className="text-2xl font-bold text-foreground mt-8 mb-4">
               {line.replace('# ', '')}
             </h1>
           );
@@ -39,7 +39,7 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = '' }) =
 
         // Horizontal Rule
         if (line.trim() === '---') {
-          return <hr key={i} className="border-white/[0.06] my-6" />;
+          return <hr key={i} className="border-card-border my-6" />;
         }
 
         // Lists
@@ -48,7 +48,7 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = '' }) =
           return (
             <div key={i} className="flex gap-3 pl-2">
               <span className="text-primary-400 mt-1.5">•</span>
-              <p className="flex-1 text-slate-300">{renderInline(text)}</p>
+              <p className="flex-1 text-muted-foreground/80">{renderInline(text)}</p>
             </div>
           );
         }
@@ -60,7 +60,7 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = '' }) =
 
         // Regular paragraphs
         return (
-          <p key={i} className="text-slate-300 leading-relaxed">
+          <p key={i} className="text-muted-foreground/80 leading-relaxed">
             {renderInline(line)}
           </p>
         );
@@ -76,7 +76,7 @@ function renderInline(text: string) {
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return (
-        <strong key={i} className="font-bold text-slate-100">
+        <strong key={i} className="font-bold text-foreground">
           {part.slice(2, -2)}
         </strong>
       );
@@ -89,7 +89,7 @@ function renderInline(text: string) {
         return (
           <code
             key={`${i}-${j}`}
-            className="bg-white/[0.06] px-1.5 py-0.5 rounded text-primary-300 text-xs font-mono"
+            className="bg-card/60 px-1.5 py-0.5 rounded text-primary-300 text-xs font-mono"
           >
             {codePart.slice(1, -1)}
           </code>

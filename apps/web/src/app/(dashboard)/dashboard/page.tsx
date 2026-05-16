@@ -52,7 +52,7 @@ function severityColor(severity: string): string {
     case 'medium':
       return 'bg-warning-500/15 text-warning-400 ring-warning-500/30';
     default:
-      return 'bg-slate-500/15 text-slate-400 ring-slate-500/30';
+      return 'bg-slate-500/15 text-muted-foreground ring-slate-500/30';
   }
 }
 
@@ -82,7 +82,7 @@ function statIconBg(color: string): string {
     case 'warning':
       return 'bg-warning-500/15 text-warning-400';
     default:
-      return 'bg-slate-500/15 text-slate-400';
+      return 'bg-slate-500/15 text-muted-foreground';
   }
 }
 
@@ -222,7 +222,7 @@ export default function DashboardPage() {
             whileHover={{ scale: 1.02, y: -2 }}
             className={`glass-card p-5 ${statGlowClass(stat.color)} transition-shadow duration-300 relative overflow-hidden`}
           >
-            {loading && <div className="absolute inset-0 bg-white/[0.02] animate-pulse" />}
+            {loading && <div className="absolute inset-0 bg-card/30 animate-pulse" />}
             <div className="flex items-start justify-between relative z-10">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -261,11 +261,13 @@ export default function DashboardPage() {
           </div>
           <div className="divide-y divide-card-border">
             {loading ? (
-              <div className="p-5 text-center text-sm text-slate-500 animate-pulse">
+              <div className="p-5 text-center text-sm text-muted-foreground/70 animate-pulse">
                 Loading alerts...
               </div>
             ) : alerts.length === 0 ? (
-              <div className="p-5 text-center text-sm text-slate-500">No recent alerts.</div>
+              <div className="p-5 text-center text-sm text-muted-foreground/70">
+                No recent alerts.
+              </div>
             ) : (
               alerts.map((alert, i) => (
                 <motion.div
@@ -273,7 +275,7 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + i * 0.05 }}
-                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.02] transition-colors cursor-pointer group"
+                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-card/30 transition-colors cursor-pointer group"
                 >
                   <span
                     className={`shrink-0 inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ${severityColor(alert.severity)}`}
@@ -303,11 +305,13 @@ export default function DashboardPage() {
           </div>
           <div className="p-4 space-y-3">
             {loading ? (
-              <div className="p-2 text-center text-sm text-slate-500 animate-pulse">
+              <div className="p-2 text-center text-sm text-muted-foreground/70 animate-pulse">
                 Loading paths...
               </div>
             ) : paths.length === 0 ? (
-              <div className="p-2 text-center text-sm text-slate-500">No attack paths found.</div>
+              <div className="p-2 text-center text-sm text-muted-foreground/70">
+                No attack paths found.
+              </div>
             ) : (
               paths.map((path, i) => (
                 <motion.div
@@ -334,7 +338,7 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   {/* Risk bar */}
-                  <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div className="h-1.5 rounded-full bg-card/60 overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${path.risk}%` }}

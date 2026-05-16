@@ -65,9 +65,9 @@ function RoleBadge({
     admin: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
     operator: 'bg-blue-500/15 text-blue-300 ring-blue-500/30',
     analyst: 'bg-violet-500/15 text-violet-300 ring-violet-500/30',
-    viewer: 'bg-slate-500/15 text-slate-300 ring-slate-500/30',
-    member: 'bg-slate-500/15 text-slate-300 ring-slate-500/30',
-    user: 'bg-slate-500/15 text-slate-300 ring-slate-500/30',
+    viewer: 'bg-slate-500/15 text-muted-foreground/80 ring-slate-500/30',
+    member: 'bg-slate-500/15 text-muted-foreground/80 ring-slate-500/30',
+    user: 'bg-slate-500/15 text-muted-foreground/80 ring-slate-500/30',
   };
 
   const labels: Record<string, string> = {
@@ -133,8 +133,8 @@ export default function AdminPage() {
   return (
     <div className="space-y-6 p-8">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-100">Platform Admin</h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <h1 className="text-2xl font-semibold text-foreground">Platform Admin</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Manage platform-level users and global administrator permissions. Organization roles are
           managed within each workspace.
         </p>
@@ -142,20 +142,26 @@ export default function AdminPage() {
 
       {/* ── Stats Cards ──────────────────────────────────────────── */}
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-4">
+        <div className="rounded-lg border border-card-border bg-card/40 p-4">
           <ShieldCheck className="h-5 w-5 text-primary-400" />
-          <p className="mt-3 text-xs uppercase tracking-wider text-slate-500">Admin Scope</p>
-          <p className="mt-1 text-lg font-semibold text-slate-100">Global</p>
+          <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground/70">
+            Admin Scope
+          </p>
+          <p className="mt-1 text-lg font-semibold text-foreground">Global</p>
         </div>
-        <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-4">
+        <div className="rounded-lg border border-card-border bg-card/40 p-4">
           <Users className="h-5 w-5 text-accent-400" />
-          <p className="mt-3 text-xs uppercase tracking-wider text-slate-500">Platform Users</p>
-          <p className="mt-1 text-lg font-semibold text-slate-100">{users?.length ?? 0}</p>
+          <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground/70">
+            Platform Users
+          </p>
+          <p className="mt-1 text-lg font-semibold text-foreground">{users?.length ?? 0}</p>
         </div>
-        <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-4">
+        <div className="rounded-lg border border-card-border bg-card/40 p-4">
           <Building2 className="h-5 w-5 text-success-400" />
-          <p className="mt-3 text-xs uppercase tracking-wider text-slate-500">Organizations</p>
-          <p className="mt-1 text-lg font-semibold text-slate-100">{organizations?.length ?? 0}</p>
+          <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground/70">
+            Organizations
+          </p>
+          <p className="mt-1 text-lg font-semibold text-foreground">{organizations?.length ?? 0}</p>
         </div>
       </div>
 
@@ -166,24 +172,24 @@ export default function AdminPage() {
       ) : null}
 
       {/* ── Platform Users Table ──────────────────────────────────── */}
-      <div className="overflow-hidden rounded-lg border border-white/[0.06]">
-        <div className="border-b border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-200">
+      <div className="overflow-hidden rounded-lg border border-card-border">
+        <div className="border-b border-card-border bg-card/40 px-4 py-3 text-sm font-semibold text-foreground">
           Platform Users
         </div>
         <div className="divide-y divide-white/[0.06]">
           {users?.map((user) => (
             <div key={user.id} className="grid grid-cols-[1fr_auto] gap-4 px-4 py-3">
               <div>
-                <p className="text-sm font-medium text-slate-200">{user.name || 'Unnamed user'}</p>
-                <p className="text-xs text-slate-500">{user.email}</p>
+                <p className="text-sm font-medium text-foreground">{user.name || 'Unnamed user'}</p>
+                <p className="text-xs text-muted-foreground/70">{user.email}</p>
                 {/* Show org memberships inline */}
                 {user.organizations && user.organizations.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <Building2 className="h-3 w-3 text-slate-500" />
+                    <Building2 className="h-3 w-3 text-muted-foreground/70" />
                     {user.organizations.map((org) => (
                       <span
                         key={org.id}
-                        className="inline-flex items-center gap-1 rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-400 ring-1 ring-white/[0.06]"
+                        className="inline-flex items-center gap-1 rounded bg-card/50 px-1.5 py-0.5 text-[10px] text-muted-foreground ring-1 border border-card-border"
                       >
                         {org.name}
                         <span className="text-emerald-400">({org.role})</span>
@@ -210,40 +216,40 @@ export default function AdminPage() {
       {organizations && organizations.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-slate-400" />
-            <h2 className="text-lg font-semibold text-slate-100">Organizations & Members</h2>
+            <Building2 className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-foreground">Organizations & Members</h2>
           </div>
           <div className="grid gap-4">
             {organizations.map((org) => (
-              <div key={org.id} className="rounded-lg border border-white/[0.06] overflow-hidden">
-                <div className="bg-white/[0.03] px-4 py-3 border-b border-white/[0.06]">
+              <div key={org.id} className="rounded-lg border border-card-border overflow-hidden">
+                <div className="bg-card/40 px-4 py-3 border-b border-card-border">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-100">{org.name}</h3>
-                      <p className="text-xs text-slate-500 mt-1">{org.slug}</p>
+                      <h3 className="text-sm font-semibold text-foreground">{org.name}</h3>
+                      <p className="text-xs text-muted-foreground/70 mt-1">{org.slug}</p>
                       {/* Show org metadata if available */}
                       {org.metadata && (
                         <div className="mt-1.5 flex flex-wrap gap-2">
                           {org.metadata.industry && (
-                            <span className="inline-flex items-center rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-400 ring-1 ring-white/[0.06]">
+                            <span className="inline-flex items-center rounded bg-card/50 px-1.5 py-0.5 text-[10px] text-muted-foreground ring-1 border border-card-border">
                               {org.metadata.industry}
                             </span>
                           )}
                           {org.metadata.cloudProviders &&
                             org.metadata.cloudProviders.length > 0 && (
-                              <span className="inline-flex items-center rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-400 ring-1 ring-white/[0.06]">
+                              <span className="inline-flex items-center rounded bg-card/50 px-1.5 py-0.5 text-[10px] text-muted-foreground ring-1 border border-card-border">
                                 {org.metadata.cloudProviders.map((p) => p.toUpperCase()).join(', ')}
                               </span>
                             )}
                           {org.metadata.estimatedAssets != null && (
-                            <span className="inline-flex items-center rounded bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-400 ring-1 ring-white/[0.06]">
+                            <span className="inline-flex items-center rounded bg-card/50 px-1.5 py-0.5 text-[10px] text-muted-foreground ring-1 border border-card-border">
                               ~{org.metadata.estimatedAssets} assets
                             </span>
                           )}
                         </div>
                       )}
                     </div>
-                    <span className="rounded-md bg-white/[0.04] px-2 py-1 text-xs text-slate-400">
+                    <span className="rounded-md bg-card/50 px-2 py-1 text-xs text-muted-foreground">
                       {org.memberCount} member{org.memberCount !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -253,10 +259,10 @@ export default function AdminPage() {
                     org.members.map((member) => (
                       <div key={member.id} className="px-4 py-3 grid grid-cols-[1fr_auto] gap-4">
                         <div>
-                          <p className="text-sm text-slate-200">
+                          <p className="text-sm text-foreground">
                             {member.user?.name || 'Unnamed user'}
                           </p>
-                          <p className="text-xs text-slate-500">{member.user?.email}</p>
+                          <p className="text-xs text-muted-foreground/70">{member.user?.email}</p>
                         </div>
                         <div className="self-center">
                           <RoleBadge role={member.role} variant="org" />
@@ -264,7 +270,7 @@ export default function AdminPage() {
                       </div>
                     ))
                   ) : (
-                    <div className="px-4 py-3 text-xs text-slate-500">No members</div>
+                    <div className="px-4 py-3 text-xs text-muted-foreground/70">No members</div>
                   )}
                 </div>
               </div>

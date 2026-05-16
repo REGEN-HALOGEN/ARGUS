@@ -129,7 +129,7 @@ export function Sidebar() {
             )}
           </AnimatePresence>
           {!collapsed && (
-            <kbd className="flex items-center gap-0.5 rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+            <kbd className="flex items-center gap-0.5 rounded bg-card/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/70">
               <Command className="h-2.5 w-2.5" />K
             </kbd>
           )}
