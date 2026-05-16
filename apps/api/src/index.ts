@@ -39,6 +39,16 @@ rootApp.use('*', logger());
 rootApp.use('*', prettyJSON());
 rootApp.use('*', secureHeaders());
 
+// --- DIAGNOSTIC ORIGIN LOGGING ---
+rootApp.use('*', async (c, next) => {
+  const origin = c.req.header('Origin');
+  const host = c.req.header('Host');
+  if (c.req.path.includes('/auth')) {
+    console.info(`[AUTH-DEBUG] Path: ${c.req.path} | Origin: ${origin} | Host: ${host}`);
+  }
+  await next();
+});
+
 // --- FAIL-SAFE CROSS-SITE COOKIE FIX ---
 rootApp.use('*', async (c, next) => {
   await next();
