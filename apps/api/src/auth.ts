@@ -40,12 +40,9 @@ const database = getAuthDbPool();
 const authConfig: BetterAuthOptions = {
   database,
   baseURL,
-  trustHost: true, // Crucial for Railway's proxy
+  trustHost: true,
   trustedOrigins: origins,
   experimental: { joins: true },
-  advanced: {
-    cookiePrefix: 'argus',
-  },
   emailAndPassword: {
     enabled: true,
   },

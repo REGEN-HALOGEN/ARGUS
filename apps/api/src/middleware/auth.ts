@@ -19,7 +19,14 @@ export async function getAuthSession(headers: Headers): Promise<AuthSession> {
   const session = await auth.api.getSession({ headers });
 
   if (!session?.user) {
-    throw new AppError(401, 'UNAUTHORIZED', 'Authentication required');
+    const origin = headers.get('origin');
+    const isVercel = origin?.endsWith('.vercel.app');
+    
+    console.warn(`[AUTH-SESSION-FAIL] No session found. Origin: ${origin} | IsVercel: ${isVercel}`);
+    
+    // If we're on Vercel and it's a known issue, we might want to handle it, 
+    // but for now let's just throw a more descriptive error.
+    throw new AppError(401, 'UNAUTHORIZED', 'Authentication required. Please ensure cookies are enabled.');
   }
 
   return session as AuthSession;
