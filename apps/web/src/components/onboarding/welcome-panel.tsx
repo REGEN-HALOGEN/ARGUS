@@ -1,5 +1,6 @@
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Logo } from '@/components/ui/logo';
+import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
 import { ArrowRight, Building2, UserCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -35,12 +36,13 @@ export function WelcomePanel() {
                   Sign in
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <a
-                  href="#signup"
-                  className="inline-flex items-center gap-2 rounded-full border border-card-border bg-card/50 px-7 py-3 text-sm font-bold text-foreground transition hover:bg-card hover:border-card-border/80"
-                >
-                  Get Started
-                </a>
+                <OnboardingWizard
+                  trigger={
+                    <button className="inline-flex items-center gap-2 rounded-full border border-card-border bg-card/50 px-7 py-3 text-sm font-bold text-foreground transition hover:bg-card hover:border-card-border/80 cursor-pointer">
+                      Get Started
+                    </button>
+                  }
+                />
               </div>
             </div>
 
