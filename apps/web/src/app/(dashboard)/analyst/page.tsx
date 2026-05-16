@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BrainCircuit, Send, Sparkles, RotateCcw, Loader2 } from 'lucide-react';
 import { apiFetch, API_BASE } from '@/lib/api';
+import { Markdown } from '@/components/ui/markdown';
 
 const suggestedPrompts = [
   'Show attack paths to production database',
@@ -135,11 +136,17 @@ export default function AnalystPage() {
           ) : (
             messages.map((msg, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user' ? 'bg-primary-500/15 text-primary-100 ring-1 ring-primary-500/20' : 'bg-white/[0.04] text-slate-200 ring-1 ring-white/[0.06]'}`}>
-                  {msg.content || (
-                     <div className="flex items-center gap-2 text-slate-400">
-                       <Loader2 className="h-4 w-4 animate-spin" /> Analyzing graph data...
-                     </div>
+                <div className={`max-w-[75%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary-500/15 text-primary-100 ring-1 ring-primary-500/20' : 'bg-white/[0.04] text-slate-200 ring-1 ring-white/[0.06]'}`}>
+                  {msg.role === 'assistant' ? (
+                    msg.content ? (
+                      <Markdown content={msg.content} />
+                    ) : (
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Analyzing graph data...
+                      </div>
+                    )
+                  ) : (
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
                   )}
                 </div>
               </motion.div>
