@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { signIn } from '@/lib/auth';
-import { useRouter } from 'next/navigation';
-import { Shield, Loader2 } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('admin@argus.local');
@@ -54,7 +54,9 @@ export default function AdminLoginPage() {
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Admin Email</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">
+              Admin Email
+            </label>
             <input
               type="email"
               value={email}
@@ -66,7 +68,9 @@ export default function AdminLoginPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Password</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">
+              Password
+            </label>
             <input
               type="password"
               value={password}
@@ -86,7 +90,10 @@ export default function AdminLoginPage() {
           </button>
 
           <p className="text-center text-xs text-slate-500 mt-6">
-            Back to <Link href="/" className="text-primary-400 hover:text-primary-300">welcome</Link>
+            Back to{' '}
+            <Link href="/" className="text-primary-400 hover:text-primary-300">
+              welcome
+            </Link>
           </p>
         </form>
       </div>

@@ -1,21 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, type Variants } from 'framer-motion';
+import { useAuth } from '@/components/providers/auth-provider';
+import { apiFetch } from '@/lib/api';
+import { type Variants, motion } from 'framer-motion';
 import {
-  Shield,
-  AlertTriangle,
   Activity,
+  AlertTriangle,
+  Bug,
+  Building2,
+  Network,
+  Shield,
   TrendingUp,
   Users,
-  Network,
-  Bug,
   Zap,
-  Building2,
 } from 'lucide-react';
-import { apiFetch } from '@/lib/api';
-import { useAuth } from '@/components/providers/auth-provider';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface DashboardStats {
   totalAssets: number;
@@ -45,30 +45,44 @@ const itemVariants: Variants = {
 
 function severityColor(severity: string): string {
   switch (severity) {
-    case 'critical': return 'bg-threat-500/15 text-threat-400 ring-threat-500/30';
-    case 'high': return 'bg-orange-500/15 text-orange-400 ring-orange-500/30';
-    case 'medium': return 'bg-warning-500/15 text-warning-400 ring-warning-500/30';
-    default: return 'bg-slate-500/15 text-slate-400 ring-slate-500/30';
+    case 'critical':
+      return 'bg-threat-500/15 text-threat-400 ring-threat-500/30';
+    case 'high':
+      return 'bg-orange-500/15 text-orange-400 ring-orange-500/30';
+    case 'medium':
+      return 'bg-warning-500/15 text-warning-400 ring-warning-500/30';
+    default:
+      return 'bg-slate-500/15 text-slate-400 ring-slate-500/30';
   }
 }
 
 function statGlowClass(color: string): string {
   switch (color) {
-    case 'primary': return 'glow-primary';
-    case 'threat': return 'glow-threat';
-    case 'accent': return 'glow-accent';
-    case 'warning': return 'glow-primary';
-    default: return '';
+    case 'primary':
+      return 'glow-primary';
+    case 'threat':
+      return 'glow-threat';
+    case 'accent':
+      return 'glow-accent';
+    case 'warning':
+      return 'glow-primary';
+    default:
+      return '';
   }
 }
 
 function statIconBg(color: string): string {
   switch (color) {
-    case 'primary': return 'bg-primary-500/15 text-primary-400';
-    case 'threat': return 'bg-threat-500/15 text-threat-400';
-    case 'accent': return 'bg-accent-500/15 text-accent-400';
-    case 'warning': return 'bg-warning-500/15 text-warning-400';
-    default: return 'bg-slate-500/15 text-slate-400';
+    case 'primary':
+      return 'bg-primary-500/15 text-primary-400';
+    case 'threat':
+      return 'bg-threat-500/15 text-threat-400';
+    case 'accent':
+      return 'bg-accent-500/15 text-accent-400';
+    case 'warning':
+      return 'bg-warning-500/15 text-warning-400';
+    default:
+      return 'bg-slate-500/15 text-slate-400';
   }
 }
 
@@ -139,8 +153,8 @@ export default function DashboardPage() {
           </div>
           <h2 className="text-xl font-semibold text-foreground">No Active Organization</h2>
           <p className="text-sm text-muted-foreground">
-            The dashboard requires an active organization to display data.
-            Set up your workspace to get started.
+            The dashboard requires an active organization to display data. Set up your workspace to
+            get started.
           </p>
           <Link
             href="/onboarding/organization"
@@ -155,28 +169,43 @@ export default function DashboardPage() {
   }
 
   const statCards = [
-    { label: 'Total Assets', value: stats?.totalAssets ?? '-', change: '+0%', icon: Network, color: 'primary' },
-    { label: 'Critical CVEs', value: stats?.criticalVulnerabilities ?? '-', change: '+0', icon: Bug, color: 'threat' },
-    { label: 'Threat Actors', value: stats?.activeThreatActors ?? '-', change: '+0', icon: Users, color: 'warning' },
-    { label: 'Risk Score', value: stats?.riskScore ?? '-', change: '-0', icon: Shield, color: 'accent' },
+    {
+      label: 'Total Assets',
+      value: stats?.totalAssets ?? '-',
+      change: '+0%',
+      icon: Network,
+      color: 'primary',
+    },
+    {
+      label: 'Critical CVEs',
+      value: stats?.criticalVulnerabilities ?? '-',
+      change: '+0',
+      icon: Bug,
+      color: 'threat',
+    },
+    {
+      label: 'Threat Actors',
+      value: stats?.activeThreatActors ?? '-',
+      change: '+0',
+      icon: Users,
+      color: 'warning',
+    },
+    {
+      label: 'Risk Score',
+      value: stats?.riskScore ?? '-',
+      change: '-0',
+      icon: Shield,
+      color: 'accent',
+    },
   ];
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="space-y-6"
-    >
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-6">
       {/* Page Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Threat Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Real-time security posture overview
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Threat Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">Real-time security posture overview</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Activity className="h-3 w-3 text-success-400" />
@@ -193,9 +222,7 @@ export default function DashboardPage() {
             whileHover={{ scale: 1.02, y: -2 }}
             className={`glass-card p-5 ${statGlowClass(stat.color)} transition-shadow duration-300 relative overflow-hidden`}
           >
-            {loading && (
-              <div className="absolute inset-0 bg-white/[0.02] animate-pulse" />
-            )}
+            {loading && <div className="absolute inset-0 bg-white/[0.02] animate-pulse" />}
             <div className="flex items-start justify-between relative z-10">
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -203,7 +230,9 @@ export default function DashboardPage() {
                 </p>
                 <p className="text-3xl font-bold text-foreground mt-2">{stat.value}</p>
               </div>
-              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${statIconBg(stat.color)}`}>
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-xl ${statIconBg(stat.color)}`}
+              >
                 <stat.icon className="h-5 w-5" />
               </div>
             </div>
@@ -219,7 +248,10 @@ export default function DashboardPage() {
       {/* Main Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Recent Alerts */}
-        <motion.div variants={itemVariants} className="xl:col-span-2 glass-card overflow-hidden relative">
+        <motion.div
+          variants={itemVariants}
+          className="xl:col-span-2 glass-card overflow-hidden relative"
+        >
           <div className="flex items-center justify-between p-5 border-b border-card-border">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-warning-400" />
@@ -229,7 +261,9 @@ export default function DashboardPage() {
           </div>
           <div className="divide-y divide-card-border">
             {loading ? (
-              <div className="p-5 text-center text-sm text-slate-500 animate-pulse">Loading alerts...</div>
+              <div className="p-5 text-center text-sm text-slate-500 animate-pulse">
+                Loading alerts...
+              </div>
             ) : alerts.length === 0 ? (
               <div className="p-5 text-center text-sm text-slate-500">No recent alerts.</div>
             ) : (
@@ -269,7 +303,9 @@ export default function DashboardPage() {
           </div>
           <div className="p-4 space-y-3">
             {loading ? (
-              <div className="p-2 text-center text-sm text-slate-500 animate-pulse">Loading paths...</div>
+              <div className="p-2 text-center text-sm text-slate-500 animate-pulse">
+                Loading paths...
+              </div>
             ) : paths.length === 0 ? (
               <div className="p-2 text-center text-sm text-slate-500">No attack paths found.</div>
             ) : (
@@ -302,7 +338,11 @@ export default function DashboardPage() {
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${path.risk}%` }}
-                      transition={{ duration: 0.8, delay: 0.5 + i * 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+                      transition={{
+                        duration: 0.8,
+                        delay: 0.5 + i * 0.1,
+                        ease: [0.25, 0.1, 0.25, 1],
+                      }}
                       className={`h-full rounded-full ${
                         path.risk >= 90
                           ? 'bg-gradient-to-r from-threat-500 to-threat-400'
@@ -313,7 +353,9 @@ export default function DashboardPage() {
                     />
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-[10px] text-muted-foreground">{path.nodes} nodes in path</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {path.nodes} nodes in path
+                    </span>
                     <span className="text-[10px] text-muted-foreground">Risk Score</span>
                   </div>
                 </motion.div>
@@ -336,8 +378,11 @@ export default function DashboardPage() {
             </span>
           </div>
           <p className="text-sm text-foreground max-w-2xl leading-relaxed">
-            ARGUS has identified <strong className="text-primary-400">{paths.length} critical attack paths</strong> to your
-            crown jewels. The most critical path has a risk score of <strong className="text-threat-400">{paths[0]?.risk || 0}</strong> and involves {paths[0]?.nodes || 0} nodes.
+            ARGUS has identified{' '}
+            <strong className="text-primary-400">{paths.length} critical attack paths</strong> to
+            your crown jewels. The most critical path has a risk score of{' '}
+            <strong className="text-threat-400">{paths[0]?.risk || 0}</strong> and involves{' '}
+            {paths[0]?.nodes || 0} nodes.
           </p>
           <button className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-500/15 px-4 py-2 text-sm font-medium text-primary-300 ring-1 ring-primary-500/30 transition-all hover:bg-primary-500/25 hover:ring-primary-500/50">
             View Full Analysis →

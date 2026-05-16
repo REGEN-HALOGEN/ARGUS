@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { Logo } from '@/components/ui/logo';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { API_BASE, setActiveTenantId } from '@/lib/api';
 import { signIn } from '@/lib/auth';
-import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { API_BASE, setActiveTenantId } from '@/lib/api';
-import { Logo } from '@/components/ui/logo';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -62,42 +63,50 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="glass-card w-full max-w-md p-8 relative overflow-hidden">
-        <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary-500/20 blur-3xl pointer-events-none" />
-        
+    <div className="flex min-h-screen items-center justify-center p-4 bg-background">
+      <div className="fixed top-6 right-6">
+        <ThemeToggle />
+      </div>
+
+      <div className="w-full max-w-md p-8 rounded-3xl border border-card-border bg-card shadow-2xl shadow-black/5 dark:shadow-black/40 relative overflow-hidden">
+        <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary-500/10 blur-3xl pointer-events-none" />
+
         <div className="flex flex-col items-center mb-8 relative z-10">
           <Logo width={48} height={48} showText={false} className="mb-4" />
-          <h1 className="text-2xl font-bold text-slate-100 tracking-tight">ARGUS Platform</h1>
-          <p className="text-sm text-slate-400 mt-1">Sign in to access your dashboard</p>
+          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">ARGUS Platform</h1>
+          <p className="text-sm text-muted-foreground mt-1">Sign in to access your dashboard</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4 relative z-10">
+        <form onSubmit={handleLogin} className="space-y-5 relative z-10">
           {error && (
-            <div className="rounded-lg bg-threat-500/10 p-3 text-sm text-threat-400 ring-1 ring-threat-500/20">
+            <div className="rounded-xl bg-threat-500/10 p-4 text-sm font-medium text-threat-600 dark:text-threat-400 border border-threat-500/20">
               {error}
             </div>
           )}
-          
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Email Address</label>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
+              Email Address
+            </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl bg-white/3 px-4 py-3 text-sm text-slate-200 ring-1 ring-white/6 focus:outline-none focus:ring-primary-500/50 placeholder:text-slate-600 transition-all"
+              className="w-full rounded-2xl bg-background px-4 py-3.5 text-sm text-foreground border border-card-border focus:outline-none focus:ring-2 focus:ring-primary-500/50 placeholder:text-muted-foreground/50 transition-all"
               placeholder="operator@argus.local"
               required
             />
           </div>
-          
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Password</label>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
+              Password
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl bg-white/3 px-4 py-3 text-sm text-slate-200 ring-1 ring-white/6 focus:outline-none focus:ring-primary-500/50 placeholder:text-slate-600 transition-all"
+              className="w-full rounded-2xl bg-background px-4 py-3.5 text-sm text-foreground border border-card-border focus:outline-none focus:ring-2 focus:ring-primary-500/50 placeholder:text-muted-foreground/50 transition-all"
               placeholder="••••••••"
               required
             />
@@ -106,13 +115,16 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 flex items-center justify-center gap-2 rounded-xl bg-primary-500/20 px-4 py-3 text-sm font-semibold text-primary-300 ring-1 ring-primary-500/40 hover:bg-primary-500/30 hover:ring-primary-500/50 transition-all disabled:opacity-50"
+            className="w-full mt-4 flex items-center justify-center gap-2 rounded-2xl bg-primary-500 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary-500/25 hover:bg-primary-600 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Authenticate'}
           </button>
 
-          <p className="text-center text-xs text-slate-500 mt-6">
-            Need access? <Link href="/onboarding" className="text-primary-400 hover:text-primary-300">Choose a sign up path</Link>
+          <p className="text-center text-xs text-muted-foreground mt-8">
+            Need access?{' '}
+            <Link href="/onboarding" className="text-primary-500 font-bold hover:underline">
+              Choose a sign up path
+            </Link>
           </p>
         </form>
       </div>

@@ -22,7 +22,9 @@ async function deleteIfColumnExists(table: string, column: string, value: string
 
 async function resetAdminUser(email: string) {
   const pool = getAuthDbPool();
-  const found = await pool.query<{ id: string }>(`SELECT id FROM "user" WHERE email = $1 LIMIT 1`, [email]);
+  const found = await pool.query<{ id: string }>(`SELECT id FROM "user" WHERE email = $1 LIMIT 1`, [
+    email,
+  ]);
   const userId = found.rows[0]?.id;
   if (!userId) {
     return false;
@@ -53,7 +55,10 @@ async function seedAdmin() {
 
     if (res?.user) {
       const pool = getAuthDbPool();
-      await pool.query(`UPDATE "user" SET role = $1 WHERE email = $2`, ['super_admin', 'admin@argus.local']);
+      await pool.query(`UPDATE "user" SET role = $1 WHERE email = $2`, [
+        'super_admin',
+        'admin@argus.local',
+      ]);
       console.log('✅ Admin user created successfully:');
       console.log('Email: admin@argus.local');
       console.log('Password: AdminPassword123!');

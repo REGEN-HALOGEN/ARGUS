@@ -33,7 +33,8 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
   const json = await res.json().catch(() => null);
 
-  const errorMessage = json?.error?.message || json?.message || `API Error: ${res.status} ${res.statusText}`;
+  const errorMessage =
+    json?.error?.message || json?.message || `API Error: ${res.status} ${res.statusText}`;
   const errorCode = json?.error?.code;
 
   if (!res.ok) {
@@ -60,9 +61,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
       silent?: boolean;
     };
     err.code = errorCode;
-    err.silent =
-      errorCode === 'TENANT_REQUIRED' ||
-      errorCode === 'TENANT_FORBIDDEN';
+    err.silent = errorCode === 'TENANT_REQUIRED' || errorCode === 'TENANT_FORBIDDEN';
     throw err;
   }
 

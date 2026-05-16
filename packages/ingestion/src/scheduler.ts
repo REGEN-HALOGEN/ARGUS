@@ -1,10 +1,15 @@
-import { fetchAllNVDCVEs } from './fetchers/nvd';
-import { fetchCISAKEV } from './fetchers/cisa-kev';
-import { fetchMITRETechniques, extractMitreId, extractTactic } from './fetchers/mitre';
-import { fetchTopNews } from './fetchers/news';
-import { batchUpsertCVEs, markExploitedCVEs, upsertTechnique } from './writers/neo4j';
-import { indexCVE } from '@argus/ai';
+import { SYSTEM_PROMPTS, USER_PROMPTS, buildPrompt, chat, indexCVE } from '@argus/ai';
 import { getCacheClient } from '@argus/cache';
+import { fetchCISAKEV } from './fetchers/cisa-kev';
+import { extractMitreId, extractTactic, fetchMITRETechniques } from './fetchers/mitre';
+import { fetchTopNews } from './fetchers/news';
+import { fetchAllNVDCVEs } from './fetchers/nvd';
+import {
+  batchUpsertCVEs,
+  checkEntityPresence,
+  markExploitedCVEs,
+  upsertTechnique,
+} from './writers/neo4j';
 
 export interface SyncResult {
   source: string;
@@ -86,7 +91,12 @@ export async function syncMITRE(): Promise<SyncResult> {
       });
     }
 
-    return { source: 'MITRE', itemsSynced: techniques.length, errors, duration: Date.now() - start };
+    return {
+      source: 'MITRE',
+      itemsSynced: techniques.length,
+      errors,
+      duration: Date.now() - start,
+    };
   } catch (e) {
     errors.push((e as Error).message);
     return { source: 'MITRE', itemsSynced: 0, errors, duration: Date.now() - start };
@@ -99,8 +109,47 @@ export async function syncNews(): Promise<SyncResult> {
 
   try {
     const news = await fetchTopNews(10);
+
+    // AI Summarization & Entity Extraction
+    console.info(`[Ingestion] Analyzing ${news.length} news items...`);
+    for (const item of news) {
+      try {
+        const response = await chat(
+          [
+            {
+              role: 'user',
+              content: buildPrompt(USER_PROMPTS.SUMMARIZE_NEWS, {
+                title: item.title,
+                snippet: item.contentSnippet ?? '',
+              }),
+            },
+          ],
+          {
+            systemPrompt: SYSTEM_PROMPTS.NEWS_SUMMARY,
+            maxTokens: 300,
+            temperature: 0.1,
+          },
+        );
+
+        const cleanResponse = response.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(cleanResponse);
+
+        item.summary = parsed.summary;
+        const entities: string[] = parsed.entities || [];
+        item.entities = entities;
+
+        if (entities.length > 0) {
+          const matches = await checkEntityPresence(entities);
+          item.hasMatch = matches.length > 0;
+        }
+      } catch (e) {
+        console.warn(`[AI-NEWS] Failed to analyze news: ${item.title}`, e);
+        item.summary = item.contentSnippet; // Fallback
+      }
+    }
+
     const client = getCacheClient();
-    
+
     if (client.status === 'ready') {
       // Cache for 6 hours
       await client.setex('cache:news:top10', 6 * 60 * 60, JSON.stringify(news));
@@ -118,12 +167,7 @@ export async function syncNews(): Promise<SyncResult> {
 // Master sync: runs all sources
 export async function runFullSync(): Promise<SyncResult[]> {
   console.info('[Ingestion] Starting full sync...');
-  const results = await Promise.allSettled([
-    syncNVD(),
-    syncCISAKEV(),
-    syncMITRE(),
-    syncNews(),
-  ]);
+  const results = await Promise.allSettled([syncNVD(), syncCISAKEV(), syncMITRE(), syncNews()]);
 
   return results.map((r) =>
     r.status === 'fulfilled'
@@ -139,5 +183,7 @@ export function startScheduler() {
   // Periodic sync only — use POST /api/v1/ingestion/sync for manual trigger
   setInterval(() => runFullSync(), SIX_HOURS);
 
-  console.info('[Ingestion] Scheduler started — syncing every 6 hours (use API to trigger manually)');
+  console.info(
+    '[Ingestion] Scheduler started — syncing every 6 hours (use API to trigger manually)',
+  );
 }

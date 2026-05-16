@@ -3,10 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "ARGUS — AI-powered Relationship Graph for Understanding Security Threats",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "bun run --filter '*' dev",
     "dev:web": "bun run --filter @argus/web dev",

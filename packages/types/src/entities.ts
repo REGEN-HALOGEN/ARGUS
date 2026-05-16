@@ -6,7 +6,15 @@ export const AssetSchema = z.object({
   id: z.string().uuid(),
   hostname: z.string().min(1),
   ip: z.string().ip().optional(),
-  type: z.enum(['server', 'workstation', 'network_device', 'cloud_instance', 'container', 'database', 'application']),
+  type: z.enum([
+    'server',
+    'workstation',
+    'network_device',
+    'cloud_instance',
+    'container',
+    'database',
+    'application',
+  ]),
   internetFacing: z.boolean().default(false),
   criticality: z.enum(['critical', 'high', 'medium', 'low']),
   os: z.string().optional(),
@@ -40,7 +48,9 @@ export const ThreatActorSchema = z.object({
   aliases: z.array(z.string()).default([]),
   country: z.string().optional(),
   sophistication: z.enum(['advanced', 'intermediate', 'basic']),
-  motivation: z.enum(['espionage', 'financial', 'hacktivism', 'destruction', 'unknown']).default('unknown'),
+  motivation: z
+    .enum(['espionage', 'financial', 'hacktivism', 'destruction', 'unknown'])
+    .default('unknown'),
   targets: z.array(z.string()).default([]),
   firstSeen: z.string().datetime().optional(),
   lastSeen: z.string().datetime().optional(),
@@ -84,7 +94,9 @@ export const CrownJewelSchema = z.object({
   description: z.string().optional(),
   importance: z.enum(['critical', 'high', 'medium']),
   businessImpact: z.enum(['catastrophic', 'major', 'moderate']),
-  dataClassification: z.enum(['top_secret', 'secret', 'confidential', 'internal', 'public']).default('internal'),
+  dataClassification: z
+    .enum(['top_secret', 'secret', 'confidential', 'internal', 'public'])
+    .default('internal'),
 });
 
 export type CrownJewel = z.infer<typeof CrownJewelSchema>;

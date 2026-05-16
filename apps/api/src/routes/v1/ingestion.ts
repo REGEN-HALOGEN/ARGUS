@@ -1,5 +1,5 @@
+import { runFullSync, syncCISAKEV, syncMITRE, syncNVD } from '@argus/ingestion';
 import { Hono } from 'hono';
-import { runFullSync, syncNVD, syncCISAKEV, syncMITRE } from '@argus/ingestion';
 
 export const ingestionRoutes = new Hono();
 
@@ -25,7 +25,10 @@ ingestionRoutes.post('/sync/:source', async (c) => {
       syncFn = syncMITRE;
       break;
     default:
-      return c.json({ success: false, error: { code: 'INVALID_SOURCE', message: `Unknown source: ${source}` } }, 400);
+      return c.json(
+        { success: false, error: { code: 'INVALID_SOURCE', message: `Unknown source: ${source}` } },
+        400,
+      );
   }
 
   const result = await syncFn();

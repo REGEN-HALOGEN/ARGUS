@@ -76,3 +76,21 @@ export async function markExploitedCVEs(cveIds: string[]) {
     await session.close();
   }
 }
+
+export async function checkEntityPresence(entities: string[]): Promise<string[]> {
+  const session = getNeo4jDriver().session();
+  try {
+    const result = await session.run(
+      `UNWIND $entities AS entity
+       MATCH (n) 
+       WHERE (n:CVE AND n.cveId = entity) 
+          OR (n:ThreatActor AND n.name = entity) 
+          OR (n:AttackTechnique AND n.mitreId = entity)
+       RETURN DISTINCT entity`,
+      { entities },
+    );
+    return result.records.map((r) => r.get('entity'));
+  } finally {
+    await session.close();
+  }
+}

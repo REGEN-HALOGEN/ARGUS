@@ -1,6 +1,6 @@
-import { Hono } from 'hono';
-import { getNeo4jDriver } from '@argus/graph';
 import { withCache } from '@argus/cache';
+import { getNeo4jDriver } from '@argus/graph';
+import { Hono } from 'hono';
 
 type TenantEnv = {
   Variables: {
@@ -35,7 +35,7 @@ dashboardRoutes.get('/stats', async (c) => {
       activeExploits,
       crownJewels,
       exposedAssetsResult,
-      attackPathsResult
+      attackPathsResult,
     ] = await Promise.all([
       countQuery('MATCH (a:Asset {tenantId: $tenantId}) RETURN count(a) AS count', { tenantId }),
       countQuery(
@@ -47,7 +47,9 @@ dashboardRoutes.get('/stats', async (c) => {
         'MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(c:CVE {exploitedInWild: true}) RETURN count(DISTINCT c) AS count',
         { tenantId },
       ),
-      countQuery('MATCH (cj:CrownJewel {tenantId: $tenantId}) RETURN count(cj) AS count', { tenantId }),
+      countQuery('MATCH (cj:CrownJewel {tenantId: $tenantId}) RETURN count(cj) AS count', {
+        tenantId,
+      }),
       countQuery(
         'MATCH (a:Asset {tenantId: $tenantId, internetFacing: true})-[:HAS_VULNERABILITY]->(c:CVE {exploitedInWild: true}) RETURN count(DISTINCT a) AS count',
         { tenantId },
@@ -64,7 +66,7 @@ dashboardRoutes.get('/stats', async (c) => {
     const W_ATTACK_PATH = 25;
     const W_CRITICAL_VULN = 5;
     const W_THREAT_ACTOR = 8;
-    
+
     let rawRisk = 0;
     rawRisk += exposedAssetsResult * W_EXPOSED_ASSET;
     rawRisk += attackPathsResult * W_ATTACK_PATH;
@@ -95,7 +97,8 @@ dashboardRoutes.get('/alerts', async (c) => {
   const data = await withCache(`dashboard:${tenantId}:alerts`, 30, async () => {
     const session = getNeo4jDriver().session();
     try {
-      const result = await session.run(`
+      const result = await session.run(
+        `
         MATCH (cv:CVE)
         OPTIONAL MATCH (t:ThreatActor)-[:EXPLOITS]->(cv)
         OPTIONAL MATCH (a:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(cv)
@@ -104,7 +107,9 @@ dashboardRoutes.get('/alerts', async (c) => {
         RETURN cv, actors, assets
         ORDER BY cv.cvss DESC
         LIMIT 10
-      `, { tenantId });
+      `,
+        { tenantId },
+      );
 
       return result.records.map((record, i) => {
         const cve = record.get('cv').properties;
@@ -117,7 +122,10 @@ dashboardRoutes.get('/alerts', async (c) => {
           title: `${cve.cveId}: ${cve.description}`,
           source: actors.length > 0 ? `Threat Actor: ${actors[0]}` : 'CVE Feed',
           exploited: cve.exploitedInWild,
-          cvss: typeof cve.cvss === 'object' && cve.cvss?.toNumber ? cve.cvss.toNumber() : Number(cve.cvss),
+          cvss:
+            typeof cve.cvss === 'object' && cve.cvss?.toNumber
+              ? cve.cvss.toNumber()
+              : Number(cve.cvss),
           affectedAssets: assets,
           time: 'Recent',
         };
@@ -138,7 +146,8 @@ dashboardRoutes.get('/attack-paths', async (c) => {
   const data = await withCache(`dashboard:${tenantId}:attack-paths`, 30, async () => {
     const session = getNeo4jDriver().session();
     try {
-      const result = await session.run(`
+      const result = await session.run(
+        `
         MATCH path = (entry:Asset {tenantId: $tenantId, internetFacing: true})-[rels*1..6]->(crown:CrownJewel {tenantId: $tenantId})
         WITH path, entry, crown,
              [n IN nodes(path) | COALESCE(n.hostname, n.cveId, n.name, '')] AS nodeNames,
@@ -147,13 +156,18 @@ dashboardRoutes.get('/attack-paths', async (c) => {
         RETURN nodeNames, pathRisk, hops, entry.hostname AS entryPoint, crown.name AS target
         ORDER BY pathRisk DESC
         LIMIT 5
-      `, { tenantId });
+      `,
+        { tenantId },
+      );
 
       return result.records.map((record, i) => {
         const nodeNames = record.get('nodeNames') as string[];
         const pathRisk = record.get('pathRisk');
         const hops = record.get('hops');
-        const riskNum = typeof pathRisk === 'object' && pathRisk?.toNumber ? pathRisk.toNumber() : Number(pathRisk);
+        const riskNum =
+          typeof pathRisk === 'object' && pathRisk?.toNumber
+            ? pathRisk.toNumber()
+            : Number(pathRisk);
         const hopsNum = typeof hops === 'object' && hops?.toNumber ? hops.toNumber() : Number(hops);
 
         const normalizedRisk = Math.min(100, Math.round((riskNum / 20) * 100));

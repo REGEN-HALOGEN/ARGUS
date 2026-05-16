@@ -11,7 +11,9 @@ const baseEnvSchema = z.object({
   API_URL: z.string().url().default('http://localhost:4000'),
 
   // PostgreSQL (Supabase: URI from Project Settings → Database; include sslmode=require if required)
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required (Supabase Postgres or local PostgreSQL)'),
+  DATABASE_URL: z
+    .string()
+    .min(1, 'DATABASE_URL is required (Supabase Postgres or local PostgreSQL)'),
   /** Dev-only: set "true" if pg fails with "self signed certificate in certificate chain" (some Windows / proxy setups). */
   DATABASE_SSL_INSECURE: z.enum(['true', 'false']).optional().default('false'),
 
@@ -42,19 +44,19 @@ const baseEnvSchema = z.object({
 
   // Ingestion
   INGESTION_INTERVAL_HOURS: z.coerce.number().default(6),
-  });
+});
 
 const envSchema = baseEnvSchema.superRefine((data, ctx) => {
-    const url = data.DATABASE_URL;
-    if (url.includes('[YOUR-PASSWORD]')) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          'Replace the placeholder in DATABASE_URL with your real Supabase database password (Project Settings → Database). Use the database password, not the anon or service_role API key. If the password contains @ # / etc., URL-encode it in the URI.',
-        path: ['DATABASE_URL'],
-      });
-    }
-  });
+  const url = data.DATABASE_URL;
+  if (url.includes('[YOUR-PASSWORD]')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        'Replace the placeholder in DATABASE_URL with your real Supabase database password (Project Settings → Database). Use the database password, not the anon or service_role API key. If the password contains @ # / etc., URL-encode it in the URI.',
+      path: ['DATABASE_URL'],
+    });
+  }
+});
 
 export type Env = z.infer<typeof baseEnvSchema>;
 

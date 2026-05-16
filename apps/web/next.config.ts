@@ -7,7 +7,8 @@ const nextConfig: NextConfig = {
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1',
-    NEXT_PUBLIC_BETTER_AUTH_URL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:4000/api/v1/auth',
+    NEXT_PUBLIC_BETTER_AUTH_URL:
+      process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:4000/api/v1/auth',
   },
 };
 

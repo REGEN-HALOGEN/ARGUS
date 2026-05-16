@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { BrainCircuit, Send, Sparkles, RotateCcw, Loader2 } from 'lucide-react';
-import { apiFetch, API_BASE } from '@/lib/api';
 import { Markdown } from '@/components/ui/markdown';
+import { API_BASE, apiFetch } from '@/lib/api';
+import { motion } from 'framer-motion';
+import { BrainCircuit, Loader2, RotateCcw, Send, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 const suggestedPrompts = [
   'Show attack paths to production database',
@@ -34,9 +34,13 @@ export default function AnalystPage() {
 
   const handleSend = async (text: string = input) => {
     if (!text.trim() || isLoading) return;
-    
+
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'assistant', content: '' }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content: text },
+      { role: 'assistant', content: '' },
+    ]);
     setIsLoading(true);
 
     try {
@@ -48,39 +52,42 @@ export default function AnalystPage() {
 
       let finalContent = '';
       if (data.interpretation) {
-         finalContent = `**Graph Query Generated:**\n\`\`\`cypher\n${data.cypher}\n\`\`\`\n\n${data.interpretation}`;
+        finalContent = `**Graph Query Generated:**\n\`\`\`cypher\n${data.cypher}\n\`\`\`\n\n${data.interpretation}`;
       } else {
-         // Fallback to chat stream if NL-to-Cypher didn't work well
-         const streamRes = await fetch(`${API_BASE}/ai/chat/stream`, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'x-tenant-id': typeof window !== 'undefined' ? window.localStorage.getItem('argus.activeTenantId') || '' : ''
-            },
-            credentials: 'include',
-            body: JSON.stringify({ message: text }),
+        // Fallback to chat stream if NL-to-Cypher didn't work well
+        const streamRes = await fetch(`${API_BASE}/ai/chat/stream`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-tenant-id':
+              typeof window !== 'undefined'
+                ? window.localStorage.getItem('argus.activeTenantId') || ''
+                : '',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ message: text }),
+        });
+
+        if (!streamRes.ok) throw new Error('Stream request failed');
+        if (!streamRes.body) throw new Error('No stream body');
+
+        const reader = streamRes.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          setMessages((prev) => {
+            const newMsgs = [...prev];
+            const lastMsg = newMsgs[newMsgs.length - 1]!;
+            lastMsg.content += chunk;
+            return newMsgs;
           });
-    
-          if (!streamRes.ok) throw new Error('Stream request failed');
-          if (!streamRes.body) throw new Error('No stream body');
-    
-          const reader = streamRes.body.getReader();
-          const decoder = new TextDecoder();
-    
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            const chunk = decoder.decode(value, { stream: true });
-            setMessages((prev) => {
-              const newMsgs = [...prev];
-              const lastMsg = newMsgs[newMsgs.length - 1]!;
-              lastMsg.content += chunk;
-              return newMsgs;
-            });
-          }
-          setIsLoading(false);
-          return;
+        }
+        setIsLoading(false);
+        return;
       }
 
       setMessages((prev) => {
@@ -89,13 +96,13 @@ export default function AnalystPage() {
         lastMsg.content = finalContent;
         return newMsgs;
       });
-      
     } catch (error) {
       console.error('Chat error:', error);
       setMessages((prev) => {
         const newMsgs = [...prev];
         const lastMsg = newMsgs[newMsgs.length - 1]!;
-        lastMsg.content = 'Sorry, I encountered an error while processing your request. Please check your API keys and try again.';
+        lastMsg.content =
+          'Sorry, I encountered an error while processing your request. Please check your API keys and try again.';
         return newMsgs;
       });
     } finally {
@@ -104,13 +111,22 @@ export default function AnalystPage() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-[calc(100vh-140px)]">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex flex-col h-[calc(100vh-140px)]"
+    >
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">AI Analyst</h1>
-          <p className="text-sm text-muted-foreground mt-1">Natural language security intelligence</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Natural language security intelligence
+          </p>
         </div>
-        <button onClick={() => setMessages([])} className="flex items-center gap-2 rounded-lg bg-card-border/5 px-3 py-2 text-sm text-muted-foreground ring-1 ring-card-border hover:bg-card-border/10 hover:text-foreground">
+        <button
+          onClick={() => setMessages([])}
+          className="flex items-center gap-2 rounded-lg bg-card-border/5 px-3 py-2 text-sm text-muted-foreground ring-1 ring-card-border hover:bg-card-border/10 hover:text-foreground"
+        >
           <RotateCcw className="h-4 w-4" /> New Session
         </button>
       </div>
@@ -122,11 +138,20 @@ export default function AnalystPage() {
               <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary-500/15 to-accent-500/15 ring-1 ring-primary-500/20">
                 <BrainCircuit className="h-10 w-10 text-primary-400" />
               </div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">Ask your security graph</h2>
-              <p className="text-sm text-muted-foreground max-w-md mb-8">Query your infrastructure using natural language. ARGUS converts questions into graph queries.</p>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                Ask your security graph
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-md mb-8">
+                Query your infrastructure using natural language. ARGUS converts questions into
+                graph queries.
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-w-xl w-full">
                 {suggestedPrompts.map((p) => (
-                  <button key={p} onClick={() => handleSend(p)} className="flex items-center gap-2 rounded-xl bg-card-border/5 px-4 py-3 text-left text-sm text-muted-foreground ring-1 ring-card-border hover:bg-card-border/10 hover:text-foreground">
+                  <button
+                    key={p}
+                    onClick={() => handleSend(p)}
+                    className="flex items-center gap-2 rounded-xl bg-card-border/5 px-4 py-3 text-left text-sm text-muted-foreground ring-1 ring-card-border hover:bg-card-border/10 hover:text-foreground"
+                  >
                     <Sparkles className="h-3.5 w-3.5 text-primary-500 shrink-0" />
                     <span className="truncate">{p}</span>
                   </button>
@@ -135,8 +160,15 @@ export default function AnalystPage() {
             </div>
           ) : (
             messages.map((msg, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary-500/15 text-foreground ring-1 ring-primary-500/30' : 'bg-card-border/5 text-foreground ring-1 ring-card-border'}`}>
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[75%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary-500/15 text-foreground ring-1 ring-primary-500/30' : 'bg-card-border/5 text-foreground ring-1 ring-card-border'}`}
+                >
                   {msg.role === 'assistant' ? (
                     msg.content ? (
                       <Markdown content={msg.content} />
@@ -157,16 +189,21 @@ export default function AnalystPage() {
 
         <div className="border-t border-card-border p-4">
           <div className="flex items-center gap-3">
-            <input 
-              value={input} 
-              onChange={(e) => setInput(e.target.value)} 
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); }}} 
-              placeholder="Ask about your security posture..." 
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Ask about your security posture..."
               disabled={isLoading}
-              className="flex-1 rounded-xl bg-card-border/5 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none ring-1 ring-card-border focus:ring-primary-500/30 disabled:opacity-50" 
+              className="flex-1 rounded-xl bg-card-border/5 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none ring-1 ring-card-border focus:ring-primary-500/30 disabled:opacity-50"
             />
-            <button 
-              onClick={() => handleSend()} 
+            <button
+              onClick={() => handleSend()}
               disabled={isLoading || !input.trim()}
               className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-500/20 text-primary-300 ring-1 ring-primary-500/30 hover:bg-primary-500/30 disabled:opacity-50"
             >

@@ -3,7 +3,7 @@ import { getCacheClient } from './client';
 /**
  * Helper to execute a function and cache its result.
  * If the cache is unavailable, gracefully falls back to executing the function.
- * 
+ *
  * @param key The cache key
  * @param ttlSeconds Time to live in seconds
  * @param fetcher Function that returns the data if cache misses
@@ -11,10 +11,10 @@ import { getCacheClient } from './client';
 export async function withCache<T>(
   key: string,
   ttlSeconds: number,
-  fetcher: () => Promise<T>
+  fetcher: () => Promise<T>,
 ): Promise<T> {
   const client = getCacheClient();
-  
+
   if (client.status !== 'ready') {
     // If not ready, just bypass cache
     return fetcher();
@@ -45,7 +45,7 @@ export async function withCache<T>(
 export async function invalidateCache(keyPattern: string): Promise<void> {
   const client = getCacheClient();
   if (client.status !== 'ready') return;
-  
+
   try {
     const keys = await client.keys(keyPattern);
     if (keys.length > 0) {

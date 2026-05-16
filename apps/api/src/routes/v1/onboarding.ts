@@ -35,7 +35,11 @@ const OnboardingSchema = z.object({
 // ─── Helpers ─────────────────────────────────────────────────────
 
 function slugify(value: string): string {
-  const slug = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48);
   return slug || `tenant-${Date.now()}`;
 }
 
@@ -52,32 +56,118 @@ interface KnownCVE {
 }
 
 const CVE_DATABASE: KnownCVE[] = [
-  { cveId: 'CVE-2024-6387', severity: 'critical', cvss: 9.8, exploitedInWild: true, description: 'RegreSSHion: Remote code execution in OpenSSH server', affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'CentOS', 'Amazon Linux'] },
-  { cveId: 'CVE-2024-3094', severity: 'critical', cvss: 10.0, exploitedInWild: true, description: 'XZ Utils backdoor allowing unauthorized SSH access', affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'CentOS'] },
-  { cveId: 'CVE-2024-21351', severity: 'high', cvss: 7.6, exploitedInWild: true, description: 'Windows SmartScreen security feature bypass', affectsOs: ['Windows Server'] },
-  { cveId: 'CVE-2024-21412', severity: 'high', cvss: 8.1, exploitedInWild: true, description: 'Windows Internet Shortcut files security bypass', affectsOs: ['Windows Server'] },
-  { cveId: 'CVE-2023-44487', severity: 'high', cvss: 7.5, exploitedInWild: true, description: 'HTTP/2 Rapid Reset DDoS attack vector', affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'CentOS', 'Windows Server', 'Amazon Linux'] },
-  { cveId: 'CVE-2024-1086', severity: 'high', cvss: 7.8, exploitedInWild: true, description: 'Linux kernel nf_tables use-after-free privilege escalation', affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'CentOS', 'Amazon Linux'] },
-  { cveId: 'CVE-2023-4911', severity: 'high', cvss: 7.8, exploitedInWild: true, description: 'Looney Tunables: glibc buffer overflow privilege escalation', affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'CentOS'] },
-  { cveId: 'CVE-2024-0012', severity: 'critical', cvss: 9.1, exploitedInWild: false, description: 'PostgreSQL privilege escalation via crafted SQL', affectsOs: ['PostgreSQL'] },
-  { cveId: 'CVE-2024-1597', severity: 'critical', cvss: 9.8, exploitedInWild: false, description: 'SQL injection in PostgreSQL JDBC driver', affectsOs: ['PostgreSQL'] },
-  { cveId: 'CVE-2024-23897', severity: 'critical', cvss: 9.8, exploitedInWild: true, description: 'MongoDB arbitrary file read via BSON deserialization', affectsOs: ['MongoDB'] },
-  { cveId: 'CVE-2023-22515', severity: 'critical', cvss: 9.8, exploitedInWild: true, description: 'Remote code execution via web application framework', affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'Windows Server'] },
+  {
+    cveId: 'CVE-2024-6387',
+    severity: 'critical',
+    cvss: 9.8,
+    exploitedInWild: true,
+    description: 'RegreSSHion: Remote code execution in OpenSSH server',
+    affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'CentOS', 'Amazon Linux'],
+  },
+  {
+    cveId: 'CVE-2024-3094',
+    severity: 'critical',
+    cvss: 10.0,
+    exploitedInWild: true,
+    description: 'XZ Utils backdoor allowing unauthorized SSH access',
+    affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'CentOS'],
+  },
+  {
+    cveId: 'CVE-2024-21351',
+    severity: 'high',
+    cvss: 7.6,
+    exploitedInWild: true,
+    description: 'Windows SmartScreen security feature bypass',
+    affectsOs: ['Windows Server'],
+  },
+  {
+    cveId: 'CVE-2024-21412',
+    severity: 'high',
+    cvss: 8.1,
+    exploitedInWild: true,
+    description: 'Windows Internet Shortcut files security bypass',
+    affectsOs: ['Windows Server'],
+  },
+  {
+    cveId: 'CVE-2023-44487',
+    severity: 'high',
+    cvss: 7.5,
+    exploitedInWild: true,
+    description: 'HTTP/2 Rapid Reset DDoS attack vector',
+    affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'CentOS', 'Windows Server', 'Amazon Linux'],
+  },
+  {
+    cveId: 'CVE-2024-1086',
+    severity: 'high',
+    cvss: 7.8,
+    exploitedInWild: true,
+    description: 'Linux kernel nf_tables use-after-free privilege escalation',
+    affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'CentOS', 'Amazon Linux'],
+  },
+  {
+    cveId: 'CVE-2023-4911',
+    severity: 'high',
+    cvss: 7.8,
+    exploitedInWild: true,
+    description: 'Looney Tunables: glibc buffer overflow privilege escalation',
+    affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'CentOS'],
+  },
+  {
+    cveId: 'CVE-2024-0012',
+    severity: 'critical',
+    cvss: 9.1,
+    exploitedInWild: false,
+    description: 'PostgreSQL privilege escalation via crafted SQL',
+    affectsOs: ['PostgreSQL'],
+  },
+  {
+    cveId: 'CVE-2024-1597',
+    severity: 'critical',
+    cvss: 9.8,
+    exploitedInWild: false,
+    description: 'SQL injection in PostgreSQL JDBC driver',
+    affectsOs: ['PostgreSQL'],
+  },
+  {
+    cveId: 'CVE-2024-23897',
+    severity: 'critical',
+    cvss: 9.8,
+    exploitedInWild: true,
+    description: 'MongoDB arbitrary file read via BSON deserialization',
+    affectsOs: ['MongoDB'],
+  },
+  {
+    cveId: 'CVE-2023-22515',
+    severity: 'critical',
+    cvss: 9.8,
+    exploitedInWild: true,
+    description: 'Remote code execution via web application framework',
+    affectsOs: ['Ubuntu', 'Debian', 'RHEL', 'Windows Server'],
+  },
 ];
 
 function findCVEsForOS(osName: string): KnownCVE[] {
-  return CVE_DATABASE.filter(cve => cve.affectsOs.some(os => osName.toLowerCase().includes(os.toLowerCase())));
+  return CVE_DATABASE.filter((cve) =>
+    cve.affectsOs.some((os) => osName.toLowerCase().includes(os.toLowerCase())),
+  );
 }
 
 function findCVEsForDB(dbType: string): KnownCVE[] {
-  return CVE_DATABASE.filter(cve => cve.affectsOs.some(os => dbType.toLowerCase().includes(os.toLowerCase())));
+  return CVE_DATABASE.filter((cve) =>
+    cve.affectsOs.some((os) => dbType.toLowerCase().includes(os.toLowerCase())),
+  );
 }
 
 // ─── Risk Scoring ────────────────────────────────────────────────
 
-function calculateRisk(cvss: number, internetFacing: boolean, hopsToCrown: number): { score: number; rating: string } {
+function calculateRisk(
+  cvss: number,
+  internetFacing: boolean,
+  hopsToCrown: number,
+): { score: number; rating: string } {
   const exposureMultiplier = internetFacing ? 1.5 : 1.0;
-  const proximityMultiplier = hopsToCrown <= 1 ? 1.8 : hopsToCrown <= 2 ? 1.4 : hopsToCrown <= 3 ? 1.1 : 0.8;
+  const proximityMultiplier =
+    hopsToCrown <= 1 ? 1.8 : hopsToCrown <= 2 ? 1.4 : hopsToCrown <= 3 ? 1.1 : 0.8;
   const raw = (cvss / 10) * exposureMultiplier * proximityMultiplier * 100;
   const score = Math.min(100, Math.round(raw));
   const rating = score >= 80 ? 'critical' : score >= 60 ? 'high' : score >= 40 ? 'medium' : 'low';
@@ -113,9 +203,22 @@ async function buildTenantGraph(tenantId: string, input: OnboardingInput) {
            SET s.tenantId = $tenantId, s.hostname = $hostname, s.type = 'server',
                s.role = $role, s.os = $os, s.osVersion = $osVersion,
                s.internetFacing = $internetFacing, s.criticality = 'medium'`,
-          { id: nodeId, tenantId, hostname, role: group.role, os: group.os, osVersion: group.osVersion, internetFacing: group.internetFacing },
+          {
+            id: nodeId,
+            tenantId,
+            hostname,
+            role: group.role,
+            os: group.os,
+            osVersion: group.osVersion,
+            internetFacing: group.internetFacing,
+          },
         );
-        serverNodeIds.push({ id: nodeId, internetFacing: group.internetFacing, role: group.role, os: group.os });
+        serverNodeIds.push({
+          id: nodeId,
+          internetFacing: group.internetFacing,
+          role: group.role,
+          os: group.os,
+        });
       }
     }
 
@@ -131,7 +234,14 @@ async function buildTenantGraph(tenantId: string, input: OnboardingInput) {
          SET d.tenantId = $tenantId, d.hostname = $hostname, d.type = 'database',
              d.dbType = $dbType, d.purpose = $purpose, d.internetFacing = false,
              d.criticality = $criticality`,
-        { id: nodeId, tenantId, hostname, dbType: ds.type, purpose: ds.purpose, criticality: isCrown ? 'critical' : 'high' },
+        {
+          id: nodeId,
+          tenantId,
+          hostname,
+          dbType: ds.type,
+          purpose: ds.purpose,
+          criticality: isCrown ? 'critical' : 'high',
+        },
       );
       if (isCrown) {
         const crownId = `${tenantId}:crown-${slugify(ds.type)}-${i + 1}`;
@@ -148,7 +258,7 @@ async function buildTenantGraph(tenantId: string, input: OnboardingInput) {
     }
 
     // 4. Create edges: Internet → internet-facing servers
-    const internetFacingServers = serverNodeIds.filter(s => s.internetFacing);
+    const internetFacingServers = serverNodeIds.filter((s) => s.internetFacing);
     for (const srv of internetFacingServers) {
       await session.run(
         `MATCH (inet:Asset {id: $inetId}), (s:Asset {id: $srvId})
@@ -158,9 +268,9 @@ async function buildTenantGraph(tenantId: string, input: OnboardingInput) {
     }
 
     // 5. Create edges: Web/App servers → databases
-    const webServers = serverNodeIds.filter(s => s.role.toLowerCase().includes('web'));
-    const appServers = serverNodeIds.filter(s => s.role.toLowerCase().includes('application'));
-    const internalServers = serverNodeIds.filter(s => !s.internetFacing);
+    const webServers = serverNodeIds.filter((s) => s.role.toLowerCase().includes('web'));
+    const appServers = serverNodeIds.filter((s) => s.role.toLowerCase().includes('application'));
+    const internalServers = serverNodeIds.filter((s) => !s.internetFacing);
 
     // Web servers → App servers (if both exist)
     for (const ws of webServers) {
@@ -175,7 +285,12 @@ async function buildTenantGraph(tenantId: string, input: OnboardingInput) {
     }
 
     // App servers (or internal servers) → Databases
-    const connectingServers = appServers.length > 0 ? appServers : internalServers.length > 0 ? internalServers : webServers;
+    const connectingServers =
+      appServers.length > 0
+        ? appServers
+        : internalServers.length > 0
+          ? internalServers
+          : webServers;
     for (const srv of connectingServers) {
       for (const ds of dsNodeIds) {
         await session.run(
@@ -195,12 +310,19 @@ async function buildTenantGraph(tenantId: string, input: OnboardingInput) {
             `MERGE (c:CVE {cveId: $cveId})
              SET c.severity = $severity, c.cvss = $cvss, c.exploitedInWild = $exploited,
                  c.description = $desc, c.tenantId = $tenantId`,
-            { cveId: cve.cveId, severity: cve.severity, cvss: cve.cvss, exploited: cve.exploitedInWild, desc: cve.description, tenantId },
+            {
+              cveId: cve.cveId,
+              severity: cve.severity,
+              cvss: cve.cvss,
+              exploited: cve.exploitedInWild,
+              desc: cve.description,
+              tenantId,
+            },
           );
           assignedCVEs.add(cve.cveId);
         }
         // Calculate risk based on proximity to crown jewels
-        const hopsToCrown = dsNodeIds.some(d => d.isCrown) ? (srv.internetFacing ? 2 : 3) : 5;
+        const hopsToCrown = dsNodeIds.some((d) => d.isCrown) ? (srv.internetFacing ? 2 : 3) : 5;
         const risk = calculateRisk(cve.cvss, srv.internetFacing, hopsToCrown);
         await session.run(
           `MATCH (s:Asset {id: $srvId}), (c:CVE {cveId: $cveId})
@@ -220,7 +342,14 @@ async function buildTenantGraph(tenantId: string, input: OnboardingInput) {
             `MERGE (c:CVE {cveId: $cveId})
              SET c.severity = $severity, c.cvss = $cvss, c.exploitedInWild = $exploited,
                  c.description = $desc, c.tenantId = $tenantId`,
-            { cveId: cve.cveId, severity: cve.severity, cvss: cve.cvss, exploited: cve.exploitedInWild, desc: cve.description, tenantId },
+            {
+              cveId: cve.cveId,
+              severity: cve.severity,
+              cvss: cve.cvss,
+              exploited: cve.exploitedInWild,
+              desc: cve.description,
+              tenantId,
+            },
           );
           assignedCVEs.add(cve.cveId);
         }
@@ -234,7 +363,9 @@ async function buildTenantGraph(tenantId: string, input: OnboardingInput) {
       }
     }
 
-    console.log(`[GRAPH FACTORY] Built graph for tenant ${tenantId}: ${serverNodeIds.length} servers, ${dsNodeIds.length} data stores, ${assignedCVEs.size} CVEs`);
+    console.log(
+      `[GRAPH FACTORY] Built graph for tenant ${tenantId}: ${serverNodeIds.length} servers, ${dsNodeIds.length} data stores, ${assignedCVEs.size} CVEs`,
+    );
   } finally {
     await session.close();
   }
@@ -249,13 +380,17 @@ onboardingRoutes.post('/', zValidator('json', OnboardingSchema), async (c) => {
       industry: input.industry,
       cloudProviders: input.cloudProviders,
       hasOnPrem: input.hasOnPrem,
-      estimatedAssets: input.servers.reduce((sum, s) => sum + s.quantity, 0) + input.dataStores.length,
+      estimatedAssets:
+        input.servers.reduce((sum, s) => sum + s.quantity, 0) + input.dataStores.length,
       onboardingCompletedAt: new Date().toISOString(),
     };
 
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session || !session.user) {
-      return c.json({ success: false, error: { code: 'NOT_AUTHENTICATED', message: 'User not authenticated' } }, 401);
+      return c.json(
+        { success: false, error: { code: 'NOT_AUTHENTICATED', message: 'User not authenticated' } },
+        401,
+      );
     }
     const userId = session.user.id;
     console.log('[ONBOARDING] Current user:', userId);

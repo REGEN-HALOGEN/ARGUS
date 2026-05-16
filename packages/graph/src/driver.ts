@@ -1,5 +1,5 @@
-import neo4j, { type Driver, type Session } from 'neo4j-driver';
 import { getEnv } from '@argus/config';
+import neo4j, { type Driver, type Session } from 'neo4j-driver';
 
 // ─── Neo4j Driver Singleton ──────────────────────────────────────
 
@@ -10,14 +10,10 @@ export function getNeo4jDriver(): Driver {
 
   const env = getEnv();
 
-  _driver = neo4j.driver(
-    env.NEO4J_URI,
-    neo4j.auth.basic(env.NEO4J_USER, env.NEO4J_PASSWORD),
-    {
-      maxConnectionPoolSize: 50,
-      connectionAcquisitionTimeout: 10000,
-    },
-  );
+  _driver = neo4j.driver(env.NEO4J_URI, neo4j.auth.basic(env.NEO4J_USER, env.NEO4J_PASSWORD), {
+    maxConnectionPoolSize: 50,
+    connectionAcquisitionTimeout: 10000,
+  });
 
   return _driver;
 }

@@ -1,6 +1,6 @@
-import { QdrantClient } from '@qdrant/js-client-rest';
-import { getEnv } from '@argus/config';
 import crypto from 'crypto';
+import { getEnv } from '@argus/config';
+import { QdrantClient } from '@qdrant/js-client-rest';
 
 const qdrantEnv = getEnv();
 export const qdrant = new QdrantClient({
@@ -76,7 +76,9 @@ export async function indexCVE(cveId: string, description: string, severity: str
       wait: true,
       points: [
         {
-          id: hashId(cveId).substring(0, 32).replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5'),
+          id: hashId(cveId)
+            .substring(0, 32)
+            .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5'),
           vector,
           payload: { cveId, description, severity, cvss },
         },

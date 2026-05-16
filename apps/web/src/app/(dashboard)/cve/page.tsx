@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search, Filter, ExternalLink, Loader2 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { motion } from 'framer-motion';
+import { ExternalLink, Filter, Loader2, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface CVE {
   cveId: string;
@@ -35,13 +35,14 @@ export default function CVEPage() {
   const [exploitFilter, setExploitFilter] = useState<boolean | null>(null);
 
   const toggleSeverity = (sev: string) => {
-    setSeverityFilter(prev => 
-      prev.includes(sev) ? prev.filter(s => s !== sev) : [...prev, sev]
+    setSeverityFilter((prev) =>
+      prev.includes(sev) ? prev.filter((s) => s !== sev) : [...prev, sev],
     );
   };
 
-  const filteredCves = cves.filter(cve => {
-    const severityMatch = severityFilter.length === 0 || severityFilter.includes(cve.severity.toLowerCase());
+  const filteredCves = cves.filter((cve) => {
+    const severityMatch =
+      severityFilter.length === 0 || severityFilter.includes(cve.severity.toLowerCase());
     const exploitMatch = exploitFilter === null || cve.exploitedInWild === exploitFilter;
     return severityMatch && exploitMatch;
   });
@@ -65,12 +66,12 @@ export default function CVEPage() {
   useEffect(() => {
     if (!searchQuery) {
       if (!loading && cves.length === 0) {
-         apiFetch<CVE[]>('/cve?page=1&limit=20')
-           .then(setCves)
-           .catch((error) => {
-             if ((error as { silent?: boolean }).silent) return;
-             console.error('Failed to reload CVEs:', error);
-           });
+        apiFetch<CVE[]>('/cve?page=1&limit=20')
+          .then(setCves)
+          .catch((error) => {
+            if ((error as { silent?: boolean }).silent) return;
+            console.error('Failed to reload CVEs:', error);
+          });
       }
       return;
     }
@@ -96,7 +97,9 @@ export default function CVEPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">CVE Intelligence</h1>
-          <p className="text-sm text-muted-foreground mt-1">Vulnerability tracking and impact analysis</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Vulnerability tracking and impact analysis
+          </p>
         </div>
       </div>
 
@@ -115,7 +118,7 @@ export default function CVEPage() {
           />
         </div>
         <div className="relative">
-          <button 
+          <button
             onClick={() => setFiltersOpen(!filtersOpen)}
             className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm ring-1 transition-all ${
               filtersOpen || severityFilter.length > 0 || exploitFilter !== null
@@ -131,16 +134,15 @@ export default function CVEPage() {
 
           {filtersOpen && (
             <>
-              <div 
-                className="fixed inset-0 z-40" 
-                onClick={() => setFiltersOpen(false)} 
-              />
+              <div className="fixed inset-0 z-40" onClick={() => setFiltersOpen(false)} />
               <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl bg-card p-4 ring-1 ring-card-border shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in duration-200">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Severity</h4>
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+                      Severity
+                    </h4>
                     <div className="grid grid-cols-2 gap-2">
-                      {['critical', 'high', 'medium', 'low'].map(sev => (
+                      {['critical', 'high', 'medium', 'low'].map((sev) => (
                         <button
                           key={sev}
                           onClick={() => toggleSeverity(sev)}
@@ -157,7 +159,9 @@ export default function CVEPage() {
                   </div>
 
                   <div>
-                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Exploit Status</h4>
+                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+                      Exploit Status
+                    </h4>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setExploitFilter(exploitFilter === true ? null : true)}
@@ -197,12 +201,24 @@ export default function CVEPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-card-border">
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">CVE ID</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Severity</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">CVSS</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Exploited</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Assets</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    CVE ID
+                  </th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Severity
+                  </th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    CVSS
+                  </th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Exploited
+                  </th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Description
+                  </th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Assets
+                  </th>
                   <th className="px-5 py-3.5"></th>
                 </tr>
               </thead>
@@ -210,32 +226,49 @@ export default function CVEPage() {
                 {filteredCves.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">
-                      {cves.length === 0 ? 'No vulnerabilities found.' : 'No vulnerabilities match your filters.'}
+                      {cves.length === 0
+                        ? 'No vulnerabilities found.'
+                        : 'No vulnerabilities match your filters.'}
                     </td>
                   </tr>
                 ) : (
                   filteredCves.map((cve, i) => (
-                    <motion.tr key={cve.cveId} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="hover:bg-card-border/5 cursor-pointer group">
-                      <td className="px-5 py-3.5 font-mono text-sm font-medium text-primary-500">{cve.cveId}</td>
+                    <motion.tr
+                      key={cve.cveId}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="hover:bg-card-border/5 cursor-pointer group"
+                    >
+                      <td className="px-5 py-3.5 font-mono text-sm font-medium text-primary-500">
+                        {cve.cveId}
+                      </td>
                       <td className="px-5 py-3.5">
-                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase ring-1 ${sevBadge(cve.severity)}`}>
+                        <span
+                          className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase ring-1 ${sevBadge(cve.severity)}`}
+                        >
                           {cve.severity}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 font-mono font-semibold text-foreground">{cve.cvss}</td>
+                      <td className="px-5 py-3.5 font-mono font-semibold text-foreground">
+                        {cve.cvss}
+                      </td>
                       <td className="px-5 py-3.5">
                         {cve.exploitedInWild ? (
                           <span className="inline-flex items-center gap-1 text-threat-500 text-xs font-medium">
-                            <span className="h-1.5 w-1.5 rounded-full bg-threat-500 animate-pulse" /> Active
+                            <span className="h-1.5 w-1.5 rounded-full bg-threat-500 animate-pulse" />{' '}
+                            Active
                           </span>
                         ) : (
                           <span className="text-xs text-muted-foreground">No</span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-foreground max-w-xs truncate">{cve.description}</td>
+                      <td className="px-5 py-3.5 text-foreground max-w-xs truncate">
+                        {cve.description}
+                      </td>
                       <td className="px-5 py-3.5 text-muted-foreground">{cve.affectedAssets}</td>
                       <td className="px-5 py-3.5">
-                        <a 
+                        <a
                           href={`https://nvd.nist.gov/vuln/detail/${cve.cveId}`}
                           target="_blank"
                           rel="noreferrer"

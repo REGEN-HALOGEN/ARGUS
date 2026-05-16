@@ -1,10 +1,10 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { AIChatRequestSchema } from '@argus/types';
-import { stream } from 'hono/streaming';
-import { chat, streamChat, nlToCypher, SYSTEM_PROMPTS, buildPrompt, USER_PROMPTS } from '@argus/ai';
+import { SYSTEM_PROMPTS, USER_PROMPTS, buildPrompt, chat, nlToCypher, streamChat } from '@argus/ai';
 import { withCache } from '@argus/cache';
 import { executeReadOnlyQuery } from '@argus/graph';
+import { AIChatRequestSchema } from '@argus/types';
+import { zValidator } from '@hono/zod-validator';
+import { Hono } from 'hono';
+import { stream } from 'hono/streaming';
 
 export const aiRoutes = new Hono();
 
@@ -14,10 +14,9 @@ aiRoutes.post('/chat', zValidator('json', AIChatRequestSchema), async (c) => {
   const body = c.req.valid('json');
 
   try {
-    const response = await chat(
-      [{ role: 'user', content: body.message }],
-      { systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST },
-    );
+    const response = await chat([{ role: 'user', content: body.message }], {
+      systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST,
+    });
 
     return c.json({
       success: true,
@@ -49,10 +48,9 @@ aiRoutes.post('/chat/stream', zValidator('json', AIChatRequestSchema), async (c)
 
   return stream(c, async (s) => {
     try {
-      const gen = streamChat(
-        [{ role: 'user', content: body.message }],
-        { systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST },
-      );
+      const gen = streamChat([{ role: 'user', content: body.message }], {
+        systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST,
+      });
 
       for await (const chunk of gen) {
         await s.write(chunk);
@@ -68,10 +66,7 @@ aiRoutes.post('/chat/stream', zValidator('json', AIChatRequestSchema), async (c)
 
 aiRoutes.post(
   '/nl-to-cypher',
-  zValidator(
-    'json',
-    AIChatRequestSchema.pick({ message: true }),
-  ),
+  zValidator('json', AIChatRequestSchema.pick({ message: true })),
   async (c) => {
     const { message } = c.req.valid('json');
 
@@ -105,10 +100,12 @@ aiRoutes.post(
       if (results && results.length > 0) {
         try {
           interpretation = await chat(
-            [{
-              role: 'user',
-              content: `The user asked: "${message}"\n\nThe Cypher query "${cypher}" returned these results:\n${JSON.stringify(results, null, 2)}\n\nPlease interpret these results in plain language for a security analyst.`,
-            }],
+            [
+              {
+                role: 'user',
+                content: `The user asked: "${message}"\n\nThe Cypher query "${cypher}" returned these results:\n${JSON.stringify(results, null, 2)}\n\nPlease interpret these results in plain language for a security analyst.`,
+              },
+            ],
             { systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST },
           );
         } catch {
@@ -172,10 +169,9 @@ aiRoutes.get('/threat-brief', async (c) => {
         riskChanges: 'N/A - initial assessment',
       });
 
-      const briefContent = await chat(
-        [{ role: 'user', content: prompt }],
-        { systemPrompt: SYSTEM_PROMPTS.THREAT_BRIEFING },
-      );
+      const briefContent = await chat([{ role: 'user', content: prompt }], {
+        systemPrompt: SYSTEM_PROMPTS.THREAT_BRIEFING,
+      });
 
       return {
         id: crypto.randomUUID(),

@@ -48,6 +48,12 @@ Use professional cybersecurity terminology. Be concise but thorough.`,
 calculate and explain the risk level. Consider: CVSS scores, exploit availability, internet exposure,
 proximity to crown jewels, lateral movement potential, and active threat actor targeting.
 Provide a numerical score (0-100) with detailed justification.`,
+
+  NEWS_SUMMARY: `You are a senior cybersecurity intelligence analyst.
+Analyze the provided news and return a JSON object with:
+1. "summary": A concise, high-impact, one-sentence summary.
+2. "entities": A list of specific CVE IDs, Threat Actor names, or MITRE Technique IDs (e.g., T1059).
+Return ONLY the JSON object.`,
 } as const;
 
 // ─── Prompt Builder ──────────────────────────────────────────────
@@ -98,4 +104,11 @@ New CVEs: {{newCves}}
 Active Threats: {{activeThreats}}
 Affected Assets: {{affectedAssets}}
 Risk Changes: {{riskChanges}}`,
+
+  SUMMARIZE_NEWS: `Analyze this cybersecurity news item:
+
+Title: {{title}}
+Snippet: {{snippet}}
+
+Return a JSON object with "summary" and "entities".`,
 } as const;

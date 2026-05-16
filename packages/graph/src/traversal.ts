@@ -1,4 +1,4 @@
-import type { GraphData, AttackPath } from '@argus/types';
+import type { AttackPath, GraphData } from '@argus/types';
 import { executeReadOnlyQuery, fetchGraphData } from './queries';
 
 // ─── Shortest Path ───────────────────────────────────────────────
@@ -42,10 +42,7 @@ export async function findAllPaths(
 
 // ─── Attack Paths to Crown Jewels ────────────────────────────────
 
-export async function findAttackPathsToCrownJewels(
-  maxHops = 8,
-  limit = 20,
-): Promise<AttackPath[]> {
+export async function findAttackPathsToCrownJewels(maxHops = 8, limit = 20): Promise<AttackPath[]> {
   const cypher = `
     MATCH path = (entry:Asset {internetFacing: true})-[*..${maxHops}]->(crown:CrownJewel)
     WITH path, 
@@ -81,11 +78,7 @@ export async function findAttackPathsToCrownJewels(
 
 // ─── Neighborhood Query ──────────────────────────────────────────
 
-export async function getNeighborhood(
-  nodeId: string,
-  depth = 2,
-  limit = 50,
-): Promise<GraphData> {
+export async function getNeighborhood(nodeId: string, depth = 2, limit = 50): Promise<GraphData> {
   const cypher = `
     MATCH path = (center)-[*1..${depth}]-(neighbor)
     WHERE elementId(center) = $nodeId

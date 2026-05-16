@@ -4,14 +4,7 @@
     "enabled": true
   },
   "files": {
-    "ignore": [
-      "node_modules",
-      "dist",
-      ".next",
-      "*.min.js",
-      "*.d.ts",
-      "bun.lockb"
-    ]
+    "ignore": ["node_modules", "dist", ".next", "*.min.js", "*.d.ts", "bun.lockb"]
   },
   "linter": {
     "enabled": true,

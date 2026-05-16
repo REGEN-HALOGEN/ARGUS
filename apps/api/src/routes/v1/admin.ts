@@ -104,8 +104,8 @@ adminRoutes.get('/organizations', async (c) => {
        ORDER BY "createdAt" DESC
        LIMIT $1 OFFSET $2`,
       [
-        parseInt(c.req.query('limit') ?? '100', 10),
-        parseInt(c.req.query('offset') ?? '0', 10),
+        Number.parseInt(c.req.query('limit') ?? '100', 10),
+        Number.parseInt(c.req.query('offset') ?? '0', 10),
       ],
     );
 
@@ -132,7 +132,11 @@ adminRoutes.get('/organizations', async (c) => {
 
           return {
             ...org,
-            metadata: org.metadata ? (typeof org.metadata === 'string' ? JSON.parse(org.metadata) : org.metadata) : null,
+            metadata: org.metadata
+              ? typeof org.metadata === 'string'
+                ? JSON.parse(org.metadata)
+                : org.metadata
+              : null,
             memberCount: members.length,
             members: members.map((m) => ({
               id: m.id,

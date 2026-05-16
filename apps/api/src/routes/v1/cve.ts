@@ -1,10 +1,10 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { PaginationSchema } from '@argus/types';
-import { getNeo4jDriver } from '@argus/graph';
-import neo4j from 'neo4j-driver';
-import { withCache } from '@argus/cache';
 import { searchCVEs } from '@argus/ai';
+import { withCache } from '@argus/cache';
+import { getNeo4jDriver } from '@argus/graph';
+import { PaginationSchema } from '@argus/types';
+import { zValidator } from '@hono/zod-validator';
+import { Hono } from 'hono';
+import neo4j from 'neo4j-driver';
 
 type TenantEnv = {
   Variables: {

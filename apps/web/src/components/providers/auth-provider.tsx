@@ -1,9 +1,9 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useSession } from '@/lib/auth';
 import { apiFetch, getActiveTenantId, setActiveTenantId } from '@/lib/api';
+import { useSession } from '@/lib/auth';
+import { usePathname, useRouter } from 'next/navigation';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 type PlatformRole = 'super_admin';
 type OrgRole = 'org_admin' | 'operator' | 'analyst' | 'viewer';
@@ -116,7 +116,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadMe();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [sessionData, sessionPending]);
 
   // ── Role-based redirects (only fires after /me completes) ──────
@@ -139,11 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // User has no org, not an admin, and not on an admin page → onboarding
-    if (
-      !account.platformRole &&
-      !account.activeOrganizationId &&
-      !pathname.startsWith('/admin')
-    ) {
+    if (!account.platformRole && !account.activeOrganizationId && !pathname.startsWith('/admin')) {
       router.replace('/onboarding');
     }
   }, [account, meLoading, sessionPending, pathname, isPublicPath, router]);
@@ -151,7 +149,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loading = sessionPending || meLoading;
 
   return (
-    <AuthContext.Provider value={{ ...account, user: account.user ?? sessionData?.user ?? null, loading }}>
+    <AuthContext.Provider
+      value={{ ...account, user: account.user ?? sessionData?.user ?? null, loading }}
+    >
       {loading ? (
         <div className="flex h-screen w-screen items-center justify-center bg-[#0b0f19]">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />

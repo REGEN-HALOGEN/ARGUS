@@ -1,5 +1,5 @@
+import { type OrgRole, type PlatformRole, isPlatformRole, normalizeOrgRole } from '@argus/types';
 import type { Context, Next } from 'hono';
-import { isPlatformRole, normalizeOrgRole, type OrgRole, type PlatformRole } from '@argus/types';
 import { auth } from '../auth';
 import { AppError } from './error-handler';
 
@@ -21,12 +21,16 @@ export async function getAuthSession(headers: Headers): Promise<AuthSession> {
   if (!session?.user) {
     const origin = headers.get('origin');
     const isVercel = origin?.endsWith('.vercel.app');
-    
+
     console.warn(`[AUTH-SESSION-FAIL] No session found. Origin: ${origin} | IsVercel: ${isVercel}`);
-    
-    // If we're on Vercel and it's a known issue, we might want to handle it, 
+
+    // If we're on Vercel and it's a known issue, we might want to handle it,
     // but for now let's just throw a more descriptive error.
-    throw new AppError(401, 'UNAUTHORIZED', 'Authentication required. Please ensure cookies are enabled.');
+    throw new AppError(
+      401,
+      'UNAUTHORIZED',
+      'Authentication required. Please ensure cookies are enabled.',
+    );
   }
 
   return session as AuthSession;

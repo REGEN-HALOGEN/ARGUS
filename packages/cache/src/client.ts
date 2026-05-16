@@ -20,7 +20,7 @@ class CacheClient {
       CacheClient.instance.on('error', (err) => {
         console.warn('[Cache] Connection error. Caching will gracefully fail.', err.message);
       });
-      
+
       CacheClient.instance.on('connect', () => {
         console.log('[Cache] Connected to Redis / Valkey');
       });

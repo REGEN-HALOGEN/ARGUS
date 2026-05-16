@@ -1,25 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/components/providers/auth-provider';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Settings as SettingsIcon,
-  Key,
-  Palette,
-  Shield,
-  Database,
   Bell,
+  CheckCircle2,
   ChevronRight,
+  Database,
   Eye,
   EyeOff,
-  Save,
-  CheckCircle2,
-  Loader2,
-  X,
   Info,
+  Key,
+  Loader2,
+  Palette,
+  Save,
+  Settings as SettingsIcon,
+  Shield,
+  X,
 } from 'lucide-react';
-import { useAuth } from '@/components/providers/auth-provider';
 import { useTheme } from 'next-themes';
+import { useState } from 'react';
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
@@ -31,11 +31,36 @@ interface SettingsSection {
 }
 
 const sections: SettingsSection[] = [
-  { id: 'api-keys', label: 'API Keys', icon: Key, description: 'Manage Anthropic, NVD, and external API keys' },
-  { id: 'appearance', label: 'Appearance', icon: Palette, description: 'Customize theme, colors, and display preferences' },
-  { id: 'access', label: 'Access Control', icon: Shield, description: 'RBAC roles, permissions, and user management' },
-  { id: 'database', label: 'Database', icon: Database, description: 'Neo4j, Qdrant, and Valkey connection settings' },
-  { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Alert preferences and notification channels' },
+  {
+    id: 'api-keys',
+    label: 'API Keys',
+    icon: Key,
+    description: 'Manage Anthropic, NVD, and external API keys',
+  },
+  {
+    id: 'appearance',
+    label: 'Appearance',
+    icon: Palette,
+    description: 'Customize theme, colors, and display preferences',
+  },
+  {
+    id: 'access',
+    label: 'Access Control',
+    icon: Shield,
+    description: 'RBAC roles, permissions, and user management',
+  },
+  {
+    id: 'database',
+    label: 'Database',
+    icon: Database,
+    description: 'Neo4j, Qdrant, and Valkey connection settings',
+  },
+  {
+    id: 'notifications',
+    label: 'Notifications',
+    icon: Bell,
+    description: 'Alert preferences and notification channels',
+  },
 ];
 
 /* ─── Helpers ────────────────────────────────────────────────────── */
@@ -45,16 +70,25 @@ function MaskedKey({ value }: { value: string }) {
   return (
     <div className="flex items-center gap-2 font-mono text-xs">
       <span className="text-slate-400 select-all">
-        {visible ? value : value.slice(0, 4) + '•'.repeat(Math.max(value.length - 8, 4)) + value.slice(-4)}
+        {visible
+          ? value
+          : value.slice(0, 4) + '•'.repeat(Math.max(value.length - 8, 4)) + value.slice(-4)}
       </span>
-      <button onClick={() => setVisible(!visible)} className="text-slate-500 hover:text-slate-300 transition-colors">
+      <button
+        onClick={() => setVisible(!visible)}
+        className="text-slate-500 hover:text-slate-300 transition-colors"
+      >
         {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
       </button>
     </div>
   );
 }
 
-function SaveButton({ onClick, saving, saved }: { onClick: () => void; saving: boolean; saved: boolean }) {
+function SaveButton({
+  onClick,
+  saving,
+  saved,
+}: { onClick: () => void; saving: boolean; saved: boolean }) {
   return (
     <button
       onClick={onClick}
@@ -224,7 +258,9 @@ function AppearancePanel() {
         <div className="rounded-xl bg-card/50 ring-1 ring-card-border p-4 flex items-center justify-between">
           <div>
             <h4 className="text-sm font-semibold text-foreground">Animations</h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">Enable motion and transition effects</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Enable motion and transition effects
+            </p>
           </div>
           <ToggleSwitch enabled={animationsEnabled} onChange={setAnimationsEnabled} />
         </div>
@@ -250,11 +286,15 @@ function AccessControlPanel() {
           <h4 className="text-sm font-semibold text-slate-200 mb-3">Your Permissions</h4>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg bg-white/[0.03] p-3">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Platform Role</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">
+                Platform Role
+              </p>
               <p className="text-sm font-semibold text-slate-200">{platformRole ?? 'Standard'}</p>
             </div>
             <div className="rounded-lg bg-white/[0.03] p-3">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Organization Role</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">
+                Organization Role
+              </p>
               <p className="text-sm font-semibold text-slate-200 capitalize">{orgRole ?? 'None'}</p>
             </div>
             <div className="rounded-lg bg-white/[0.03] p-3">
@@ -273,15 +313,32 @@ function AccessControlPanel() {
           <h4 className="text-sm font-semibold text-slate-200 mb-3">Role Hierarchy</h4>
           <div className="space-y-2">
             {[
-              { role: 'Super Admin', scope: 'Platform-wide', color: 'text-threat-400 bg-threat-500/10' },
-              { role: 'Org Admin', scope: 'Organization', color: 'text-warning-400 bg-warning-500/10' },
-              { role: 'Operator', scope: 'Read/Write', color: 'text-primary-400 bg-primary-500/10' },
+              {
+                role: 'Super Admin',
+                scope: 'Platform-wide',
+                color: 'text-threat-400 bg-threat-500/10',
+              },
+              {
+                role: 'Org Admin',
+                scope: 'Organization',
+                color: 'text-warning-400 bg-warning-500/10',
+              },
+              {
+                role: 'Operator',
+                scope: 'Read/Write',
+                color: 'text-primary-400 bg-primary-500/10',
+              },
               { role: 'Analyst', scope: 'Read + AI', color: 'text-accent-400 bg-accent-500/10' },
               { role: 'Viewer', scope: 'Read-only', color: 'text-slate-400 bg-slate-500/10' },
             ].map((r) => (
-              <div key={r.role} className="flex items-center justify-between rounded-lg bg-white/[0.02] p-3">
+              <div
+                key={r.role}
+                className="flex items-center justify-between rounded-lg bg-white/[0.02] p-3"
+              >
                 <span className="text-sm font-medium text-slate-300">{r.role}</span>
-                <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${r.color}`}>
+                <span
+                  className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${r.color}`}
+                >
                   {r.scope}
                 </span>
               </div>
@@ -297,8 +354,16 @@ function AccessControlPanel() {
 
 function DatabasePanel() {
   const [connections] = useState([
-    { name: 'Neo4j', uri: process.env.NEXT_PUBLIC_NEO4J_URI || 'bolt://localhost:7687', status: 'connected' },
-    { name: 'Qdrant', uri: process.env.NEXT_PUBLIC_QDRANT_URL || 'http://localhost:6333', status: 'connected' },
+    {
+      name: 'Neo4j',
+      uri: process.env.NEXT_PUBLIC_NEO4J_URI || 'bolt://localhost:7687',
+      status: 'connected',
+    },
+    {
+      name: 'Qdrant',
+      uri: process.env.NEXT_PUBLIC_QDRANT_URL || 'http://localhost:6333',
+      status: 'connected',
+    },
     { name: 'Valkey (Redis)', uri: 'redis://localhost:6379', status: 'connected' },
     { name: 'Supabase (Auth)', uri: 'PostgreSQL', status: 'connected' },
   ]);
@@ -308,14 +373,21 @@ function DatabasePanel() {
       <InfoBanner text="Database connections are configured via environment variables on the API server. These values are read-only in the dashboard." />
       <div className="space-y-3">
         {connections.map((conn) => (
-          <div key={conn.name} className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4 flex items-center justify-between">
+          <div
+            key={conn.name}
+            className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4 flex items-center justify-between"
+          >
             <div>
               <h4 className="text-sm font-semibold text-slate-200">{conn.name}</h4>
               <p className="text-xs text-slate-500 font-mono mt-0.5">{conn.uri}</p>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full ${conn.status === 'connected' ? 'bg-success-400' : 'bg-threat-400'} animate-pulse`} />
-              <span className={`text-[10px] uppercase tracking-wider font-bold ${conn.status === 'connected' ? 'text-success-400' : 'text-threat-400'}`}>
+              <div
+                className={`h-2 w-2 rounded-full ${conn.status === 'connected' ? 'bg-success-400' : 'bg-threat-400'} animate-pulse`}
+              />
+              <span
+                className={`text-[10px] uppercase tracking-wider font-bold ${conn.status === 'connected' ? 'text-success-400' : 'text-threat-400'}`}
+              >
                 {conn.status}
               </span>
             </div>
@@ -356,13 +428,36 @@ function NotificationsPanel() {
       <InfoBanner text="Notification preferences are stored per-user and apply across all organizations you belong to." />
       <div className="space-y-3">
         {[
-          { key: 'criticalAlerts' as const, label: 'Critical Severity Alerts', desc: 'Immediate notification for CVSS ≥ 9.0 vulnerabilities' },
-          { key: 'newCves' as const, label: 'New CVE Ingestion', desc: 'Notify when new vulnerabilities are ingested' },
-          { key: 'threatActorUpdates' as const, label: 'Threat Actor Activity', desc: 'Updates on tracked APT groups' },
-          { key: 'weeklyDigest' as const, label: 'Weekly Digest', desc: 'Summary of your organization\u2019s risk posture' },
-          { key: 'ingestionStatus' as const, label: 'Ingestion Pipeline Status', desc: 'Alerts on data pipeline failures or delays' },
+          {
+            key: 'criticalAlerts' as const,
+            label: 'Critical Severity Alerts',
+            desc: 'Immediate notification for CVSS ≥ 9.0 vulnerabilities',
+          },
+          {
+            key: 'newCves' as const,
+            label: 'New CVE Ingestion',
+            desc: 'Notify when new vulnerabilities are ingested',
+          },
+          {
+            key: 'threatActorUpdates' as const,
+            label: 'Threat Actor Activity',
+            desc: 'Updates on tracked APT groups',
+          },
+          {
+            key: 'weeklyDigest' as const,
+            label: 'Weekly Digest',
+            desc: 'Summary of your organization\u2019s risk posture',
+          },
+          {
+            key: 'ingestionStatus' as const,
+            label: 'Ingestion Pipeline Status',
+            desc: 'Alerts on data pipeline failures or delays',
+          },
         ].map((item) => (
-          <div key={item.key} className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4 flex items-center justify-between">
+          <div
+            key={item.key}
+            className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4 flex items-center justify-between"
+          >
             <div>
               <h4 className="text-sm font-semibold text-slate-200">{item.label}</h4>
               <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
@@ -426,13 +521,19 @@ export default function SettingsPage() {
                       : 'bg-white/[0.04] ring-white/[0.06] group-hover:ring-white/[0.1]'
                   }`}
                 >
-                  <section.icon className={`h-4.5 w-4.5 ${isActive ? 'text-primary-400' : 'text-slate-400'}`} />
+                  <section.icon
+                    className={`h-4.5 w-4.5 ${isActive ? 'text-primary-400' : 'text-slate-400'}`}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-semibold ${isActive ? 'text-primary-500' : 'text-foreground'}`}>
+                  <h3
+                    className={`text-sm font-semibold ${isActive ? 'text-primary-500' : 'text-foreground'}`}
+                  >
                     {section.label}
                   </h3>
-                  <p className="text-[11px] text-muted-foreground truncate">{section.description}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {section.description}
+                  </p>
                 </div>
                 <ChevronRight
                   className={`h-4 w-4 shrink-0 transition-transform ${

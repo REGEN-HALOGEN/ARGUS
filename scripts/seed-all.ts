@@ -1,7 +1,7 @@
-import { auth } from '../apps/api/src/auth';
-import { getAuthDbPool } from '../apps/api/src/auth-db-pool';
 import * as fs from 'fs';
 import * as path from 'path';
+import { auth } from '../apps/api/src/auth';
+import { getAuthDbPool } from '../apps/api/src/auth-db-pool';
 
 async function tableHasColumn(table: string, column: string): Promise<boolean> {
   const pool = getAuthDbPool();
@@ -24,7 +24,9 @@ async function deleteIfColumnExists(table: string, column: string, value: string
 
 async function removeUser(email: string) {
   const pool = getAuthDbPool();
-  const found = await pool.query<{ id: string }>(`SELECT id FROM "user" WHERE email = $1 LIMIT 1`, [email]);
+  const found = await pool.query<{ id: string }>(`SELECT id FROM "user" WHERE email = $1 LIMIT 1`, [
+    email,
+  ]);
   const userId = found.rows[0]?.id;
   if (!userId) {
     return false;
@@ -43,7 +45,10 @@ async function removeOrg(slug: string) {
   const pool = getAuthDbPool();
   // Ensure we also clean up organization by slug
   if (!(await tableHasColumn('organization', 'slug'))) return;
-  const found = await pool.query<{ id: string }>(`SELECT id FROM "organization" WHERE slug = $1 LIMIT 1`, [slug]);
+  const found = await pool.query<{ id: string }>(
+    `SELECT id FROM "organization" WHERE slug = $1 LIMIT 1`,
+    [slug],
+  );
   const orgId = found.rows[0]?.id;
   if (!orgId) return;
 
@@ -81,11 +86,11 @@ async function main() {
       const pool = getAuthDbPool();
       await pool.query(`UPDATE "user" SET role = $1 WHERE email = $2`, ['super_admin', adminEmail]);
       console.log('✅ Admin user created successfully');
-      
+
       // Attempt to sign in to get headers (session token) for auth.api calls
       const signinRes = await auth.api.signInEmail({
-         body: { email: adminEmail, password: adminPassword },
-         asResponse: true
+        body: { email: adminEmail, password: adminPassword },
+        asResponse: true,
       });
       adminHeaders = signinRes.headers;
     }
@@ -103,38 +108,44 @@ async function main() {
 
     if (userRes?.user) {
       console.log('✅ Regular user created successfully');
-      
+
       const signinRes = await auth.api.signInEmail({
-         body: { email: userEmail, password: userPassword },
-         asResponse: true
+        body: { email: userEmail, password: userPassword },
+        asResponse: true,
       });
       userHeaders = signinRes.headers;
     }
-    
+
     // Auth organization API requires standard requests.
     // However, because Better Auth creates organizations bound to the currently authenticated user
     // We pass the user's headers to auth.api.createOrganization.
     if (userHeaders && userRes?.user) {
-        console.log('Creating Organization for Regular User...');
-        try {
-            const pool = getAuthDbPool();
-            const orgId = 'org_' + Math.random().toString(36).substring(2, 10);
-            const now = new Date();
-            
-            await pool.query(
-                'INSERT INTO "organization" (id, name, slug, "createdAt") VALUES ($1, $2, $3, $4)', 
-                [orgId, orgName, orgSlug, now]
-            );
+      console.log('Creating Organization for Regular User...');
+      try {
+        const pool = getAuthDbPool();
+        const orgId = 'org_' + Math.random().toString(36).substring(2, 10);
+        const now = new Date();
 
-            await pool.query(
-                'INSERT INTO "member" (id, "organizationId", "userId", role, "createdAt") VALUES ($1, $2, $3, $4, $5)',
-                ['mem_' + Math.random().toString(36).substring(2, 10), orgId, userRes.user.id, 'owner', now]
-            );
-            
-            console.log('✅ Organization created successfully via SQL');
-        } catch (e: any) {
-            console.error('Failed to create organization via SQL:', e.message);
-        }
+        await pool.query(
+          'INSERT INTO "organization" (id, name, slug, "createdAt") VALUES ($1, $2, $3, $4)',
+          [orgId, orgName, orgSlug, now],
+        );
+
+        await pool.query(
+          'INSERT INTO "member" (id, "organizationId", "userId", role, "createdAt") VALUES ($1, $2, $3, $4, $5)',
+          [
+            'mem_' + Math.random().toString(36).substring(2, 10),
+            orgId,
+            userRes.user.id,
+            'owner',
+            now,
+          ],
+        );
+
+        console.log('✅ Organization created successfully via SQL');
+      } catch (e: any) {
+        console.error('Failed to create organization via SQL:', e.message);
+      }
     }
 
     const output = `ARGUS Application Login Details
@@ -154,7 +165,6 @@ Organization: ${orgName} (slug: ${orgSlug})
 
     console.log(`\nAll details written to ${outputPath}`);
     process.exit(0);
-
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('Failed:', message);

@@ -4,13 +4,13 @@
 /* Cybersecurity-grade UI with Palantir/CrowdStrike aesthetic      */
 
 /* ─── Fonts ────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 /* ─── Theme Variables ──────────────────────────────────────────── */
 
 @theme {
-  --font-sans: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  --font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", monospace;
 
   /* Cyber Blue Primary */
   --color-primary-50: #eff6ff;
@@ -61,39 +61,68 @@
 /* ─── Keyframes ────────────────────────────────────────────────── */
 
 @keyframes glow {
-  from { box-shadow: 0 0 10px rgba(59, 130, 246, 0.2), 0 0 20px rgba(59, 130, 246, 0.1); }
-  to { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 40px rgba(59, 130, 246, 0.2); }
+  from {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2), 0 0 20px rgba(59, 130, 246, 0.1);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 40px rgba(59, 130, 246, 0.2);
+  }
 }
 
 @keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 @keyframes slide-in {
-  from { transform: translateX(-10px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes scan-line {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
 }
 
 /* ─── Base Styles ──────────────────────────────────────────────── */
 
 * {
-  border-color: theme('colors.white / 0.06');
+  border-color: var(--card-border);
 }
 
 html {
@@ -104,9 +133,9 @@ html {
 }
 
 body {
-  font-family: theme('font-sans');
-  background: #070b14;
-  color: #e2e8f0;
+  font-family: theme("font-sans");
+  background: var(--background);
+  color: var(--foreground);
   overflow-x: hidden;
 }
 
@@ -154,15 +183,15 @@ body {
 /* ─── Light Mode Overrides ─────────────────────────────────────── */
 [data-theme="light"],
 .light {
-  --background: #f1f5f9;
-  --foreground: #0f172a;
+  --background: #f8fafc;
+  --foreground: #020617;
   --muted-foreground: #475569;
   --card-bg: #ffffff;
   --card-border: rgba(0, 0, 0, 0.08);
   --sidebar-bg: #ffffff;
-  --sidebar-border: rgba(0, 0, 0, 0.1);
+  --sidebar-border: rgba(0, 0, 0, 0.06);
   --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-border: rgba(0, 0, 0, 0.08);
   --glass-blur: 12px;
 }
 
@@ -212,23 +241,19 @@ body {
 /* ─── Cyber Glow Effects ───────────────────────────────────────── */
 
 .glow-primary {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15),
-              0 0 60px rgba(59, 130, 246, 0.05);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 0 60px rgba(59, 130, 246, 0.05);
 }
 
 .glow-accent {
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15),
-              0 0 60px rgba(6, 182, 212, 0.05);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15), 0 0 60px rgba(6, 182, 212, 0.05);
 }
 
 .glow-threat {
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15),
-              0 0 60px rgba(239, 68, 68, 0.05);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15), 0 0 60px rgba(239, 68, 68, 0.05);
 }
 
 .glow-success {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15),
-              0 0 60px rgba(16, 185, 129, 0.05);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), 0 0 60px rgba(16, 185, 129, 0.05);
 }
 
 /* ─── Gradient Text ────────────────────────────────────────────── */
@@ -290,8 +315,7 @@ body {
 /* ─── Grid Pattern Background ──────────────────────────────────── */
 
 .bg-grid {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: 40px 40px;
 }
@@ -299,7 +323,7 @@ body {
 /* ─── Scan Line Effect ─────────────────────────────────────────── */
 
 .scan-line::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;

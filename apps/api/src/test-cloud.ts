@@ -1,7 +1,7 @@
-import { getEnv } from '@argus/config';
-import { Client } from 'pg';
-import { getNeo4jDriver } from '@argus/graph';
 import { getCacheClient } from '@argus/cache';
+import { getEnv } from '@argus/config';
+import { getNeo4jDriver } from '@argus/graph';
+import { Client } from 'pg';
 
 async function testConnections() {
   const env = getEnv();
@@ -10,13 +10,13 @@ async function testConnections() {
   // 1. PostgreSQL (Supabase)
   console.log('1. Testing PostgreSQL (Supabase)...');
   // Use Client instead of Pool for simple test, and force SSL via config
-  const client = new Client({ 
+  const client = new Client({
     connectionString: env.DATABASE_URL,
     ssl: {
-      rejectUnauthorized: false
-    }
+      rejectUnauthorized: false,
+    },
   });
-  
+
   try {
     await client.connect();
     const res = await client.query('SELECT NOW()');
@@ -54,7 +54,7 @@ async function testConnections() {
   console.log('\n4. Testing Qdrant Cloud...');
   try {
     const res = await fetch(`${env.QDRANT_URL}/healthz`, {
-      headers: env.QDRANT_API_KEY ? { 'api-key': env.QDRANT_API_KEY } : {}
+      headers: env.QDRANT_API_KEY ? { 'api-key': env.QDRANT_API_KEY } : {},
     });
     if (res.ok) {
       console.log('✅ Qdrant Connected (Health OK)');

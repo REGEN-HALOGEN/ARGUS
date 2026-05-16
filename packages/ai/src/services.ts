@@ -16,10 +16,7 @@ export interface ChatMessage {
   content: string;
 }
 
-export async function chat(
-  messages: ChatMessage[],
-  options: ChatOptions = {},
-): Promise<string> {
+export async function chat(messages: ChatMessage[], options: ChatOptions = {}): Promise<string> {
   const primaryModelId = options.model ?? MODELS.PRO;
   const fallbacks: ModelId[] = ['gemini-2.5-flash', 'gemini-pro-latest'] as any;
   const modelsToTry = [primaryModelId, ...fallbacks];
@@ -50,10 +47,13 @@ export async function chat(
     } catch (error: any) {
       lastError = error;
       const isQuotaError = error.message?.includes('429') || error.message?.includes('quota');
-      const isNotFoundError = error.message?.includes('404') || error.message?.includes('not found');
-      
+      const isNotFoundError =
+        error.message?.includes('404') || error.message?.includes('not found');
+
       if (isQuotaError || isNotFoundError) {
-        console.warn(`[AI-FALLBACK] Model ${modelId} failed (${isQuotaError ? '429' : '404'}). Trying next...`);
+        console.warn(
+          `[AI-FALLBACK] Model ${modelId} failed (${isQuotaError ? '429' : '404'}). Trying next...`,
+        );
         continue;
       }
       throw error;
@@ -105,10 +105,13 @@ export async function* streamChat(
     } catch (error: any) {
       lastError = error;
       const isQuotaError = error.message?.includes('429') || error.message?.includes('quota');
-      const isNotFoundError = error.message?.includes('404') || error.message?.includes('not found');
-      
+      const isNotFoundError =
+        error.message?.includes('404') || error.message?.includes('not found');
+
       if (isQuotaError || isNotFoundError) {
-        console.warn(`[AI-FALLBACK] Streaming model ${modelId} failed (${isQuotaError ? '429' : '404'}). Trying next...`);
+        console.warn(
+          `[AI-FALLBACK] Streaming model ${modelId} failed (${isQuotaError ? '429' : '404'}). Trying next...`,
+        );
         continue;
       }
       throw error;
@@ -133,14 +136,11 @@ const CYPHER_BLOCKLIST = [
 ];
 
 export async function nlToCypher(query: string): Promise<{ cypher: string; safe: boolean }> {
-  const response = await chat(
-    [{ role: 'user', content: query }],
-    {
-      systemPrompt: SYSTEM_PROMPTS.NL_TO_CYPHER,
-      model: MODELS.PRO,
-      temperature: 0.1,
-    },
-  );
+  const response = await chat([{ role: 'user', content: query }], {
+    systemPrompt: SYSTEM_PROMPTS.NL_TO_CYPHER,
+    model: MODELS.PRO,
+    temperature: 0.1,
+  });
 
   const cypher = response.trim();
 
@@ -150,9 +150,7 @@ export async function nlToCypher(query: string): Promise<{ cypher: string; safe:
   }
 
   const upperCypher = cypher.toUpperCase();
-  const hasBlockedKeyword = CYPHER_BLOCKLIST.some((keyword) =>
-    upperCypher.includes(keyword),
-  );
+  const hasBlockedKeyword = CYPHER_BLOCKLIST.some((keyword) => upperCypher.includes(keyword));
 
   if (hasBlockedKeyword) {
     return { cypher: '', safe: false };

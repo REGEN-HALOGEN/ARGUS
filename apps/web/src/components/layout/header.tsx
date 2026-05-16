@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Bell, LogOut, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
-import { signOut } from '@/lib/auth';
 import { clearActiveTenantId } from '@/lib/api';
+import { signOut } from '@/lib/auth';
+import { motion } from 'framer-motion';
+import { Bell, CheckCircle2, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -18,8 +18,6 @@ export function Header() {
     clearActiveTenantId();
     router.replace('/login');
   };
-
-
 
   return (
     <motion.header
@@ -40,11 +38,11 @@ export function Header() {
       <div className="flex items-center gap-2">
         {/* Notifications */}
         <div className="relative">
-          <button 
+          <button
             onClick={() => setShowNotifications(!showNotifications)}
             className={`relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
-              showNotifications 
-                ? 'bg-white/[0.08] text-slate-200' 
+              showNotifications
+                ? 'bg-white/[0.08] text-slate-200'
                 : 'text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
             }`}
           >
@@ -54,18 +52,17 @@ export function Header() {
 
           {showNotifications && (
             <>
-              <div 
-                className="fixed inset-0 z-40" 
-                onClick={() => setShowNotifications(false)} 
-              />
-              <motion.div 
+              <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+              <motion.div
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 className="absolute right-0 top-full mt-2 w-80 rounded-xl bg-[#0c1220]/95 p-4 ring-1 ring-white/[0.06] shadow-xl backdrop-blur-xl z-50"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-sm font-semibold text-slate-200">Notifications</h4>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-500 font-medium px-2 py-0.5 rounded-full bg-white/[0.04]">0 New</span>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 font-medium px-2 py-0.5 rounded-full bg-white/[0.04]">
+                    0 New
+                  </span>
                 </div>
                 <div className="flex flex-col items-center justify-center py-6 text-center">
                   <div className="h-10 w-10 rounded-full bg-success-500/10 flex items-center justify-center mb-3">

@@ -1,26 +1,56 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Search,
+  ArrowRight,
+  BrainCircuit,
   LayoutDashboard,
   Network,
-  BrainCircuit,
+  Search,
+  Settings,
   Shield,
   Users,
-  Settings,
-  ArrowRight,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const commands = [
-  { id: 'dashboard', label: 'Go to Dashboard', icon: LayoutDashboard, href: '/dashboard', group: 'Navigation' },
-  { id: 'graph', label: 'Go to Graph Explorer', icon: Network, href: '/graph', group: 'Navigation' },
-  { id: 'analyst', label: 'Go to AI Analyst', icon: BrainCircuit, href: '/analyst', group: 'Navigation' },
+  {
+    id: 'dashboard',
+    label: 'Go to Dashboard',
+    icon: LayoutDashboard,
+    href: '/dashboard',
+    group: 'Navigation',
+  },
+  {
+    id: 'graph',
+    label: 'Go to Graph Explorer',
+    icon: Network,
+    href: '/graph',
+    group: 'Navigation',
+  },
+  {
+    id: 'analyst',
+    label: 'Go to AI Analyst',
+    icon: BrainCircuit,
+    href: '/analyst',
+    group: 'Navigation',
+  },
   { id: 'cve', label: 'Go to CVE Intelligence', icon: Shield, href: '/cve', group: 'Navigation' },
-  { id: 'threats', label: 'Go to Threat Actors', icon: Users, href: '/threats', group: 'Navigation' },
-  { id: 'settings', label: 'Go to Settings', icon: Settings, href: '/settings', group: 'Navigation' },
+  {
+    id: 'threats',
+    label: 'Go to Threat Actors',
+    icon: Users,
+    href: '/threats',
+    group: 'Navigation',
+  },
+  {
+    id: 'settings',
+    label: 'Go to Settings',
+    icon: Settings,
+    href: '/settings',
+    group: 'Navigation',
+  },
 ] as const;
 
 export function CommandPalette() {
@@ -29,9 +59,7 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const router = useRouter();
 
-  const filtered = commands.filter((cmd) =>
-    cmd.label.toLowerCase().includes(query.toLowerCase()),
-  );
+  const filtered = commands.filter((cmd) => cmd.label.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -104,7 +132,9 @@ export function CommandPalette() {
                 placeholder="Search commands..."
                 className="flex-1 bg-transparent text-sm text-slate-200 placeholder:text-slate-500 outline-none"
               />
-              <kbd className="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-slate-500">ESC</kbd>
+              <kbd className="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-slate-500">
+                ESC
+              </kbd>
             </div>
 
             {/* Results */}

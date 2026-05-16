@@ -1,5 +1,5 @@
+import type { GraphData, GraphEdge, GraphNode } from '@argus/types';
 import type { Record as Neo4jRecord } from 'neo4j-driver';
-import type { GraphNode, GraphEdge, GraphData } from '@argus/types';
 import { getSession } from './driver';
 
 // ─── Query Executor ──────────────────────────────────────────────

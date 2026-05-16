@@ -1,18 +1,23 @@
 import { Hono } from 'hono';
-import { graphRoutes } from './graph';
-import { authRoutes } from './auth';
+import {
+  requireAuth,
+  requireOrgRole,
+  requirePlatformAdmin,
+  requireTenant,
+} from '../../middleware/auth';
+import { adminRoutes } from './admin';
 import { aiRoutes } from './ai';
 import { assetsRoutes } from './assets';
+import { authRoutes } from './auth';
 import { cveRoutes } from './cve';
-import { threatActorsRoutes } from './threat-actors';
 import { dashboardRoutes } from './dashboard';
+import { graphRoutes } from './graph';
 import { ingestionRoutes } from './ingestion';
-import { newsRoutes } from './news';
-import { requireAuth, requireOrgRole, requirePlatformAdmin, requireTenant } from '../../middleware/auth';
-import { onboardingRoutes } from './onboarding';
 import { meRoutes } from './me';
-import { adminRoutes } from './admin';
+import { newsRoutes } from './news';
+import { onboardingRoutes } from './onboarding';
 import { organizationRoutes } from './organization';
+import { threatActorsRoutes } from './threat-actors';
 
 // ─── V1 API Router ───────────────────────────────────────────────
 

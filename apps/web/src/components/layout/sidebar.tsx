@@ -1,24 +1,24 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  LayoutDashboard,
-  Network,
-  BrainCircuit,
-  Shield,
-  Users,
-  Settings,
-  SlidersHorizontal,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  Command,
-} from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Logo } from '@/components/ui/logo';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  BrainCircuit,
+  ChevronLeft,
+  ChevronRight,
+  Command,
+  LayoutDashboard,
+  Network,
+  Search,
+  Settings,
+  Shield,
+  SlidersHorizontal,
+  Users,
+} from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { NewsWidget } from './news-widget';
 
 type PlatformRole = 'super_admin';
@@ -99,10 +99,10 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex h-16 items-center px-4 border-b border-sidebar-border">
-        <Logo 
-          width={32} 
-          height={32} 
-          showText={!collapsed} 
+        <Logo
+          width={32}
+          height={32}
+          showText={!collapsed}
           className="transition-all duration-200"
         />
       </div>
@@ -174,9 +174,7 @@ export function Sidebar() {
       </nav>
 
       {/* Conditional News Widget */}
-      {platformRole !== 'super_admin' && (
-        <NewsWidget collapsed={collapsed} />
-      )}
+      {platformRole !== 'super_admin' && <NewsWidget collapsed={collapsed} />}
 
       {/* Footer Controls */}
       <div className="p-3 border-t border-sidebar-border">

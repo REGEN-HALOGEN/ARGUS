@@ -35,7 +35,11 @@ function isCertChainError(message: string | undefined): boolean {
     return false;
   }
   const m = message.toLowerCase();
-  return m.includes('self signed certificate') || m.includes('certificate chain') || m.includes('unable to verify');
+  return (
+    m.includes('self signed certificate') ||
+    m.includes('certificate chain') ||
+    m.includes('unable to verify')
+  );
 }
 
 async function tryQuery(databaseUrl: string, sslInsecure: boolean) {
@@ -60,8 +64,7 @@ async function main() {
 
   const envInsecure = env.DATABASE_SSL_INSECURE === 'true';
 
-  const run = async (insecure: boolean) =>
-    tryQuery(env.DATABASE_URL, insecure);
+  const run = async (insecure: boolean) => tryQuery(env.DATABASE_URL, insecure);
 
   try {
     let rows: { ok: number; database: string; user: string; server_time: Date }[];
@@ -79,7 +82,9 @@ async function main() {
           console.log(
             '\nTLS: certificate verification failed (common on Windows with proxies). Retrying with relaxed TLS for this test only.',
           );
-          console.log('Add DATABASE_SSL_INSECURE=true to .env so the API uses the same behavior.\n');
+          console.log(
+            'Add DATABASE_SSL_INSECURE=true to .env so the API uses the same behavior.\n',
+          );
           const r = await run(true);
           rows = r.rows as typeof rows;
         } else {
@@ -95,13 +100,19 @@ async function main() {
     const e = err as { code?: string; message?: string };
     console.error('\nConnection failed:', e.message ?? err);
     if (e.code === '28P01') {
-      console.error('\nHint: 28P01 = wrong database user or password in DATABASE_URL (not API keys).');
+      console.error(
+        '\nHint: 28P01 = wrong database user or password in DATABASE_URL (not API keys).',
+      );
     }
     if (e.code === 'ENOTFOUND' || e.code === 'ETIMEDOUT') {
-      console.error('\nHint: Check network / IPv4 vs IPv6. Try Session pooler URI from Supabase if direct host fails.');
+      console.error(
+        '\nHint: Check network / IPv4 vs IPv6. Try Session pooler URI from Supabase if direct host fails.',
+      );
     }
     if (isCertChainError(e.message)) {
-      console.error('\nHint: TLS certificate issue. For local dev add DATABASE_SSL_INSECURE=true to .env, then retry.');
+      console.error(
+        '\nHint: TLS certificate issue. For local dev add DATABASE_SSL_INSECURE=true to .env, then retry.',
+      );
     }
     process.exit(1);
   }

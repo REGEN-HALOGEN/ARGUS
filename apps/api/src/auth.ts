@@ -1,5 +1,5 @@
 import { getEnv } from '@argus/config';
-import { betterAuth, type BetterAuthOptions } from 'better-auth';
+import { type BetterAuthOptions, betterAuth } from 'better-auth';
 import { getMigrations } from 'better-auth/db/migration';
 import { admin, organization } from 'better-auth/plugins';
 import { adminAc } from 'better-auth/plugins/admin/access';
@@ -9,7 +9,8 @@ const env = getEnv();
 
 // --- NUCLEAR ORIGIN FIX ---
 // Force HTTPS and clean up URLs
-const rawBaseURL = process.env.BETTER_AUTH_URL || 'https://argusapi-production.up.railway.app/api/v1/auth';
+const rawBaseURL =
+  process.env.BETTER_AUTH_URL || 'https://argusapi-production.up.railway.app/api/v1/auth';
 let baseURL = rawBaseURL.replace('http://', 'https://');
 
 // Fail-safe: If we are on Railway but baseURL still says localhost, force the production URL
@@ -22,8 +23,10 @@ const origins = [
   'https://argus-web-three.vercel.app',
   'https://argus-web.vercel.app',
   'https://argus-ngzfjupwf-ashwins-projects-90bc185c.vercel.app', // From logs
-  'http://localhost:3000'
-].filter(Boolean).map(url => url!.trim().replace(/\/+$/, ''));
+  'http://localhost:3000',
+]
+  .filter(Boolean)
+  .map((url) => url!.trim().replace(/\/+$/, ''));
 
 // DYNAMIC VERCEL TRUST: If we are in production, trust common Vercel patterns
 if (process.env.NODE_ENV === 'production' || env.NODE_ENV === 'production') {
@@ -74,6 +77,9 @@ export const auth = betterAuth(authConfig) as any;
     }
     console.log('[AUTH] Database schema up to date');
   } catch (error) {
-    console.error('[AUTH] Database migration failed:', error instanceof Error ? error.message : error);
+    console.error(
+      '[AUTH] Database migration failed:',
+      error instanceof Error ? error.message : error,
+    );
   }
 })();

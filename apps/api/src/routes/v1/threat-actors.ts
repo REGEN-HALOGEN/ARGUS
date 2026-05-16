@@ -1,6 +1,6 @@
-import { Hono } from 'hono';
-import { getNeo4jDriver } from '@argus/graph';
 import { withCache } from '@argus/cache';
+import { getNeo4jDriver } from '@argus/graph';
+import { Hono } from 'hono';
 
 type TenantEnv = {
   Variables: {
@@ -17,7 +17,8 @@ threatActorsRoutes.get('/', async (c) => {
   const data = await withCache(`tenant:${tenantId}:threat-actors:list`, 300, async () => {
     const session = getNeo4jDriver().session();
     try {
-      const result = await session.run(`
+      const result = await session.run(
+        `
         MATCH (t:ThreatActor)
         OPTIONAL MATCH (t)-[:EXPLOITS]->(c:CVE)
         OPTIONAL MATCH (t)-[:USES_TECHNIQUE]->(tech:AttackTechnique)
@@ -27,11 +28,16 @@ threatActorsRoutes.get('/', async (c) => {
                count(DISTINCT tech) AS techniqueCount,
                count(DISTINCT a) AS targetedAssets
         ORDER BY t.sophistication, t.name
-      `, { tenantId });
+      `,
+        { tenantId },
+      );
 
       return result.records.map((r) => {
         const props = r.get('t').properties;
-        const toNum = (v: unknown) => (typeof v === 'object' && v !== null && 'toNumber' in (v as Record<string, unknown>)) ? (v as { toNumber: () => number }).toNumber() : Number(v);
+        const toNum = (v: unknown) =>
+          typeof v === 'object' && v !== null && 'toNumber' in (v as Record<string, unknown>)
+            ? (v as { toNumber: () => number }).toNumber()
+            : Number(v);
         return {
           ...props,
           cveCount: toNum(r.get('cveCount')),
@@ -71,7 +77,10 @@ threatActorsRoutes.get('/:name', async (c) => {
         const record = result.records[0];
         if (!record) return null;
 
-        const toNum = (v: unknown) => (typeof v === 'object' && v !== null && 'toNumber' in (v as Record<string, unknown>)) ? (v as { toNumber: () => number }).toNumber() : Number(v);
+        const toNum = (v: unknown) =>
+          typeof v === 'object' && v !== null && 'toNumber' in (v as Record<string, unknown>)
+            ? (v as { toNumber: () => number }).toNumber()
+            : Number(v);
 
         return {
           ...record.get('t').properties,
@@ -79,7 +88,7 @@ threatActorsRoutes.get('/:name', async (c) => {
           techniques: record.get('techniques'),
           targets: record.get('targets').map((target: any) => ({
             ...target,
-            criticality: target.criticality !== undefined ? toNum(target.criticality) : undefined
+            criticality: target.criticality !== undefined ? toNum(target.criticality) : undefined,
           })),
         };
       } finally {
@@ -87,7 +96,11 @@ threatActorsRoutes.get('/:name', async (c) => {
       }
     });
 
-    if (!data) return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Threat actor not found' } }, 404);
+    if (!data)
+      return c.json(
+        { success: false, error: { code: 'NOT_FOUND', message: 'Threat actor not found' } },
+        404,
+      );
 
     return c.json({ success: true, data });
   } catch (error) {

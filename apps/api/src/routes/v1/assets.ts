@@ -1,7 +1,7 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { PaginationSchema } from '@argus/types';
 import { getNeo4jDriver } from '@argus/graph';
+import { PaginationSchema } from '@argus/types';
+import { zValidator } from '@hono/zod-validator';
+import { Hono } from 'hono';
 
 type TenantEnv = {
   Variables: {
@@ -24,9 +24,12 @@ assetsRoutes.get('/', zValidator('query', PaginationSchema), async (c) => {
       'MATCH (a:Asset {tenantId: $tenantId}) RETURN a ORDER BY a.criticality SKIP $skip LIMIT $limit',
       { tenantId, skip, limit },
     );
-    const countResult = await session.run('MATCH (a:Asset {tenantId: $tenantId}) RETURN count(a) AS total', {
-      tenantId,
-    });
+    const countResult = await session.run(
+      'MATCH (a:Asset {tenantId: $tenantId}) RETURN count(a) AS total',
+      {
+        tenantId,
+      },
+    );
 
     const assets = dataResult.records.map((r) => r.get('a').properties);
     const total = countResult.records[0]?.get('total')?.toNumber?.() ?? 0;
@@ -48,9 +51,16 @@ assetsRoutes.get('/:id', async (c) => {
   const tenantId = c.get('tenantId');
   const session = getNeo4jDriver().session();
   try {
-    const result = await session.run('MATCH (a:Asset {id: $id, tenantId: $tenantId}) RETURN a', { id, tenantId });
+    const result = await session.run('MATCH (a:Asset {id: $id, tenantId: $tenantId}) RETURN a', {
+      id,
+      tenantId,
+    });
     const record = result.records[0];
-    if (!record) return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Asset not found' } }, 404);
+    if (!record)
+      return c.json(
+        { success: false, error: { code: 'NOT_FOUND', message: 'Asset not found' } },
+        404,
+      );
 
     return c.json({ success: true, data: record.get('a').properties });
   } finally {

@@ -30,17 +30,13 @@ export function Logo({ className = '', width = 32, height = 32, showText = true 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div className="relative shrink-0" style={{ width, height }}>
-        <Image
-          src={logoSrc}
-          alt="ARGUS Logo"
-          fill
-          className="object-contain"
-          priority
-        />
+        <Image src={logoSrc} alt="ARGUS Logo" fill className="object-contain" priority />
       </div>
       {showText && (
         <div className="flex flex-col">
-          <span className="text-lg font-bold tracking-tight text-foreground leading-none">ARGUS</span>
+          <span className="text-lg font-bold tracking-tight text-foreground leading-none">
+            ARGUS
+          </span>
           <p className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
             Security Intelligence
           </p>

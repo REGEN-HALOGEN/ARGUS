@@ -3,8 +3,8 @@
  * Seeds the graph database with example cybersecurity data
  */
 
+import { indexCVE, initQdrant } from '@argus/ai';
 import neo4j from '../packages/graph/node_modules/neo4j-driver';
-import { initQdrant, indexCVE } from '@argus/ai';
 
 const NEO4J_URI = process.env.NEO4J_URI ?? 'bolt://localhost:7687';
 const NEO4J_USER = process.env.NEO4J_USER ?? 'neo4j';
@@ -27,14 +27,78 @@ async function seed() {
 
     // ── Assets ──
     const assets = [
-      { id: 'a1', hostname: 'web-prod-01', ip: '10.0.1.10', type: 'server', internetFacing: true, criticality: 'high', os: 'Ubuntu 22.04' },
-      { id: 'a2', hostname: 'api-gateway-01', ip: '10.0.1.20', type: 'server', internetFacing: true, criticality: 'critical', os: 'Alpine Linux' },
-      { id: 'a3', hostname: 'prod-db-01', ip: '10.0.2.10', type: 'database', internetFacing: false, criticality: 'critical', os: 'Ubuntu 22.04' },
-      { id: 'a4', hostname: 'admin-srv-01', ip: '10.0.3.10', type: 'server', internetFacing: false, criticality: 'critical', os: 'Windows Server 2022' },
-      { id: 'a5', hostname: 'dev-workstation-01', ip: '10.0.4.10', type: 'workstation', internetFacing: false, criticality: 'medium', os: 'macOS 14' },
-      { id: 'a6', hostname: 'vpn-gateway', ip: '10.0.0.5', type: 'network_device', internetFacing: true, criticality: 'high', os: 'FortiOS' },
-      { id: 'a7', hostname: 'k8s-node-01', ip: '10.0.5.10', type: 'container', internetFacing: false, criticality: 'high', os: 'Container Linux' },
-      { id: 'a8', hostname: 'mail-server', ip: '10.0.1.30', type: 'server', internetFacing: true, criticality: 'high', os: 'Ubuntu 22.04' },
+      {
+        id: 'a1',
+        hostname: 'web-prod-01',
+        ip: '10.0.1.10',
+        type: 'server',
+        internetFacing: true,
+        criticality: 'high',
+        os: 'Ubuntu 22.04',
+      },
+      {
+        id: 'a2',
+        hostname: 'api-gateway-01',
+        ip: '10.0.1.20',
+        type: 'server',
+        internetFacing: true,
+        criticality: 'critical',
+        os: 'Alpine Linux',
+      },
+      {
+        id: 'a3',
+        hostname: 'prod-db-01',
+        ip: '10.0.2.10',
+        type: 'database',
+        internetFacing: false,
+        criticality: 'critical',
+        os: 'Ubuntu 22.04',
+      },
+      {
+        id: 'a4',
+        hostname: 'admin-srv-01',
+        ip: '10.0.3.10',
+        type: 'server',
+        internetFacing: false,
+        criticality: 'critical',
+        os: 'Windows Server 2022',
+      },
+      {
+        id: 'a5',
+        hostname: 'dev-workstation-01',
+        ip: '10.0.4.10',
+        type: 'workstation',
+        internetFacing: false,
+        criticality: 'medium',
+        os: 'macOS 14',
+      },
+      {
+        id: 'a6',
+        hostname: 'vpn-gateway',
+        ip: '10.0.0.5',
+        type: 'network_device',
+        internetFacing: true,
+        criticality: 'high',
+        os: 'FortiOS',
+      },
+      {
+        id: 'a7',
+        hostname: 'k8s-node-01',
+        ip: '10.0.5.10',
+        type: 'container',
+        internetFacing: false,
+        criticality: 'high',
+        os: 'Container Linux',
+      },
+      {
+        id: 'a8',
+        hostname: 'mail-server',
+        ip: '10.0.1.30',
+        type: 'server',
+        internetFacing: true,
+        criticality: 'high',
+        os: 'Ubuntu 22.04',
+      },
     ];
 
     for (const a of assets) {
@@ -47,11 +111,41 @@ async function seed() {
 
     // ── CVEs ──
     const cves = [
-      { cveId: 'CVE-2024-0001', severity: 'critical', cvss: 9.8, exploitedInWild: true, description: 'Remote code execution in web framework' },
-      { cveId: 'CVE-2024-0042', severity: 'critical', cvss: 9.1, exploitedInWild: true, description: 'Authentication bypass in SSH service' },
-      { cveId: 'CVE-2024-1337', severity: 'high', cvss: 8.5, exploitedInWild: false, description: 'SQL injection in API gateway' },
-      { cveId: 'CVE-2024-2048', severity: 'high', cvss: 7.8, exploitedInWild: false, description: 'Privilege escalation via kernel vulnerability' },
-      { cveId: 'CVE-2024-3001', severity: 'medium', cvss: 6.5, exploitedInWild: false, description: 'Information disclosure in logging module' },
+      {
+        cveId: 'CVE-2024-0001',
+        severity: 'critical',
+        cvss: 9.8,
+        exploitedInWild: true,
+        description: 'Remote code execution in web framework',
+      },
+      {
+        cveId: 'CVE-2024-0042',
+        severity: 'critical',
+        cvss: 9.1,
+        exploitedInWild: true,
+        description: 'Authentication bypass in SSH service',
+      },
+      {
+        cveId: 'CVE-2024-1337',
+        severity: 'high',
+        cvss: 8.5,
+        exploitedInWild: false,
+        description: 'SQL injection in API gateway',
+      },
+      {
+        cveId: 'CVE-2024-2048',
+        severity: 'high',
+        cvss: 7.8,
+        exploitedInWild: false,
+        description: 'Privilege escalation via kernel vulnerability',
+      },
+      {
+        cveId: 'CVE-2024-3001',
+        severity: 'medium',
+        cvss: 6.5,
+        exploitedInWild: false,
+        description: 'Information disclosure in logging module',
+      },
     ];
 
     for (const c of cves) {
@@ -71,13 +165,20 @@ async function seed() {
     ];
 
     for (const t of actors) {
-      await session.run(`CREATE (t:ThreatActor {name: $name, country: $country, sophistication: $sophistication})`, t);
+      await session.run(
+        `CREATE (t:ThreatActor {name: $name, country: $country, sophistication: $sophistication})`,
+        t,
+      );
     }
     console.info(`  ✓ Created ${actors.length} threat actors`);
 
     // ── Crown Jewels ──
-    await session.run(`CREATE (c:CrownJewel {name: 'Customer Database', importance: 'critical', businessImpact: 'catastrophic'})`);
-    await session.run(`CREATE (c:CrownJewel {name: 'Source Code Repository', importance: 'critical', businessImpact: 'major'})`);
+    await session.run(
+      `CREATE (c:CrownJewel {name: 'Customer Database', importance: 'critical', businessImpact: 'catastrophic'})`,
+    );
+    await session.run(
+      `CREATE (c:CrownJewel {name: 'Source Code Repository', importance: 'critical', businessImpact: 'major'})`,
+    );
     console.info('  ✓ Created 2 crown jewels');
 
     // ── Attack Techniques ──
@@ -85,11 +186,18 @@ async function seed() {
       { mitreId: 'T1190', name: 'Exploit Public-Facing Application', tactic: 'initial_access' },
       { mitreId: 'T1021', name: 'Remote Services', tactic: 'lateral_movement' },
       { mitreId: 'T1078', name: 'Valid Accounts', tactic: 'persistence' },
-      { mitreId: 'T1068', name: 'Exploitation for Privilege Escalation', tactic: 'privilege_escalation' },
+      {
+        mitreId: 'T1068',
+        name: 'Exploitation for Privilege Escalation',
+        tactic: 'privilege_escalation',
+      },
     ];
 
     for (const t of techniques) {
-      await session.run(`CREATE (t:AttackTechnique {mitreId: $mitreId, name: $name, tactic: $tactic})`, t);
+      await session.run(
+        `CREATE (t:AttackTechnique {mitreId: $mitreId, name: $name, tactic: $tactic})`,
+        t,
+      );
     }
     console.info(`  ✓ Created ${techniques.length} ATT&CK techniques`);
 

@@ -9,4 +9,11 @@ export type { ChatOptions, ChatMessage } from './services';
 export { SYSTEM_PROMPTS, USER_PROMPTS, buildPrompt } from './prompts';
 export type { PromptTemplate } from './prompts';
 
-export { qdrant, initQdrant, generateEmbedding, indexCVE, searchCVEs, COLLECTION_NAME } from './embeddings';
+export {
+  qdrant,
+  initQdrant,
+  generateEmbedding,
+  indexCVE,
+  searchCVEs,
+  COLLECTION_NAME,
+} from './embeddings';
