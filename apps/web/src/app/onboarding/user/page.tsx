@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 export default function UserOnboardingPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,9 +20,9 @@ export default function UserOnboardingPage() {
     setError('');
 
     try {
-      const { error } = await signUp.email({ email, password });
-      if (error) {
-        setError(error.message || 'Registration failed');
+      const { error: authError } = await signUp.email({ email, password, name });
+      if (authError) {
+        setError(authError.message || 'Registration failed');
       } else {
         setSuccess(true);
       }
@@ -71,6 +72,20 @@ export default function UserOnboardingPage() {
                 {error}
               </div>
             )}
+            
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-2xl bg-background px-4 py-3.5 text-sm text-foreground border border-card-border focus:outline-none focus:ring-2 focus:ring-accent-500/50 placeholder:text-muted-foreground/50 transition-all"
+                placeholder="Jane Doe"
+                required
+              />
+            </div>
 
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
