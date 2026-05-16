@@ -18,6 +18,7 @@ import {
   Command,
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
+import { Logo } from '@/components/ui/logo';
 
 type PlatformRole = 'super_admin';
 type OrgRole = 'org_admin' | 'operator' | 'analyst' | 'viewer';
@@ -96,25 +97,13 @@ export function Sidebar() {
       className="fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r border-white/[0.06] bg-[#0a0f1a]/90 backdrop-blur-xl"
     >
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 px-4 border-b border-white/[0.06]">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-500/15 ring-1 ring-primary-500/30">
-          <Shield className="h-5 w-5 text-primary-400" />
-        </div>
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.15 }}
-            >
-              <span className="text-lg font-bold tracking-tight text-gradient-primary">ARGUS</span>
-              <p className="text-[10px] font-medium text-slate-500 leading-none mt-0.5">
-                Security Intelligence
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="flex h-16 items-center px-4 border-b border-white/[0.06]">
+        <Logo 
+          width={32} 
+          height={32} 
+          showText={!collapsed} 
+          className="transition-all duration-200"
+        />
       </div>
 
       {/* Search trigger */}

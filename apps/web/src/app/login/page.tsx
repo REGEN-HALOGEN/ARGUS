@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Shield, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { API_BASE, setActiveTenantId } from '@/lib/api';
+import { Logo } from '@/components/ui/logo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -66,9 +67,7 @@ export default function LoginPage() {
         <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary-500/20 blur-3xl pointer-events-none" />
         
         <div className="flex flex-col items-center mb-8 relative z-10">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-500/10 ring-1 ring-primary-500/30 mb-4">
-            <Shield className="h-6 w-6 text-primary-400" />
-          </div>
+          <Logo width={48} height={48} showText={false} className="mb-4" />
           <h1 className="text-2xl font-bold text-slate-100 tracking-tight">ARGUS Platform</h1>
           <p className="text-sm text-slate-400 mt-1">Sign in to access your dashboard</p>
         </div>
