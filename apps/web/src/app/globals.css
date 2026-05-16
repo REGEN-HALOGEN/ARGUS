@@ -407,6 +407,27 @@ body {
   background: var(--muted-foreground);
 }
 
+/* ─── Aceternity Background Ripple Effect ─────────────────────── */
+@keyframes cell-ripple {
+  0% {
+    opacity: 0.1;
+    background-color: transparent;
+  }
+  50% {
+    opacity: 1;
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+  100% {
+    opacity: 0.1;
+    background-color: transparent;
+  }
+}
+
+.animate-cell-ripple {
+  animation: cell-ripple var(--duration, 600ms) ease-out none 1 var(--delay, 0ms);
+}
+
 /* ─── Cursor & Caret ─────────────────────────────────────────── */
 * {
   caret-color: var(--color-primary-500);
