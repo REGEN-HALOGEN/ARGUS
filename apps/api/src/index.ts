@@ -43,8 +43,9 @@ rootApp.use('*', secureHeaders());
 rootApp.use('*', async (c, next) => {
   const origin = c.req.header('Origin');
   const host = c.req.header('Host');
-  if (c.req.path.includes('/auth')) {
-    console.info(`[AUTH-DEBUG] Path: ${c.req.path} | Origin: ${origin} | Host: ${host}`);
+  const hasCookie = !!c.req.header('Cookie');
+  if (c.req.path.includes('/auth') || c.req.path.includes('/ai')) {
+    console.info(`[AUTH-DEBUG] Path: ${c.req.path} | Origin: ${origin} | Cookie: ${hasCookie ? 'YES' : 'NO'}`);
   }
   await next();
 });
@@ -52,20 +53,37 @@ rootApp.use('*', async (c, next) => {
 // --- FAIL-SAFE CROSS-SITE COOKIE FIX ---
 rootApp.use('*', async (c, next) => {
   await next();
-  const setCookie = c.res.headers.get('Set-Cookie');
-  if (setCookie) {
-    let fixedCookie = setCookie;
-    // Replace Lax/Strict with None
-    fixedCookie = fixedCookie.replace(/SameSite=(Lax|Strict)/gi, 'SameSite=None');
+  
+  // Get all set-cookie headers
+  const setCookies = c.res.headers.get('Set-Cookie');
+  if (setCookies) {
+    // Split and process each cookie
+    const cookies = setCookies.split(/,(?=[^;]+=[^;]+)/);
+    const fixedCookies = cookies.map(cookie => {
+      let fixed = cookie.trim();
+      
+      // Force SameSite=None
+      if (fixed.includes('SameSite=')) {
+        fixed = fixed.replace(/SameSite=(Lax|Strict)/gi, 'SameSite=None');
+      } else {
+        fixed += '; SameSite=None';
+      }
+      
+      // Force Secure
+      if (!fixed.toLowerCase().includes('secure')) {
+        fixed += '; Secure';
+      }
+      
+      // Add Partitioned for modern browser cross-site support
+      if (!fixed.toLowerCase().includes('partitioned')) {
+        fixed += '; Partitioned';
+      }
+      
+      return fixed;
+    });
     
-    // Ensure required attributes for cross-site cookies are present
-    if (!fixedCookie.includes('SameSite=None')) fixedCookie += '; SameSite=None';
-    if (!fixedCookie.includes('Secure')) fixedCookie += '; Secure';
-    if (!fixedCookie.includes('Partitioned')) fixedCookie += '; Partitioned';
-    
-    if (fixedCookie !== setCookie) {
-      c.res.headers.set('Set-Cookie', fixedCookie);
-    }
+    // Join back and set
+    c.res.headers.set('Set-Cookie', fixedCookies.join(', '));
   }
 });
 
