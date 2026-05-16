@@ -15,12 +15,18 @@ const baseURL = rawBaseURL.replace('http://', 'https://');
 const origins = [
   env.WEB_URL,
   'https://argus-web.vercel.app',
-  'https://argus-web-git-main-ashwins-projects-90bc185c.vercel.app', // Hardcoded for your current deployment
+  'https://argus-cyber.vercel.app', // Adding a common variant
   'http://localhost:3000'
 ].filter(Boolean).map(url => url!.trim().replace(/\/+$/, ''));
 
+// Add any other deployment-specific URLs you use
+if (process.env.VERCEL_URL) {
+  origins.push(`https://${process.env.VERCEL_URL}`);
+}
+
 console.info(`[AUTH] INITIALIZING WITH BASE URL: ${baseURL}`);
-console.info(`[AUTH] TRUSTING ORIGINS: ${origins.join(', ')}`);
+console.info(`[AUTH] TRUSTED ORIGINS: ${origins.join(', ')}`);
+console.info(`[AUTH] CURRENT WEB_URL ENV: ${env.WEB_URL}`);
 
 const database = getAuthDbPool();
 
