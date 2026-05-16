@@ -31,8 +31,8 @@ export function getGeminiClient(): GoogleGenerativeAI {
 // ─── Model Constants ─────────────────────────────────────────────
 
 export const MODELS = {
-  PRO: 'gemini-2.0-flash-lite',
-  FLASH: 'gemini-2.0-flash-lite',
+  PRO: 'gemini-1.5-flash',
+  FLASH: 'gemini-1.5-flash',
 } as const;
 
 export type ModelId = (typeof MODELS)[keyof typeof MODELS];
