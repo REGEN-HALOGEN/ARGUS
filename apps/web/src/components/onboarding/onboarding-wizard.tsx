@@ -15,18 +15,18 @@ interface Question {
 const QUESTIONS: Question[] = [
   {
     id: "team",
-    text: "Are you here to manage security for an entire company or team?",
-    description: "Select yes if you are setting up a new workspace for your organization.",
+    text: "Are you setting up ARGUS for an entire company or security team?",
+    description: "Select yes if you need to create a new workspace for your organization.",
   },
   {
     id: "infra",
-    text: "Do you need to configure infrastructure data sources (AWS, GCP, On-prem)?",
-    description: "Select yes if you will be the one seeding the graph with asset data.",
+    text: "Will you be connecting cloud infrastructure or on-prem data sources?",
+    description: "Select yes if you are responsible for seeding the threat graph with assets.",
   },
   {
     id: "joining",
-    text: "Are you looking to join an existing workspace created by your admin?",
-    description: "Select yes if your organization is already on ARGUS and you just need an account.",
+    text: "Are you an individual contributor joining a workspace created by your admin?",
+    description: "Select yes if your team already has an ARGUS account and you just need access.",
   },
 ];
 
@@ -46,9 +46,13 @@ export function OnboardingWizard({ trigger }: { trigger: React.ReactNode }) {
     if (step < QUESTIONS.length - 1) {
       setStep(step + 1);
     } else {
-      // Calculate result
-      const isOrg = (newAnswers.team || newAnswers.infra) && !newAnswers.joining;
-      setResult(isOrg ? "organization" : "individual");
+      // Weighted scoring logic
+      let score = 0;
+      if (newAnswers.team) score += 10;
+      if (newAnswers.infra) score += 10;
+      if (newAnswers.joining) score -= 25; // Strongly favor individual if they are joining existing
+
+      setResult(score > 0 ? "organization" : "individual");
     }
   };
 
