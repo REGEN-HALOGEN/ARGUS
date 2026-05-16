@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BrainCircuit, Send, Sparkles, RotateCcw, Loader2 } from 'lucide-react';
-import { API_BASE } from '@/lib/api';
+import { apiFetch, API_BASE } from '@/lib/api';
 
 const suggestedPrompts = [
   'Show attack paths to production database',
@@ -39,24 +39,24 @@ export default function AnalystPage() {
     setIsLoading(true);
 
     try {
-      // First try to use the NL-to-Cypher route as it's the core feature
-      const res = await fetch(`${API_BASE}/ai/nl-to-cypher`, {
+      // Use apiFetch to handle auth cookies and x-tenant-id automatically
+      const data = await apiFetch<any>('/ai/nl-to-cypher', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text }),
       });
 
-      if (!res.ok) throw new Error('API request failed');
-      const data = await res.json();
-      
       let finalContent = '';
-      if (data.success && data.data.interpretation) {
-         finalContent = `**Graph Query Generated:**\n\`\`\`cypher\n${data.data.cypher}\n\`\`\`\n\n${data.data.interpretation}`;
+      if (data.interpretation) {
+         finalContent = `**Graph Query Generated:**\n\`\`\`cypher\n${data.cypher}\n\`\`\`\n\n${data.interpretation}`;
       } else {
          // Fallback to chat stream if NL-to-Cypher didn't work well
          const streamRes = await fetch(`${API_BASE}/ai/chat/stream`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-tenant-id': typeof window !== 'undefined' ? window.localStorage.getItem('argus.activeTenantId') || '' : ''
+            },
+            credentials: 'include',
             body: JSON.stringify({ message: text }),
           });
     
