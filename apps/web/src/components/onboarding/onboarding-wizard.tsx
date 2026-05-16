@@ -33,27 +33,29 @@ const QUESTIONS: Question[] = [
 export function OnboardingWizard({ trigger }: { trigger: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, boolean>>({});
+  const [, setAnswers] = useState<Record<string, boolean>>({});
   const [result, setResult] = useState<"individual" | "organization" | null>(null);
 
   const handleAnswer = (val: boolean) => {
     const q = QUESTIONS[step];
     if (!q) return;
 
-    const newAnswers = { ...answers, [q.id]: val };
-    setAnswers(newAnswers);
+    setAnswers((prev) => {
+      const newAnswers = { ...prev, [q.id]: val };
 
-    if (step < QUESTIONS.length - 1) {
-      setStep(step + 1);
-    } else {
-      // Weighted scoring logic
-      let score = 0;
-      if (newAnswers.team) score += 10;
-      if (newAnswers.infra) score += 10;
-      if (newAnswers.joining) score -= 25; // Strongly favor individual if they are joining existing
+      if (step < QUESTIONS.length - 1) {
+        setStep(step + 1);
+      } else {
+        // Weighted scoring logic using the freshly merged answers
+        let score = 0;
+        if (newAnswers.team) score += 10;
+        if (newAnswers.infra) score += 10;
+        if (newAnswers.joining) score -= 25;
 
-      setResult(score > 0 ? "organization" : "individual");
-    }
+        setResult(score > 0 ? "organization" : "individual");
+      }
+      return newAnswers;
+    });
   };
 
   const reset = () => {
