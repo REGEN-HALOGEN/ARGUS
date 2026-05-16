@@ -107,10 +107,10 @@ export default function AnalystPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-[calc(100vh-140px)]">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">AI Analyst</h1>
-          <p className="text-sm text-slate-400 mt-1">Natural language security intelligence</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">AI Analyst</h1>
+          <p className="text-sm text-muted-foreground mt-1">Natural language security intelligence</p>
         </div>
-        <button onClick={() => setMessages([])} className="flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 text-sm text-slate-400 ring-1 ring-white/[0.06] hover:bg-white/[0.06]">
+        <button onClick={() => setMessages([])} className="flex items-center gap-2 rounded-lg bg-card-border/5 px-3 py-2 text-sm text-muted-foreground ring-1 ring-card-border hover:bg-card-border/10 hover:text-foreground">
           <RotateCcw className="h-4 w-4" /> New Session
         </button>
       </div>
@@ -122,12 +122,12 @@ export default function AnalystPage() {
               <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary-500/15 to-accent-500/15 ring-1 ring-primary-500/20">
                 <BrainCircuit className="h-10 w-10 text-primary-400" />
               </div>
-              <h2 className="text-xl font-semibold text-slate-200 mb-2">Ask your security graph</h2>
-              <p className="text-sm text-slate-400 max-w-md mb-8">Query your infrastructure using natural language. ARGUS converts questions into graph queries.</p>
+              <h2 className="text-xl font-semibold text-foreground mb-2">Ask your security graph</h2>
+              <p className="text-sm text-muted-foreground max-w-md mb-8">Query your infrastructure using natural language. ARGUS converts questions into graph queries.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-w-xl w-full">
                 {suggestedPrompts.map((p) => (
-                  <button key={p} onClick={() => handleSend(p)} className="flex items-center gap-2 rounded-xl bg-white/[0.03] px-4 py-3 text-left text-sm text-slate-400 ring-1 ring-white/[0.06] hover:bg-white/[0.06] hover:text-slate-200">
-                    <Sparkles className="h-3.5 w-3.5 text-primary-400 shrink-0" />
+                  <button key={p} onClick={() => handleSend(p)} className="flex items-center gap-2 rounded-xl bg-card-border/5 px-4 py-3 text-left text-sm text-muted-foreground ring-1 ring-card-border hover:bg-card-border/10 hover:text-foreground">
+                    <Sparkles className="h-3.5 w-3.5 text-primary-500 shrink-0" />
                     <span className="truncate">{p}</span>
                   </button>
                 ))}
@@ -136,12 +136,12 @@ export default function AnalystPage() {
           ) : (
             messages.map((msg, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary-500/15 text-primary-100 ring-1 ring-primary-500/20' : 'bg-white/[0.04] text-slate-200 ring-1 ring-white/[0.06]'}`}>
+                <div className={`max-w-[75%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary-500/15 text-foreground ring-1 ring-primary-500/30' : 'bg-card-border/5 text-foreground ring-1 ring-card-border'}`}>
                   {msg.role === 'assistant' ? (
                     msg.content ? (
                       <Markdown content={msg.content} />
                     ) : (
-                      <div className="flex items-center gap-2 text-slate-400">
+                      <div className="flex items-center gap-2 text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" /> Analyzing graph data...
                       </div>
                     )
@@ -155,7 +155,7 @@ export default function AnalystPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="border-t border-white/[0.06] p-4">
+        <div className="border-t border-card-border p-4">
           <div className="flex items-center gap-3">
             <input 
               value={input} 
@@ -163,7 +163,7 @@ export default function AnalystPage() {
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); }}} 
               placeholder="Ask about your security posture..." 
               disabled={isLoading}
-              className="flex-1 rounded-xl bg-white/[0.04] px-4 py-3 text-sm text-slate-200 placeholder:text-slate-500 outline-none ring-1 ring-white/[0.06] focus:ring-primary-500/30 disabled:opacity-50" 
+              className="flex-1 rounded-xl bg-card-border/5 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none ring-1 ring-card-border focus:ring-primary-500/30 disabled:opacity-50" 
             />
             <button 
               onClick={() => handleSend()} 

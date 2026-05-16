@@ -134,11 +134,11 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center max-w-md space-y-4">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.08]">
-            <Building2 className="h-7 w-7 text-slate-400" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-card-border/10 ring-1 ring-card-border">
+            <Building2 className="h-7 w-7 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-semibold text-slate-200">No Active Organization</h2>
-          <p className="text-sm text-slate-400">
+          <h2 className="text-xl font-semibold text-foreground">No Active Organization</h2>
+          <p className="text-sm text-muted-foreground">
             The dashboard requires an active organization to display data.
             Set up your workspace to get started.
           </p>
@@ -171,14 +171,14 @@ export default function DashboardPage() {
       {/* Page Header */}
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Threat Dashboard
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Real-time security posture overview
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Activity className="h-3 w-3 text-success-400" />
           Last updated: just now
         </div>
@@ -198,10 +198,10 @@ export default function DashboardPage() {
             )}
             <div className="flex items-start justify-between relative z-10">
               <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {stat.label}
                 </p>
-                <p className="text-3xl font-bold text-slate-100 mt-2">{stat.value}</p>
+                <p className="text-3xl font-bold text-foreground mt-2">{stat.value}</p>
               </div>
               <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${statIconBg(stat.color)}`}>
                 <stat.icon className="h-5 w-5" />
@@ -210,7 +210,7 @@ export default function DashboardPage() {
             <div className="mt-3 flex items-center gap-1.5 relative z-10">
               <TrendingUp className="h-3 w-3 text-success-400" />
               <span className="text-xs font-medium text-success-400">{stat.change}</span>
-              <span className="text-xs text-slate-500">vs last week</span>
+              <span className="text-xs text-muted-foreground">vs last week</span>
             </div>
           </motion.div>
         ))}
@@ -220,14 +220,14 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Recent Alerts */}
         <motion.div variants={itemVariants} className="xl:col-span-2 glass-card overflow-hidden relative">
-          <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
+          <div className="flex items-center justify-between p-5 border-b border-card-border">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-warning-400" />
-              <h2 className="font-semibold text-slate-200">Recent Alerts</h2>
+              <h2 className="font-semibold text-foreground">Recent Alerts</h2>
             </div>
-            <span className="text-xs text-slate-500">{alerts.length} alerts</span>
+            <span className="text-xs text-muted-foreground">{alerts.length} alerts</span>
           </div>
-          <div className="divide-y divide-white/[0.04]">
+          <div className="divide-y divide-card-border">
             {loading ? (
               <div className="p-5 text-center text-sm text-slate-500 animate-pulse">Loading alerts...</div>
             ) : alerts.length === 0 ? (
@@ -247,12 +247,12 @@ export default function DashboardPage() {
                     {alert.severity}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-200 truncate group-hover:text-slate-100 transition-colors">
+                    <p className="text-sm text-foreground truncate group-hover:text-primary-500 transition-colors">
                       {alert.title}
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5">{alert.source}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{alert.source}</p>
                   </div>
-                  <span className="text-xs text-slate-500 shrink-0">{alert.time}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{alert.time}</span>
                 </motion.div>
               ))
             )}
@@ -261,10 +261,10 @@ export default function DashboardPage() {
 
         {/* Attack Paths */}
         <motion.div variants={itemVariants} className="glass-card overflow-hidden relative">
-          <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
+          <div className="flex items-center justify-between p-5 border-b border-card-border">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-threat-400" />
-              <h2 className="font-semibold text-slate-200">Top Attack Paths</h2>
+              <h2 className="font-semibold text-foreground">Top Attack Paths</h2>
             </div>
           </div>
           <div className="p-4 space-y-3">
@@ -279,10 +279,10 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 + i * 0.08 }}
-                  className="rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.06] hover:bg-white/[0.05] transition-all cursor-pointer group"
+                  className="rounded-xl bg-card-border/5 p-4 ring-1 ring-card-border hover:bg-card-border/10 transition-all cursor-pointer group"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <p className="text-sm text-slate-300 group-hover:text-slate-100 transition-colors leading-snug">
+                    <p className="text-sm text-foreground group-hover:text-primary-500 transition-colors leading-snug">
                       {path.name}
                     </p>
                     <span
@@ -313,8 +313,8 @@ export default function DashboardPage() {
                     />
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-[10px] text-slate-500">{path.nodes} nodes in path</span>
-                    <span className="text-[10px] text-slate-500">Risk Score</span>
+                    <span className="text-[10px] text-muted-foreground">{path.nodes} nodes in path</span>
+                    <span className="text-[10px] text-muted-foreground">Risk Score</span>
                   </div>
                 </motion.div>
               ))
@@ -335,8 +335,8 @@ export default function DashboardPage() {
               AI Insight
             </span>
           </div>
-          <p className="text-sm text-slate-200 max-w-2xl leading-relaxed">
-            ARGUS has identified <strong className="text-primary-300">{paths.length} critical attack paths</strong> to your
+          <p className="text-sm text-foreground max-w-2xl leading-relaxed">
+            ARGUS has identified <strong className="text-primary-400">{paths.length} critical attack paths</strong> to your
             crown jewels. The most critical path has a risk score of <strong className="text-threat-400">{paths[0]?.risk || 0}</strong> and involves {paths[0]?.nodes || 0} nodes.
           </p>
           <button className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-500/15 px-4 py-2 text-sm font-medium text-primary-300 ring-1 ring-primary-500/30 transition-all hover:bg-primary-500/25 hover:ring-primary-500/50">

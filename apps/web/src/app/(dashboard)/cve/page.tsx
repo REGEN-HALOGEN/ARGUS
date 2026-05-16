@@ -95,23 +95,23 @@ export default function CVEPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">CVE Intelligence</h1>
-          <p className="text-sm text-slate-400 mt-1">Vulnerability tracking and impact analysis</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">CVE Intelligence</h1>
+          <p className="text-sm text-muted-foreground mt-1">Vulnerability tracking and impact analysis</p>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="flex-1 flex items-center gap-2 rounded-xl bg-white/[0.04] px-4 py-2.5 ring-1 ring-white/[0.06]">
+        <div className="flex-1 flex items-center gap-2 rounded-xl bg-card-border/5 px-4 py-2.5 ring-1 ring-card-border">
           {isSearching ? (
-            <Loader2 className="h-4 w-4 text-slate-400 animate-spin" />
+            <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
           ) : (
-            <Search className="h-4 w-4 text-slate-400" />
+            <Search className="h-4 w-4 text-muted-foreground" />
           )}
           <input
             placeholder="Search CVEs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-slate-200 placeholder:text-slate-500 outline-none"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
           />
         </div>
         <div className="relative">
@@ -119,8 +119,8 @@ export default function CVEPage() {
             onClick={() => setFiltersOpen(!filtersOpen)}
             className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm ring-1 transition-all ${
               filtersOpen || severityFilter.length > 0 || exploitFilter !== null
-                ? 'bg-primary-500/10 text-primary-400 ring-primary-500/30'
-                : 'bg-white/[0.04] text-slate-400 ring-white/[0.06] hover:bg-white/[0.06]'
+                ? 'bg-primary-500/10 text-primary-500 ring-primary-500/30'
+                : 'bg-card-border/5 text-muted-foreground ring-card-border hover:bg-card-border/10'
             }`}
           >
             <Filter className="h-4 w-4" /> Filter
@@ -135,7 +135,7 @@ export default function CVEPage() {
                 className="fixed inset-0 z-40" 
                 onClick={() => setFiltersOpen(false)} 
               />
-              <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl bg-[#0c1220]/95 p-4 ring-1 ring-white/[0.06] shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in duration-200">
+              <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl bg-card p-4 ring-1 ring-card-border shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in duration-200">
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Severity</h4>
@@ -196,50 +196,50 @@ export default function CVEPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.06]">
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">CVE ID</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Severity</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">CVSS</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Exploited</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Description</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Assets</th>
+                <tr className="border-b border-card-border">
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">CVE ID</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Severity</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">CVSS</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Exploited</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Assets</th>
                   <th className="px-5 py-3.5"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04]">
+              <tbody className="divide-y divide-card-border">
                 {filteredCves.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-8 text-center text-slate-500">
+                    <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">
                       {cves.length === 0 ? 'No vulnerabilities found.' : 'No vulnerabilities match your filters.'}
                     </td>
                   </tr>
                 ) : (
                   filteredCves.map((cve, i) => (
-                    <motion.tr key={cve.cveId} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="hover:bg-white/[0.02] cursor-pointer group">
-                      <td className="px-5 py-3.5 font-mono text-sm font-medium text-primary-300">{cve.cveId}</td>
+                    <motion.tr key={cve.cveId} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="hover:bg-card-border/5 cursor-pointer group">
+                      <td className="px-5 py-3.5 font-mono text-sm font-medium text-primary-500">{cve.cveId}</td>
                       <td className="px-5 py-3.5">
                         <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase ring-1 ${sevBadge(cve.severity)}`}>
                           {cve.severity}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 font-mono font-semibold text-slate-200">{cve.cvss}</td>
+                      <td className="px-5 py-3.5 font-mono font-semibold text-foreground">{cve.cvss}</td>
                       <td className="px-5 py-3.5">
                         {cve.exploitedInWild ? (
-                          <span className="inline-flex items-center gap-1 text-threat-400 text-xs font-medium">
-                            <span className="h-1.5 w-1.5 rounded-full bg-threat-400 animate-pulse" /> Active
+                          <span className="inline-flex items-center gap-1 text-threat-500 text-xs font-medium">
+                            <span className="h-1.5 w-1.5 rounded-full bg-threat-500 animate-pulse" /> Active
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-500">No</span>
+                          <span className="text-xs text-muted-foreground">No</span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-slate-300 max-w-xs truncate">{cve.description}</td>
-                      <td className="px-5 py-3.5 text-slate-400">{cve.affectedAssets}</td>
+                      <td className="px-5 py-3.5 text-foreground max-w-xs truncate">{cve.description}</td>
+                      <td className="px-5 py-3.5 text-muted-foreground">{cve.affectedAssets}</td>
                       <td className="px-5 py-3.5">
                         <a 
                           href={`https://nvd.nist.gov/vuln/detail/${cve.cveId}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center justify-center rounded p-1 hover:bg-white/[0.06] text-slate-500 hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-all"
+                          className="inline-flex items-center justify-center rounded p-1 hover:bg-card-border/10 text-muted-foreground hover:text-primary-500 opacity-0 group-hover:opacity-100 transition-all"
                           title="View on NVD"
                         >
                           <ExternalLink className="h-4 w-4" />
