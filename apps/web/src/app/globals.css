@@ -389,6 +389,24 @@ body {
   border: 2px solid var(--background) !important;
 }
 
+/* ─── Custom Scrollbar Utility ────────────────────────────────── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
 /* ─── Cursor & Caret ─────────────────────────────────────────── */
 * {
   caret-color: var(--color-primary-500);
