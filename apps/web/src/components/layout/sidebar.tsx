@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Logo } from '@/components/ui/logo';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 type PlatformRole = 'super_admin';
 type OrgRole = 'org_admin' | 'operator' | 'analyst' | 'viewer';
@@ -95,10 +94,10 @@ export function Sidebar() {
       initial={false}
       animate={{ width: collapsed ? 72 : 260 }}
       transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-      className="fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r border-white/[0.06] bg-[#0a0f1a]/90 backdrop-blur-xl"
+      className="fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r border-sidebar-border bg-sidebar backdrop-blur-xl transition-colors duration-300"
     >
       {/* Logo */}
-      <div className="flex h-16 items-center px-4 border-b border-white/[0.06]">
+      <div className="flex h-16 items-center px-4 border-b border-sidebar-border">
         <Logo 
           width={32} 
           height={32} 
@@ -174,11 +173,10 @@ export function Sidebar() {
       </nav>
 
       {/* Footer Controls */}
-      <div className="p-3 border-t border-white/[0.06] flex items-center gap-2">
-        <ThemeToggle />
+      <div className="p-3 border-t border-sidebar-border">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex flex-1 items-center justify-center rounded-lg py-2 text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-slate-300"
+          className="flex w-full items-center justify-center rounded-lg py-2 text-muted-foreground transition-colors hover:bg-card-border hover:text-foreground"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>

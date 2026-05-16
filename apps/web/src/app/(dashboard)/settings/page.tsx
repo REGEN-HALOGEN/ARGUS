@@ -19,6 +19,7 @@ import {
   Info,
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useTheme } from 'next-themes';
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
@@ -158,6 +159,7 @@ function ApiKeysPanel() {
 /* ─── Panel: Appearance ──────────────────────────────────────────── */
 
 function AppearancePanel() {
+  const { theme, setTheme } = useTheme();
   const [density, setDensity] = useState<'compact' | 'comfortable'>('comfortable');
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -173,30 +175,34 @@ function AppearancePanel() {
 
   return (
     <div>
-      <InfoBanner text="ARGUS is built on a dark-first design language optimized for SOC environments. Theme overrides may be supported in future releases." />
+      <InfoBanner text="Customize your workspace aesthetics. ARGUS supports high-contrast light and dark themes optimized for cybersecurity workflows." />
       <div className="space-y-5">
-        {/* Theme */}
-        <div className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4">
-          <h4 className="text-sm font-semibold text-slate-200 mb-3">Theme</h4>
+        {/* Theme Selection */}
+        <div className="rounded-xl bg-card/50 ring-1 ring-card-border p-4">
+          <h4 className="text-sm font-semibold text-foreground mb-3">Theme</h4>
           <div className="flex gap-3">
-            {(['dark', 'system'] as const).map((t) => (
-              <button
-                key={t}
-                className={`flex-1 rounded-lg py-3 text-sm font-medium capitalize transition-all ring-1 ${
-                  t === 'dark'
-                    ? 'bg-primary-500/15 text-primary-300 ring-primary-500/30'
-                    : 'bg-white/[0.03] text-slate-500 ring-white/[0.06] hover:bg-white/[0.05]'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
+            {(['light', 'dark', 'system'] as const).map((t) => {
+              const isActive = theme === t;
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTheme(t)}
+                  className={`flex-1 rounded-lg py-3 text-sm font-medium capitalize transition-all ring-1 ${
+                    isActive
+                      ? 'bg-primary-500/15 text-primary-500 ring-primary-500/30'
+                      : 'bg-background/50 text-slate-500 ring-card-border hover:bg-background/80'
+                  }`}
+                >
+                  {t}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Density */}
-        <div className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4">
-          <h4 className="text-sm font-semibold text-slate-200 mb-3">Display Density</h4>
+        <div className="rounded-xl bg-card/50 ring-1 ring-card-border p-4">
+          <h4 className="text-sm font-semibold text-foreground mb-3">Display Density</h4>
           <div className="flex gap-3">
             {(['compact', 'comfortable'] as const).map((d) => (
               <button
@@ -204,8 +210,8 @@ function AppearancePanel() {
                 onClick={() => setDensity(d)}
                 className={`flex-1 rounded-lg py-3 text-sm font-medium capitalize transition-all ring-1 ${
                   density === d
-                    ? 'bg-primary-500/15 text-primary-300 ring-primary-500/30'
-                    : 'bg-white/[0.03] text-slate-500 ring-white/[0.06] hover:bg-white/[0.05]'
+                    ? 'bg-primary-500/15 text-primary-500 ring-primary-500/30'
+                    : 'bg-background/50 text-slate-500 ring-card-border hover:bg-background/80'
                 }`}
               >
                 {d}
@@ -215,9 +221,9 @@ function AppearancePanel() {
         </div>
 
         {/* Animations */}
-        <div className="rounded-xl bg-white/[0.02] ring-1 ring-white/[0.06] p-4 flex items-center justify-between">
+        <div className="rounded-xl bg-card/50 ring-1 ring-card-border p-4 flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-semibold text-slate-200">Animations</h4>
+            <h4 className="text-sm font-semibold text-foreground">Animations</h4>
             <p className="text-[11px] text-slate-500 mt-0.5">Enable motion and transition effects</p>
           </div>
           <ToggleSwitch enabled={animationsEnabled} onChange={setAnimationsEnabled} />

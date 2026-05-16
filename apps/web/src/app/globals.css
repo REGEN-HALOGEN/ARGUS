@@ -141,10 +141,11 @@ body {
 :root {
   --background: #070b14;
   --foreground: #e2e8f0;
+  --muted-foreground: #94a3b8;
   --card-bg: rgba(15, 23, 42, 0.6);
   --card-border: rgba(255, 255, 255, 0.06);
-  --sidebar-bg: rgba(10, 15, 26, 0.95);
-  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-bg: #0a0f1a;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
   --glass-bg: rgba(255, 255, 255, 0.04);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: 16px;
@@ -153,14 +154,15 @@ body {
 /* ─── Light Mode Overrides ─────────────────────────────────────── */
 [data-theme="light"],
 .light {
-  --background: #f8fafc;
+  --background: #f1f5f9;
   --foreground: #0f172a;
-  --card-bg: rgba(255, 255, 255, 0.8);
-  --card-border: rgba(0, 0, 0, 0.06);
-  --sidebar-bg: rgba(255, 255, 255, 0.98);
-  --sidebar-border: rgba(0, 0, 0, 0.08);
-  --glass-bg: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(0, 0, 0, 0.08);
+  --muted-foreground: #475569;
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --sidebar-bg: #ffffff;
+  --sidebar-border: rgba(0, 0, 0, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.1);
   --glass-blur: 12px;
 }
 
@@ -168,23 +170,31 @@ body {
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
   --color-card: var(--card-bg);
   --color-sidebar: var(--sidebar-bg);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-card-border: var(--card-border);
 }
 
-/* ─── Light Mode Body ──────────────────────────────────────────── */
+/* ─── Base Reset ────────────────────────────────────────────────── */
 
-[data-theme="light"] body,
-.light body {
+html {
   background: var(--background);
   color: var(--foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ─── Glass Card ───────────────────────────────────────────────── */
 
 .glass-card {
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--card-border);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: 12px;
@@ -261,13 +271,14 @@ body {
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: rgba(148, 163, 184, 0.8);
+  color: var(--muted-foreground);
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .sidebar-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
+  background: var(--card-border);
+  color: var(--foreground);
 }
 
 .sidebar-item.active {
