@@ -1,9 +1,10 @@
 'use client';
 
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { signUp } from '@/lib/auth';
+import { signIn, signUp } from '@/lib/auth';
 import { ArrowRight, Loader2, UserCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function UserOnboardingPage() {
@@ -14,6 +15,8 @@ export default function UserOnboardingPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  const router = useRouter();
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -23,8 +26,18 @@ export default function UserOnboardingPage() {
       const { error: authError } = await signUp.email({ email, password, name });
       if (authError) {
         setError(authError.message || 'Registration failed');
-      } else {
+        setLoading(false);
+        return;
+      }
+
+      // Auto sign-in after successful registration
+      const signInResult = await signIn.email({ email, password });
+      if (signInResult.error) {
+        // Sign-in failed? Let them manually log in
         setSuccess(true);
+      } else {
+        // Success — send to onboarding (where they can wait for invite or create org)
+        router.replace('/onboarding');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration.');
