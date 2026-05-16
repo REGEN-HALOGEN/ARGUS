@@ -181,9 +181,11 @@ export default function GraphPage() {
         label: e.type,
         type: 'smoothstep',
         animated: true,
-        style: { stroke: 'var(--muted-foreground)', strokeWidth: 1.5, opacity: 0.8 },
-        labelStyle: { fill: 'var(--foreground)', fontSize: 11, fontWeight: 700 },
-        labelBgStyle: { fill: 'var(--card)', fillOpacity: 1 },
+                style: { stroke: 'var(--muted-foreground)', strokeWidth: 2, opacity: 0.6 },
+        labelStyle: { fill: 'var(--foreground)', fontSize: 12, fontWeight: 700 },
+        labelBgStyle: { fill: 'var(--background)', fillOpacity: 0.95 },
+        labelBgPadding: [6, 4],
+        labelBgBorderRadius: 4,
         markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--muted-foreground)' },
       }));
 
