@@ -20,27 +20,46 @@ export async function chat(
   messages: ChatMessage[],
   options: ChatOptions = {},
 ): Promise<string> {
-  const model = getModel(options.model ?? MODELS.PRO);
+  const primaryModelId = options.model ?? MODELS.PRO;
+  const fallbacks: ModelId[] = ['gemini-2.5-flash', 'gemini-pro-latest'] as any;
+  const modelsToTry = [primaryModelId, ...fallbacks];
 
-  const chat = model.startChat({
-    history: messages.slice(0, -1).map((msg) => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }],
-    })),
-    systemInstruction: {
-      role: 'user',
-      parts: [{ text: options.systemPrompt ?? SYSTEM_PROMPTS.SECURITY_ANALYST }],
-    },
-    generationConfig: {
-      maxOutputTokens: options.maxTokens ?? 4096,
-      temperature: options.temperature ?? 0.3,
-    },
-  });
+  let lastError: any;
+  for (const modelId of modelsToTry) {
+    try {
+      const model = getModel(modelId);
+      const chat = model.startChat({
+        history: messages.slice(0, -1).map((msg) => ({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.content }],
+        })),
+        systemInstruction: {
+          role: 'user',
+          parts: [{ text: options.systemPrompt ?? SYSTEM_PROMPTS.SECURITY_ANALYST }],
+        },
+        generationConfig: {
+          maxOutputTokens: options.maxTokens ?? 4096,
+          temperature: options.temperature ?? 0.3,
+        },
+      });
 
-  const lastMessage = messages[messages.length - 1];
-  if (!lastMessage) return '';
-  const result = await chat.sendMessage(lastMessage.content);
-  return result.response.text();
+      const lastMessage = messages[messages.length - 1];
+      if (!lastMessage) return '';
+      const result = await chat.sendMessage(lastMessage.content);
+      return result.response.text();
+    } catch (error: any) {
+      lastError = error;
+      const isQuotaError = error.message?.includes('429') || error.message?.includes('quota');
+      const isNotFoundError = error.message?.includes('404') || error.message?.includes('not found');
+      
+      if (isQuotaError || isNotFoundError) {
+        console.warn(`[AI-FALLBACK] Model ${modelId} failed (${isQuotaError ? '429' : '404'}). Trying next...`);
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
 }
 
 // ─── Streaming Chat ──────────────────────────────────────────────
@@ -49,33 +68,53 @@ export async function* streamChat(
   messages: ChatMessage[],
   options: ChatOptions = {},
 ): AsyncGenerator<string> {
-  const model = getModel(options.model ?? MODELS.PRO);
+  const primaryModelId = options.model ?? MODELS.PRO;
+  const fallbacks: ModelId[] = ['gemini-2.5-flash', 'gemini-pro-latest'] as any;
+  const modelsToTry = [primaryModelId, ...fallbacks];
 
-  const chatSession = model.startChat({
-    history: messages.slice(0, -1).map((msg) => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }],
-    })),
-    systemInstruction: {
-      role: 'user',
-      parts: [{ text: options.systemPrompt ?? SYSTEM_PROMPTS.SECURITY_ANALYST }],
-    },
-    generationConfig: {
-      maxOutputTokens: options.maxTokens ?? 4096,
-      temperature: options.temperature ?? 0.3,
-    },
-  });
+  let lastError: any;
+  for (const modelId of modelsToTry) {
+    try {
+      const model = getModel(modelId);
+      const chatSession = model.startChat({
+        history: messages.slice(0, -1).map((msg) => ({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.content }],
+        })),
+        systemInstruction: {
+          role: 'user',
+          parts: [{ text: options.systemPrompt ?? SYSTEM_PROMPTS.SECURITY_ANALYST }],
+        },
+        generationConfig: {
+          maxOutputTokens: options.maxTokens ?? 4096,
+          temperature: options.temperature ?? 0.3,
+        },
+      });
 
-  const lastMessage = messages[messages.length - 1];
-  if (!lastMessage) return;
-  const result = await chatSession.sendMessageStream(lastMessage.content);
+      const lastMessage = messages[messages.length - 1];
+      if (!lastMessage) return;
+      const result = await chatSession.sendMessageStream(lastMessage.content);
 
-  for await (const chunk of result.stream) {
-    const text = chunk.text();
-    if (text) {
-      yield text;
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        if (text) {
+          yield text;
+        }
+      }
+      return; // Success
+    } catch (error: any) {
+      lastError = error;
+      const isQuotaError = error.message?.includes('429') || error.message?.includes('quota');
+      const isNotFoundError = error.message?.includes('404') || error.message?.includes('not found');
+      
+      if (isQuotaError || isNotFoundError) {
+        console.warn(`[AI-FALLBACK] Streaming model ${modelId} failed (${isQuotaError ? '429' : '404'}). Trying next...`);
+        continue;
+      }
+      throw error;
     }
   }
+  throw lastError;
 }
 
 // ─── NL to Cypher ────────────────────────────────────────────────
