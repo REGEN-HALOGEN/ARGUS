@@ -57,3 +57,11 @@ instructions.md
 *.db-journal
 *.sqlite
 *.sqlite-journal
+
+# Temporary/Scratch
+scratch/
+temp/
+tmp/
+*.seed
+*.bak
+*.old
