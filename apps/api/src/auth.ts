@@ -10,13 +10,18 @@ const env = getEnv();
 // --- NUCLEAR ORIGIN FIX ---
 // Force HTTPS and clean up URLs
 const rawBaseURL = process.env.BETTER_AUTH_URL || 'https://argusapi-production.up.railway.app/api/v1/auth';
-const baseURL = rawBaseURL.replace('http://', 'https://');
+let baseURL = rawBaseURL.replace('http://', 'https://');
+
+// Fail-safe: If we are on Railway but baseURL still says localhost, force the production URL
+if (baseURL.includes('localhost') && process.env.RAILWAY_STATIC_URL) {
+  baseURL = 'https://argusapi-production.up.railway.app/api/v1/auth';
+}
 
 const origins = [
   env.WEB_URL,
   'https://argus-web-three.vercel.app',
   'https://argus-web.vercel.app',
-  'https://argus-cyber.vercel.app',
+  'https://argus-ngzfjupwf-ashwins-projects-90bc185c.vercel.app', // From logs
   'http://localhost:3000'
 ].filter(Boolean).map(url => url!.trim().replace(/\/+$/, ''));
 
