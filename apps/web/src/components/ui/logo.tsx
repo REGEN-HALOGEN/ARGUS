@@ -40,8 +40,8 @@ export function Logo({ className = '', width = 32, height = 32, showText = true 
       </div>
       {showText && (
         <div className="flex flex-col">
-          <span className="text-lg font-bold tracking-tight text-slate-100 leading-none">ARGUS</span>
-          <p className="text-[10px] font-medium text-slate-500 leading-none mt-1">
+          <span className="text-lg font-bold tracking-tight text-foreground leading-none">ARGUS</span>
+          <p className="text-[10px] font-medium text-muted-foreground leading-none mt-1">
             Security Intelligence
           </p>
         </div>

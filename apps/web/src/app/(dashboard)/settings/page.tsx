@@ -96,9 +96,9 @@ function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: (v: b
 
 function InfoBanner({ text }: { text: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg bg-primary-500/5 ring-1 ring-primary-500/10 p-3 mb-5">
-      <Info className="h-4 w-4 text-primary-400 mt-0.5 shrink-0" />
-      <p className="text-xs text-slate-400 leading-relaxed">{text}</p>
+    <div className="flex items-start gap-3 rounded-lg bg-primary-500/10 ring-1 ring-primary-500/20 p-3 mb-5">
+      <Info className="h-4 w-4 text-primary-500 mt-0.5 shrink-0" />
+      <p className="text-xs text-muted-foreground leading-relaxed">{text}</p>
     </div>
   );
 }
@@ -397,8 +397,8 @@ export default function SettingsPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-100">Settings</h1>
-        <p className="text-sm text-slate-400 mt-1">Platform configuration and preferences</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">Platform configuration and preferences</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
@@ -429,10 +429,10 @@ export default function SettingsPage() {
                   <section.icon className={`h-4.5 w-4.5 ${isActive ? 'text-primary-400' : 'text-slate-400'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-semibold ${isActive ? 'text-primary-300' : 'text-slate-200'}`}>
+                  <h3 className={`text-sm font-semibold ${isActive ? 'text-primary-500' : 'text-foreground'}`}>
                     {section.label}
                   </h3>
-                  <p className="text-[11px] text-slate-500 truncate">{section.description}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{section.description}</p>
                 </div>
                 <ChevronRight
                   className={`h-4 w-4 shrink-0 transition-transform ${
@@ -461,8 +461,8 @@ export default function SettingsPage() {
                     <activeInfo.icon className="h-5 w-5 text-primary-400" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-slate-100">{activeInfo.label}</h2>
-                    <p className="text-xs text-slate-500">{activeInfo.description}</p>
+                    <h2 className="text-lg font-bold text-foreground">{activeInfo.label}</h2>
+                    <p className="text-xs text-muted-foreground">{activeInfo.description}</p>
                   </div>
                 </div>
                 <button
@@ -480,11 +480,11 @@ export default function SettingsPage() {
               animate={{ opacity: 1 }}
               className="glass-card p-6 flex flex-col items-center justify-center min-h-[300px] text-center"
             >
-              <div className="h-14 w-14 rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.06] flex items-center justify-center mb-4">
-                <SettingsIcon className="h-7 w-7 text-slate-600" />
+              <div className="h-14 w-14 rounded-2xl bg-card-border/5 ring-1 ring-card-border flex items-center justify-center mb-4">
+                <SettingsIcon className="h-7 w-7 text-muted-foreground" />
               </div>
-              <h3 className="text-sm font-semibold text-slate-300">Select a section</h3>
-              <p className="text-xs text-slate-500 mt-1 max-w-[240px]">
+              <h3 className="text-sm font-semibold text-foreground">Select a section</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-[240px]">
                 Choose a configuration category from the sidebar to view and edit settings.
               </p>
             </motion.div>

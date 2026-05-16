@@ -109,7 +109,7 @@ export function Sidebar() {
       {/* Search trigger */}
       <div className="px-3 pt-4 pb-2">
         <button
-          className="flex w-full items-center gap-2.5 rounded-lg bg-white/[0.04] px-3 py-2 text-sm text-slate-400 ring-1 ring-white/[0.06] transition-all hover:bg-white/[0.06] hover:text-slate-300"
+          className="flex w-full items-center gap-2.5 rounded-lg bg-card-border/5 px-3 py-2 text-sm text-muted-foreground ring-1 ring-sidebar-border transition-all hover:bg-card-border/10 hover:text-foreground"
           onClick={() => {
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
           }}
