@@ -42,7 +42,6 @@ rootApp.use('*', secureHeaders());
 // --- DIAGNOSTIC ORIGIN LOGGING ---
 rootApp.use('*', async (c, next) => {
   const origin = c.req.header('Origin');
-  const host = c.req.header('Host');
   const hasCookie = !!c.req.header('Cookie');
   if (c.req.path.includes('/auth') || c.req.path.includes('/ai')) {
     console.info(`[AUTH-DEBUG] Path: ${c.req.path} | Origin: ${origin} | Cookie: ${hasCookie ? 'YES' : 'NO'}`);

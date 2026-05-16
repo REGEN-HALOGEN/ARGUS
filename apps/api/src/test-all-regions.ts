@@ -19,7 +19,7 @@ async function testAll() {
       console.log(`SUCCESS on ${region}!`);
       await c.end();
       process.exit(0);
-    } catch (e) {
+    } catch (e: any) {
       if (!e.message.includes('Tenant or user not found')) {
          console.log(`Failed ${region} with:`, e.message);
       }

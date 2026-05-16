@@ -34,7 +34,7 @@ async function testConnections() {
     const driver = getNeo4jDriver();
     const session = driver.session();
     const result = await session.run('RETURN "Connected" as status');
-    console.log('✅ Neo4j Connected:', result.records[0].get('status'));
+    console.log('✅ Neo4j Connected:', result.records[0]?.get('status'));
     await session.close();
   } catch (err: any) {
     console.error('❌ Neo4j Failed:', err.message);

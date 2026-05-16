@@ -40,6 +40,7 @@ const database = getAuthDbPool();
 const authConfig: BetterAuthOptions = {
   database,
   baseURL,
+  // @ts-expect-error - trustHost is available in recent versions but might not be in our current types
   trustHost: true,
   trustedOrigins: origins,
   experimental: { joins: true },

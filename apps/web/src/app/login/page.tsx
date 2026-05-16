@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { signIn } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-import { Shield, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { API_BASE, setActiveTenantId } from '@/lib/api';
 import { Logo } from '@/components/ui/logo';
