@@ -10,10 +10,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-background text-foreground antialiased selection:bg-primary-500/30 transition-colors duration-300">
+      <body className="text-foreground antialiased selection:bg-primary-500/30 transition-colors duration-300 overflow-x-hidden">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <BackgroundRippleEffect />
-          <AuthProvider>{children}</AuthProvider>
+          <div className="relative z-10">
+            <AuthProvider>{children}</AuthProvider>
+          </div>
         </ThemeProvider>
       </body>
     </html>

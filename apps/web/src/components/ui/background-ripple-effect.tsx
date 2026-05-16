@@ -39,10 +39,10 @@ export const BackgroundRippleEffect = ({
     <div
       ref={containerRef}
       className={cn(
-        "fixed inset-0 h-screen w-screen -z-10 overflow-hidden bg-background",
-        "[--cell-border-color:rgba(255,255,255,0.03)] [--cell-fill-color:transparent] [--cell-shadow-color:rgba(255,255,255,0.02)]",
-        "dark:[--cell-border-color:rgba(255,255,255,0.03)] dark:[--cell-shadow-color:rgba(0,0,0,0.2)]",
-        "light:[--cell-border-color:rgba(0,0,0,0.03)] light:[--cell-shadow-color:rgba(0,0,0,0.02)]"
+        "fixed inset-0 h-full w-full z-0 overflow-hidden bg-background",
+        "[--cell-border-color:rgba(255,255,255,0.08)] [--cell-fill-color:transparent] [--cell-shadow-color:rgba(255,255,255,0.03)]",
+        "dark:[--cell-border-color:rgba(255,255,255,0.08)] dark:[--cell-shadow-color:rgba(0,0,0,0.3)]",
+        "light:[--cell-border-color:rgba(0,0,0,0.06)] light:[--cell-shadow-color:rgba(0,0,0,0.03)]"
       )}
     >
       <div className="relative h-full w-full overflow-hidden flex items-center justify-center">
@@ -61,8 +61,8 @@ export const BackgroundRippleEffect = ({
           }}
           interactive
         />
-        {/* Masking for better focus on content */}
-        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,var(--background)_80%)]" />
+        {/* Soft Masking for better focus on content */}
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,var(--background)_100%)]" />
       </div>
     </div>
   );
