@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Logo } from '@/components/ui/logo';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 type PlatformRole = 'super_admin';
 type OrgRole = 'org_admin' | 'operator' | 'analyst' | 'viewer';
@@ -172,11 +173,12 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Collapse button */}
-      <div className="p-3 border-t border-white/[0.06]">
+      {/* Footer Controls */}
+      <div className="p-3 border-t border-white/[0.06] flex items-center gap-2">
+        <ThemeToggle />
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex w-full items-center justify-center rounded-lg py-2 text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-slate-300"
+          className="flex flex-1 items-center justify-center rounded-lg py-2 text-slate-500 transition-colors hover:bg-white/[0.04] hover:text-slate-300"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
