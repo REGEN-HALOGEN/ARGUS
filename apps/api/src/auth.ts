@@ -14,8 +14,10 @@ const baseURL = rawBaseURL.replace('http://', 'https://');
 
 const origins = [
   env.WEB_URL,
+  'https://argus-web-three.vercel.app',
   'https://argus-web.vercel.app',
-  'https://argus-cyber.vercel.app', // Adding a common variant
+  'https://argus-cyber.vercel.app',
+  'https://argus-web-git-main-ashwins-projects-90bc185c.vercel.app',
   'http://localhost:3000'
 ].filter(Boolean).map(url => url!.trim().replace(/\/+$/, ''));
 
