@@ -169,7 +169,9 @@ body {
 /* ─── Base Variables (Default Dark) ───────────────────────────── */
 :root {
   --background: #070b14;
+  --background-rgb: 7, 11, 20;
   --foreground: #e2e8f0;
+  --foreground-rgb: 226, 232, 240;
   --muted-foreground: #94a3b8;
   --card-bg: rgba(15, 23, 42, 0.6);
   --card-border: rgba(255, 255, 255, 0.06);
@@ -184,7 +186,9 @@ body {
 [data-theme="light"],
 .light {
   --background: #f8fafc;
+  --background-rgb: 248, 250, 252;
   --foreground: #020617;
+  --foreground-rgb: 2, 6, 23;
   --muted-foreground: #475569;
   --card-bg: #ffffff;
   --card-border: rgba(0, 0, 0, 0.08);

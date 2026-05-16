@@ -86,7 +86,7 @@ function ArgusNode({ data }: any) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-1 h-3 rounded-none bg-slate-500 border-none"
+        className="w-1 h-3 rounded-none bg-muted-foreground border-none"
       />
       <div className="p-3">
         <div className="flex items-start gap-3">
@@ -113,7 +113,7 @@ function ArgusNode({ data }: any) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-1 h-3 rounded-none bg-slate-500 border-none"
+        className="w-1 h-3 rounded-none bg-muted-foreground border-none"
       />
     </div>
   );
@@ -181,9 +181,9 @@ export default function GraphPage() {
         label: e.type,
         type: 'smoothstep',
         animated: true,
-        style: { stroke: 'var(--muted-foreground)', strokeWidth: 1, opacity: 0.5 },
-        labelStyle: { fill: 'var(--muted-foreground)', fontSize: 10, fontWeight: 600 },
-        labelBgStyle: { fill: 'var(--card)', fillOpacity: 0.8 },
+        style: { stroke: 'var(--muted-foreground)', strokeWidth: 1.5, opacity: 0.8 },
+        labelStyle: { fill: 'var(--foreground)', fontSize: 11, fontWeight: 700 },
+        labelBgStyle: { fill: 'var(--card)', fillOpacity: 1 },
         markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--muted-foreground)' },
       }));
 
@@ -246,7 +246,7 @@ export default function GraphPage() {
                       type="checkbox"
                       checked={visibleTypes.has(item.id)}
                       onChange={() => toggleFilter(item.id)}
-                      className="h-3.5 w-3.5 accent-primary-500 rounded border-white/10 bg-white/5"
+                      className="h-3.5 w-3.5 accent-primary-500 rounded border-card-border bg-card/50"
                     />
                     <span className="text-sm text-muted-foreground/80">{item.label}</span>
                   </label>
@@ -275,9 +275,14 @@ export default function GraphPage() {
             connectionLineType={ConnectionLineType.SmoothStep}
             fitView
             proOptions={{ hideAttribution: true }}
-            className="bg-[#0b0f19]"
+            className="bg-background"
           >
-            <Background color="#1e293b" gap={24} size={2} />
+            <Background
+              color="currentColor"
+              className="text-muted-foreground/20"
+              gap={24}
+              size={1}
+            />
             <MiniMap
               nodeColor={(node: any) => {
                 switch (node.data.type) {
@@ -295,14 +300,14 @@ export default function GraphPage() {
                     return '#64748b';
                 }
               }}
-              maskColor="rgba(11, 15, 25, 0.8)"
-              className="bg-[#0f1523] border-card-border rounded-xl"
+              maskColor="rgba(var(--background-rgb), 0.7)"
+              className="bg-card/50 border border-card-border rounded-xl backdrop-blur-md"
             />
           </ReactFlow>
         )}
 
         {/* Legend */}
-        <div className="absolute bottom-6 left-6 z-10 flex flex-col gap-2 rounded-xl bg-[#0c1220]/90 p-4 ring-1 border border-card-border backdrop-blur-md">
+        <div className="absolute bottom-6 left-6 z-10 flex flex-col gap-2 rounded-xl bg-card/80 p-4 border border-card-border backdrop-blur-md shadow-lg">
           <h4 className="text-xs font-semibold text-foreground mb-1 uppercase tracking-wider">
             Node Types
           </h4>
