@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Logo } from '@/components/ui/logo';
+import { NewsWidget } from './news-widget';
 
 type PlatformRole = 'super_admin';
 type OrgRole = 'org_admin' | 'operator' | 'analyst' | 'viewer';
@@ -171,6 +172,11 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Conditional News Widget */}
+      {platformRole !== 'super_admin' && (
+        <NewsWidget collapsed={collapsed} />
+      )}
 
       {/* Footer Controls */}
       <div className="p-3 border-t border-sidebar-border">

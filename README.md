@@ -13,6 +13,7 @@
 ## ✨ Key Features
 
 - **🕸️ Living Security Graph:** Models Assets, CVEs, Threat Actors, Attack Techniques, Crown Jewels, and Users using **Neo4j**, enabling complex relationship queries and impact analysis.
+- **📰 Cybersecurity Newsfeed:** Real-time top 10 daily cybersecurity news integrated directly into the sidebar, aggregated via RSS (e.g., The Hacker News) and cached via Valkey.
 - **🧠 AI-Native Analysis:** Powered by **Google Gemini 2.0**, ARGUS interprets complex graph data, translates natural language into Graph Cypher queries, and generates human-readable security insights.
 - **🔍 Vector Search:** Integrates **Qdrant** for semantic search across security logs, vulnerability descriptions, and threat intelligence feeds.
 - **⚡ High-Performance Architecture:** Built with **Bun**, **Next.js 15**, and **Hono** for a lightning-fast, reactive, and scalable full-stack experience.

@@ -1,8 +1,10 @@
 import { fetchAllNVDCVEs } from './fetchers/nvd';
 import { fetchCISAKEV } from './fetchers/cisa-kev';
 import { fetchMITRETechniques, extractMitreId, extractTactic } from './fetchers/mitre';
+import { fetchTopNews } from './fetchers/news';
 import { batchUpsertCVEs, markExploitedCVEs, upsertTechnique } from './writers/neo4j';
 import { indexCVE } from '@argus/ai';
+import { getCacheClient } from '@argus/cache';
 
 export interface SyncResult {
   source: string;
@@ -91,6 +93,28 @@ export async function syncMITRE(): Promise<SyncResult> {
   }
 }
 
+export async function syncNews(): Promise<SyncResult> {
+  const start = Date.now();
+  const errors: string[] = [];
+
+  try {
+    const news = await fetchTopNews(10);
+    const client = getCacheClient();
+    
+    if (client.status === 'ready') {
+      // Cache for 6 hours
+      await client.setex('cache:news:top10', 6 * 60 * 60, JSON.stringify(news));
+    } else {
+      errors.push('Cache client not ready');
+    }
+
+    return { source: 'News', itemsSynced: news.length, errors, duration: Date.now() - start };
+  } catch (e) {
+    errors.push((e as Error).message);
+    return { source: 'News', itemsSynced: 0, errors, duration: Date.now() - start };
+  }
+}
+
 // Master sync: runs all sources
 export async function runFullSync(): Promise<SyncResult[]> {
   console.info('[Ingestion] Starting full sync...');
@@ -98,6 +122,7 @@ export async function runFullSync(): Promise<SyncResult[]> {
     syncNVD(),
     syncCISAKEV(),
     syncMITRE(),
+    syncNews(),
   ]);
 
   return results.map((r) =>

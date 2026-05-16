@@ -7,6 +7,7 @@ import { cveRoutes } from './cve';
 import { threatActorsRoutes } from './threat-actors';
 import { dashboardRoutes } from './dashboard';
 import { ingestionRoutes } from './ingestion';
+import { newsRoutes } from './news';
 import { requireAuth, requireOrgRole, requirePlatformAdmin, requireTenant } from '../../middleware/auth';
 import { onboardingRoutes } from './onboarding';
 import { meRoutes } from './me';
@@ -50,6 +51,10 @@ v1Routes.route('/cve', cveRoutes);
 v1Routes.use('/threat-actors', requireTenant());
 v1Routes.use('/threat-actors/*', requireTenant());
 v1Routes.route('/threat-actors', threatActorsRoutes);
+
+v1Routes.use('/news', requireTenant());
+v1Routes.use('/news/*', requireTenant());
+v1Routes.route('/news', newsRoutes);
 
 v1Routes.use('/dashboard', requireTenant());
 v1Routes.use('/dashboard/*', requireTenant());

@@ -4,10 +4,11 @@
   "private": true,
   "main": "src/index.ts",
   "dependencies": {
+    "@argus/ai": "workspace:*",
+    "@argus/cache": "workspace:*",
     "@argus/config": "workspace:*",
     "@argus/graph": "workspace:*",
-    "@argus/ai": "workspace:*",
     "@argus/types": "workspace:*",
-    "@argus/cache": "workspace:*"
+    "rss-parser": "^3.13.0"
   }
 }
