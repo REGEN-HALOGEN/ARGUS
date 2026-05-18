@@ -45,6 +45,12 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     };
     err.code = errorCode;
     err.status = res.status;
+
+    // Clear stale tenant if forbidden
+    if (errorCode === 'TENANT_FORBIDDEN' || res.status === 403) {
+      clearActiveTenantId();
+    }
+
     // Mark redirect-worthy errors as silent so callers can check
     err.silent =
       res.status === 401 ||
@@ -61,6 +67,11 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
       silent?: boolean;
     };
     err.code = errorCode;
+
+    if (errorCode === 'TENANT_FORBIDDEN') {
+      clearActiveTenantId();
+    }
+
     err.silent = errorCode === 'TENANT_REQUIRED' || errorCode === 'TENANT_FORBIDDEN';
     throw err;
   }

@@ -181,7 +181,7 @@ export default function GraphPage() {
         label: e.type,
         type: 'smoothstep',
         animated: true,
-                style: { stroke: 'var(--muted-foreground)', strokeWidth: 2, opacity: 0.6 },
+        style: { stroke: 'var(--muted-foreground)', strokeWidth: 2, opacity: 0.6 },
         labelStyle: { fill: 'var(--foreground)', fontSize: 12, fontWeight: 700 },
         labelBgStyle: { fill: 'var(--background)', fillOpacity: 0.95 },
         labelBgPadding: [6, 4],

@@ -57,8 +57,8 @@ v1Routes.use('/threat-actors', requireTenant());
 v1Routes.use('/threat-actors/*', requireTenant());
 v1Routes.route('/threat-actors', threatActorsRoutes);
 
-v1Routes.use('/news', requireTenant());
-v1Routes.use('/news/*', requireTenant());
+v1Routes.use('/news', requireAuth());
+v1Routes.use('/news/*', requireAuth());
 v1Routes.route('/news', newsRoutes);
 
 v1Routes.use('/dashboard', requireTenant());

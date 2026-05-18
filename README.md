@@ -154,6 +154,20 @@ See `DEPLOYMENT.md` for full instructions.
 
 ## 📋 Changelog
 
+### 2026-05-18 — Platform Administration & Self-Healing Architecture
+
+#### ✨ New Features
+- **Super Admin User Management Suite**:
+  - **Secure User Deletion**: Added direct database cascade deletion logic in Hono that dynamically scans PostgreSQL table schemas (checking `information_schema.columns`) before safely purging related sessions, accounts, members, invitations, and user records. This avoids SQL errors when optional schema columns are absent.
+  - **Admin Password Resets**: Super admins can now securely reset passwords for any registered user on the platform, supported by random-password generation and client-side length validation.
+  - **Organization Assignments**: Super admins can now assign any registered user to any organization with custom roles (`owner`, `admin`, `member`) directly inside the Admin Panel.
+
+#### 🔴 Stability & Self-Healing
+- **Self-Healing LocalStorage Active Org Sync**: Configured `apiFetch` to intercept any `403 Forbidden` or `TENANT_FORBIDDEN` response codes and automatically trigger `clearActiveTenantId()`. Stale or invalid organization context cached in local storage is dynamically scrubbed, allowing the application to heal its session instantly without throwing unhandled red overlay screens.
+- **Global News Access**: Configured `/news` API endpoint to require general authentication only (`requireAuth()`) rather than organization scoping (`requireTenant()`). This ensures platform administrators or users without active organization memberships can access general threat intel feeds without triggering active organization required failures.
+- **Header Isolation for Admin Endpoints**: Automatically strip `x-tenant-id` and `x-organization-id` headers inside all platform-level `/admin` API routes before invoking Better Auth list methods, isolating platform actions from tenant-level constraints.
+- **Hydration Warning Suppression**: Added hydration mismatch suppression on the root layout `<body>` tag to cleanly handle dynamic classes injected by dark/light mode providers on initial load.
+
 ### 2026-05-14 — Cloud Deployment Readiness
 
 #### ✨ Improvements

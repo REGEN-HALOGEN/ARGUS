@@ -2,7 +2,23 @@
 
 import { useAuth } from '@/components/providers/auth-provider';
 import { apiFetch } from '@/lib/api';
-import { Building2, ShieldCheck, Users } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  AlertTriangle,
+  Building2,
+  CheckCircle,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  UserPlus,
+  Users,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type UserOrg = {
@@ -100,17 +116,147 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [orgsError, setOrgsError] = useState('');
 
-  useEffect(() => {
-    if (platformRole !== 'super_admin') return;
+  // Modals state
+  const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetError, setResetError] = useState('');
 
+  const [addMemberUser, setAddMemberUser] = useState<AdminUser | null>(null);
+  const [addMemberOrg, setAddMemberOrg] = useState<Organization | null>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [memberRole, setMemberRole] = useState<'owner' | 'admin' | 'member'>('member');
+  const [isAddingMember, setIsAddingMember] = useState(false);
+  const [addMemberSuccess, setAddMemberSuccess] = useState(false);
+  const [addMemberError, setAddMemberError] = useState('');
+
+  const [deleteUser, setDeleteUser] = useState<AdminUser | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  const fetchData = () => {
     apiFetch<AdminUsersResponse>('/admin/users?limit=25')
-      .then((data) => setUsers(data.users ?? []))
+      .then((data: AdminUsersResponse) => setUsers(data.users ?? []))
       .catch((err: Error) => setError(err.message));
 
     apiFetch<OrganizationsResponse>('/admin/organizations?limit=100')
-      .then((data) => setOrganizations(Array.isArray(data) ? data : []))
+      .then((data: OrganizationsResponse) => setOrganizations(Array.isArray(data) ? data : []))
       .catch((err: Error) => setOrgsError(err.message));
+  };
+
+  useEffect(() => {
+    if (platformRole !== 'super_admin') return;
+    fetchData();
   }, [platformRole]);
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetPasswordUser) return;
+    if (newPassword.length < 8) {
+      setResetError('Password must be at least 8 characters long.');
+      return;
+    }
+
+    setIsResetting(true);
+    setResetError('');
+    try {
+      await apiFetch(`/admin/users/${resetPasswordUser.id}/reset-password`, {
+        method: 'POST',
+        body: JSON.stringify({ password: newPassword }),
+      });
+      setResetSuccess(true);
+      setTimeout(() => {
+        setResetPasswordUser(null);
+        setResetSuccess(false);
+        setNewPassword('');
+      }, 1500);
+    } catch (err: any) {
+      setResetError(err.message || 'Failed to reset password.');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleGeneratePassword = () => {
+    const chars =
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~}{[]:;?><';
+    let generated = '';
+    // Ensure at least one lowercase, one uppercase, one number, and one symbol
+    generated += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
+    generated += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
+    generated += '0123456789'[Math.floor(Math.random() * 10)];
+    generated += '!@#$%^&*()_+~}{[]:;?><'[Math.floor(Math.random() * 22)];
+    for (let i = 0; i < 12; i++) {
+      generated += chars[Math.floor(Math.random() * chars.length)];
+    }
+    // Shuffle
+    generated = generated
+      .split('')
+      .sort(() => 0.5 - Math.random())
+      .join('');
+    setNewPassword(generated);
+    setShowPassword(true);
+  };
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const targetUserId = addMemberUser ? addMemberUser.id : selectedUserId;
+    const targetOrgId = addMemberOrg ? addMemberOrg.id : selectedOrgId;
+
+    if (!targetUserId || !targetOrgId) {
+      setAddMemberError('Please select both a user and an organization.');
+      return;
+    }
+
+    setIsAddingMember(true);
+    setAddMemberError('');
+    try {
+      await apiFetch('/admin/organizations/members', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: targetUserId,
+          organizationId: targetOrgId,
+          role: memberRole,
+        }),
+      });
+      setAddMemberSuccess(true);
+      fetchData();
+      setTimeout(() => {
+        setAddMemberUser(null);
+        setAddMemberOrg(null);
+        setSelectedOrgId('');
+        setSelectedUserId('');
+        setMemberRole('member');
+        setAddMemberSuccess(false);
+      }, 1500);
+    } catch (err: any) {
+      setAddMemberError(err.message || 'Failed to add user to organization.');
+    } finally {
+      setIsAddingMember(false);
+    }
+  };
+
+  const handleDeleteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deleteUser) return;
+
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      await apiFetch(`/admin/users/${deleteUser.id}`, {
+        method: 'DELETE',
+      });
+      fetchData();
+      setDeleteUser(null);
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to remove user.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -198,8 +344,41 @@ export default function AdminPage() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <RoleBadge role={user.role ?? 'user'} variant="platform" />
+
+                <div className="flex items-center gap-1.5 border-l border-white/[0.08] pl-3 ml-1">
+                  <button
+                    onClick={() => {
+                      setAddMemberUser(user);
+                      setSelectedOrgId(organizations[0]?.id || '');
+                    }}
+                    title="Add to Organization"
+                    className="p-1.5 rounded-md hover:bg-emerald-500/10 text-muted-foreground hover:text-emerald-400 transition-all hover:scale-105 cursor-pointer"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setResetPasswordUser(user);
+                      setNewPassword('');
+                      setShowPassword(false);
+                    }}
+                    title="Reset Password"
+                    className="p-1.5 rounded-md hover:bg-primary-500/10 text-muted-foreground hover:text-primary-400 transition-all hover:scale-105 cursor-pointer"
+                  >
+                    <KeyRound className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeleteUser(user);
+                    }}
+                    title="Remove User"
+                    className="p-1.5 rounded-md hover:bg-threat-500/10 text-muted-foreground hover:text-threat-400 transition-all hover:scale-105 cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -249,9 +428,21 @@ export default function AdminPage() {
                         </div>
                       )}
                     </div>
-                    <span className="rounded-md bg-card/50 px-2 py-1 text-xs text-muted-foreground">
-                      {org.memberCount} member{org.memberCount !== 1 ? 's' : ''}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          setAddMemberOrg(org);
+                          setSelectedUserId(users[0]?.id || '');
+                        }}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md bg-primary-500/10 hover:bg-primary-500/20 text-primary-300 ring-1 ring-primary-500/30 transition-all cursor-pointer"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Add Member
+                      </button>
+                      <span className="rounded-md bg-card/50 px-2 py-1 text-xs text-muted-foreground">
+                        {org.memberCount} member{org.memberCount !== 1 ? 's' : ''}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="divide-y divide-white/[0.06]">
@@ -278,6 +469,368 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* ── Modals & Popups ────────────────────────────────────────── */}
+      <AnimatePresence>
+        {/* Reset Password Modal */}
+        {resetPasswordUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              className="relative w-full max-w-md overflow-hidden rounded-xl border border-card-border bg-[#0a0d14]/95 p-6 shadow-2xl backdrop-blur-md"
+            >
+              <div className="flex items-center justify-between border-b border-card-border pb-3">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="h-5 w-5 text-primary-400" />
+                  <h3 className="text-base font-semibold text-foreground">Reset Password</h3>
+                </div>
+                <button
+                  onClick={() => setResetPasswordUser(null)}
+                  className="rounded-lg p-1 text-muted-foreground hover:bg-card/50 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleResetPassword} className="mt-4 space-y-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Resetting password for{' '}
+                    <span className="font-semibold text-foreground">
+                      {resetPasswordUser.name || resetPasswordUser.email}
+                    </span>{' '}
+                    ({resetPasswordUser.email}).
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">New Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Minimum 8 characters"
+                      required
+                      className="w-full rounded-lg bg-card/60 border border-card-border pl-3 pr-20 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary-500/50"
+                    />
+                    <div className="absolute right-1.5 top-1.5 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleGeneratePassword}
+                        title="Generate Password"
+                        className="p-1 rounded text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 transition-colors"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {resetError && (
+                  <div className="rounded-lg bg-threat-500/10 border border-threat-500/20 p-3 text-xs text-threat-300 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-threat-400" />
+                    <span>{resetError}</span>
+                  </div>
+                )}
+
+                {resetSuccess && (
+                  <div className="rounded-lg bg-success-500/10 border border-success-500/20 p-3 text-xs text-success-300 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 shrink-0 text-success-400" />
+                    <span>Password successfully updated!</span>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setResetPasswordUser(null)}
+                    className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-card-border hover:bg-card/50 text-muted-foreground transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isResetting || resetSuccess}
+                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-primary-500/20 hover:bg-primary-500/35 text-primary-300 border border-primary-500/30 transition-all cursor-pointer"
+                  >
+                    {isResetting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Reset Password
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Add User to Organization Modal */}
+        {(addMemberUser || addMemberOrg) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              className="relative w-full max-w-md overflow-hidden rounded-xl border border-card-border bg-[#0a0d14]/95 p-6 shadow-2xl backdrop-blur-md"
+            >
+              <div className="flex items-center justify-between border-b border-card-border pb-3">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-success-400" />
+                  <h3 className="text-base font-semibold text-foreground">Add to Organization</h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setAddMemberUser(null);
+                    setAddMemberOrg(null);
+                    setSelectedOrgId('');
+                    setSelectedUserId('');
+                    setMemberRole('member');
+                  }}
+                  className="rounded-lg p-1 text-muted-foreground hover:bg-card/50 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddMember} className="mt-4 space-y-4">
+                {/* Information Header */}
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {addMemberUser ? (
+                      <>
+                        Assign{' '}
+                        <span className="font-semibold text-foreground">
+                          {addMemberUser.name || addMemberUser.email}
+                        </span>{' '}
+                        to an organization below.
+                      </>
+                    ) : (
+                      <>
+                        Add a user to organization{' '}
+                        <span className="font-semibold text-foreground">{addMemberOrg?.name}</span>.
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                {/* Organization Selection (only if starting from user) */}
+                {addMemberUser && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Select Organization
+                    </label>
+                    <select
+                      value={selectedOrgId}
+                      onChange={(e) => setSelectedOrgId(e.target.value)}
+                      required
+                      className="w-full rounded-lg bg-card/60 border border-card-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary-500/50 cursor-pointer"
+                    >
+                      <option value="" disabled className="bg-[#0c0f16]">
+                        Choose an organization
+                      </option>
+                      {organizations.map((org) => (
+                        <option key={org.id} value={org.id} className="bg-[#0c0f16]">
+                          {org.name} ({org.slug})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* User Selection (only if starting from organization) */}
+                {addMemberOrg && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Select Platform User
+                    </label>
+                    <select
+                      value={selectedUserId}
+                      onChange={(e) => setSelectedUserId(e.target.value)}
+                      required
+                      className="w-full rounded-lg bg-card/60 border border-card-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary-500/50 cursor-pointer"
+                    >
+                      <option value="" disabled className="bg-[#0c0f16]">
+                        Choose a user
+                      </option>
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id} className="bg-[#0c0f16]">
+                          {u.name || 'Unnamed'} ({u.email})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Role Selection */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Role in Organization
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['member', 'admin', 'owner'] as const).map((roleOption) => {
+                      const isActive = memberRole === roleOption;
+                      return (
+                        <button
+                          key={roleOption}
+                          type="button"
+                          onClick={() => setMemberRole(roleOption)}
+                          className={`rounded-lg py-2.5 text-xs font-semibold capitalize border transition-all cursor-pointer ${
+                            isActive
+                              ? 'bg-success-500/15 border-success-500/40 text-success-300 font-bold'
+                              : 'bg-card/40 border-card-border hover:bg-card/70 text-muted-foreground'
+                          }`}
+                        >
+                          {roleOption}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {addMemberError && (
+                  <div className="rounded-lg bg-threat-500/10 border border-threat-500/20 p-3 text-xs text-threat-300 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-threat-400" />
+                    <span>{addMemberError}</span>
+                  </div>
+                )}
+
+                {addMemberSuccess && (
+                  <div className="rounded-lg bg-success-500/10 border border-success-500/20 p-3 text-xs text-success-300 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 shrink-0 text-success-400" />
+                    <span>Successfully added user to organization!</span>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAddMemberUser(null);
+                      setAddMemberOrg(null);
+                      setSelectedOrgId('');
+                      setSelectedUserId('');
+                      setMemberRole('member');
+                    }}
+                    className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-card-border hover:bg-card/50 text-muted-foreground transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isAddingMember || addMemberSuccess}
+                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-success-500/20 hover:bg-success-500/35 text-success-300 border border-success-500/30 transition-all cursor-pointer"
+                  >
+                    {isAddingMember && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Add Member
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Remove User Confirmation Dialog */}
+        {deleteUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              className="relative w-full max-w-md overflow-hidden rounded-xl border border-threat-500/30 bg-[#0a0d14]/95 p-6 shadow-2xl backdrop-blur-md"
+            >
+              <div className="flex items-center justify-between border-b border-threat-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-threat-400" />
+                  <h3 className="text-base font-semibold text-threat-300">Remove Platform User</h3>
+                </div>
+                <button
+                  onClick={() => setDeleteUser(null)}
+                  className="rounded-lg p-1 text-muted-foreground hover:bg-card/50 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleDeleteUser} className="mt-4 space-y-4">
+                <div className="rounded-lg bg-threat-500/10 border border-threat-500/20 p-3.5 text-xs text-threat-300 space-y-2">
+                  <p className="font-semibold">⚠️ CRITICAL WARNING</p>
+                  <p className="leading-relaxed">
+                    This action is **irreversible**. Removing this user will permanently delete:
+                  </p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>Their platform credentials and session tokens</li>
+                    <li>
+                      All memberships in organizations ({deleteUser.organizations?.length || 0}{' '}
+                      active memberships)
+                    </li>
+                    <li>Any associated credentials and authentication configurations</li>
+                  </ul>
+                </div>
+
+                <div className="text-sm">
+                  <p className="text-xs text-muted-foreground">User Details:</p>
+                  <p className="font-medium text-foreground mt-0.5">
+                    {deleteUser.name || 'Unnamed User'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{deleteUser.email}</p>
+                </div>
+
+                {deleteError && (
+                  <div className="rounded-lg bg-threat-500/10 border border-threat-500/20 p-3 text-xs text-threat-300 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-threat-400" />
+                    <span>{deleteError}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteUser(null)}
+                    className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-card-border hover:bg-card/50 text-muted-foreground transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isDeleting}
+                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-threat-500/20 hover:bg-threat-500/35 text-threat-300 border border-threat-500/30 transition-all cursor-pointer"
+                  >
+                    {isDeleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Permanently Delete
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

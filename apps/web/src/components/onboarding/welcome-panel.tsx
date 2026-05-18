@@ -1,6 +1,6 @@
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Logo } from '@/components/ui/logo';
 import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
+import { Logo } from '@/components/ui/logo';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { ArrowRight, Building2, UserCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -25,8 +25,8 @@ export function WelcomePanel() {
                 Welcome to <span className="text-primary-500">ARGUS</span>
               </h1>
               <p className="text-base text-muted-foreground sm:text-lg leading-relaxed">
-                AI-powered relationship graph for security threats. Map exposure, understand risk, and
-                act fast.
+                AI-powered relationship graph for security threats. Map exposure, understand risk,
+                and act fast.
               </p>
               <div className="flex flex-wrap gap-3 mt-4">
                 <Link

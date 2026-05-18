@@ -23,9 +23,9 @@ newsRoutes.get('/', async (c) => {
   try {
     // 1. Get 3 raw headlines quickly
     const fastNews = await fetchTopNews(3);
-    
+
     // 2. Trigger full AI sync in background (don't await)
-    syncNews().catch(err => console.error('[API] Background news sync failed:', err));
+    syncNews().catch((err) => console.error('[API] Background news sync failed:', err));
 
     return c.json({ success: true, data: fastNews });
   } catch (err) {

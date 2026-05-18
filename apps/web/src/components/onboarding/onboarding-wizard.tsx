@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, Building2, UserCircle2, ArrowRight, ShieldCheck, HelpCircle } from "lucide-react";
-import Link from "next/link";
+import * as Dialog from '@radix-ui/react-dialog';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Building2, HelpCircle, ShieldCheck, UserCircle2, X } from 'lucide-react';
+import Link from 'next/link';
+import type React from 'react';
+import { useState } from 'react';
 
 interface Question {
   id: string;
@@ -14,19 +15,19 @@ interface Question {
 
 const QUESTIONS: Question[] = [
   {
-    id: "team",
-    text: "Are you setting up ARGUS for an entire company or security team?",
-    description: "Select yes if you need to create a new workspace for your organization.",
+    id: 'team',
+    text: 'Are you setting up ARGUS for an entire company or security team?',
+    description: 'Select yes if you need to create a new workspace for your organization.',
   },
   {
-    id: "infra",
-    text: "Will you be connecting cloud infrastructure or on-prem data sources?",
-    description: "Select yes if you are responsible for seeding the threat graph with assets.",
+    id: 'infra',
+    text: 'Will you be connecting cloud infrastructure or on-prem data sources?',
+    description: 'Select yes if you are responsible for seeding the threat graph with assets.',
   },
   {
-    id: "joining",
-    text: "Are you an individual contributor joining a workspace created by your admin?",
-    description: "Select yes if your team already has an ARGUS account and you just need access.",
+    id: 'joining',
+    text: 'Are you an individual contributor joining a workspace created by your admin?',
+    description: 'Select yes if your team already has an ARGUS account and you just need access.',
   },
 ];
 
@@ -34,7 +35,7 @@ export function OnboardingWizard({ trigger }: { trigger: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [, setAnswers] = useState<Record<string, boolean>>({});
-  const [result, setResult] = useState<"individual" | "organization" | null>(null);
+  const [result, setResult] = useState<'individual' | 'organization' | null>(null);
 
   const handleAnswer = (val: boolean) => {
     const q = QUESTIONS[step];
@@ -52,7 +53,7 @@ export function OnboardingWizard({ trigger }: { trigger: React.ReactNode }) {
         if (newAnswers.infra) score += 10;
         if (newAnswers.joining) score -= 25;
 
-        setResult(score > 0 ? "organization" : "individual");
+        setResult(score > 0 ? 'organization' : 'individual');
       }
       return newAnswers;
     });
@@ -65,14 +66,20 @@ export function OnboardingWizard({ trigger }: { trigger: React.ReactNode }) {
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={(val) => { setOpen(val); if (!val) reset(); }}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(val) => {
+        setOpen(val);
+        if (!val) reset();
+      }}
+    >
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm animate-fade-in" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 p-6 animate-slide-in">
           <div className="relative overflow-hidden rounded-3xl border border-card-border bg-card p-8 shadow-2xl">
             <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-primary-500/10 blur-3xl" />
-            
+
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
@@ -101,7 +108,9 @@ export function OnboardingWizard({ trigger }: { trigger: React.ReactNode }) {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-primary-500">
                         <HelpCircle className="h-4 w-4" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Question {step + 1} of 3</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest">
+                          Question {step + 1} of 3
+                        </span>
                       </div>
                       <h3 className="text-xl font-bold text-foreground leading-tight">
                         {QUESTIONS[step]?.text}
@@ -137,12 +146,16 @@ export function OnboardingWizard({ trigger }: { trigger: React.ReactNode }) {
                       <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-success-500/10 border border-success-500/20 mb-2">
                         <ShieldCheck className="h-6 w-6 text-success-500" />
                       </div>
-                      <h3 className="text-2xl font-extrabold text-foreground tracking-tight">Recommended Path</h3>
-                      <p className="text-sm text-muted-foreground">Based on your answers, we recommend:</p>
+                      <h3 className="text-2xl font-extrabold text-foreground tracking-tight">
+                        Recommended Path
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Based on your answers, we recommend:
+                      </p>
                     </div>
 
                     <div className="p-1 rounded-3xl border border-card-border bg-black/20">
-                      {result === "organization" ? (
+                      {result === 'organization' ? (
                         <div className="flex flex-col gap-4 p-6 rounded-[calc(1.5rem-1px)] bg-card border border-primary-500/20">
                           <div className="flex items-center gap-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
@@ -150,7 +163,9 @@ export function OnboardingWizard({ trigger }: { trigger: React.ReactNode }) {
                             </div>
                             <div>
                               <h4 className="font-bold text-foreground">Organization Onboarding</h4>
-                              <p className="text-xs text-muted-foreground">Setup workspace & connect infrastructure</p>
+                              <p className="text-xs text-muted-foreground">
+                                Setup workspace & connect infrastructure
+                              </p>
                             </div>
                           </div>
                           <Link
@@ -169,7 +184,9 @@ export function OnboardingWizard({ trigger }: { trigger: React.ReactNode }) {
                             </div>
                             <div>
                               <h4 className="font-bold text-foreground">Individual Account</h4>
-                              <p className="text-xs text-muted-foreground">Create your account and join a team</p>
+                              <p className="text-xs text-muted-foreground">
+                                Create your account and join a team
+                              </p>
                             </div>
                           </div>
                           <Link

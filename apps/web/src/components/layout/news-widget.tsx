@@ -81,7 +81,9 @@ export function NewsWidget({ collapsed }: { collapsed: boolean }) {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
             </span>
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.15em]">Intelligence Feed</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.15em]">
+            Intelligence Feed
+          </span>
         </div>
         {expanded ? (
           <ChevronUp className="h-3 w-3 opacity-50" />

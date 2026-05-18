@@ -134,7 +134,7 @@ export async function syncNews(): Promise<SyncResult> {
         // Extract JSON using a more robust method
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error('No JSON object found in response');
-        
+
         const parsed = JSON.parse(jsonMatch[0]);
 
         item.summary = parsed.summary;

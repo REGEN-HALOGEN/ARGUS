@@ -8,9 +8,7 @@ export default function OnboardingLayout({
   return (
     <div className="relative min-h-screen">
       <BackgroundRippleEffect />
-      <div className="relative z-10 min-h-screen">
-        {children}
-      </div>
+      <div className="relative z-10 min-h-screen">{children}</div>
     </div>
   );
 }

@@ -6,6 +6,13 @@ import { getAuthDbPool } from '../../auth-db-pool';
 
 export const adminRoutes = new Hono();
 
+function getCleanHeaders(reqHeaders: Headers): Headers {
+  const headers = new Headers(reqHeaders);
+  headers.delete('x-tenant-id');
+  headers.delete('x-organization-id');
+  return headers;
+}
+
 const CreateUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
@@ -30,7 +37,7 @@ adminRoutes.get('/users', async (c) => {
   };
 
   const users = await auth.api.listUsers({
-    headers: c.req.raw.headers,
+    headers: getCleanHeaders(c.req.raw.headers),
     query,
   });
 
@@ -195,18 +202,136 @@ adminRoutes.patch('/users/:userId/role', zValidator('json', SetUserRoleSchema), 
   return c.json({ success: true, data: user });
 });
 
-adminRoutes.delete('/users/:userId', async (c) => {
-  const result = await auth.api.removeUser({
-    headers: c.req.raw.headers,
-    body: { userId: c.req.param('userId') },
-  });
+async function deleteIfColumnExists(pool: any, table: string, column: string, value: string) {
+  const r = await pool.query(
+    `SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2
+     LIMIT 1`,
+    [table, column],
+  );
+  if ((r.rowCount ?? 0) > 0) {
+    await pool.query(`DELETE FROM "${table}" WHERE "${column}" = $1`, [value]);
+  }
+}
 
-  return c.json({ success: true, data: result });
+adminRoutes.delete('/users/:userId', async (c) => {
+  const userId = c.req.param('userId');
+  const pool = getAuthDbPool();
+  try {
+    await pool.query('BEGIN');
+    await deleteIfColumnExists(pool, 'session', 'userId', userId);
+    await deleteIfColumnExists(pool, 'account', 'userId', userId);
+    await deleteIfColumnExists(pool, 'member', 'userId', userId);
+    await deleteIfColumnExists(pool, 'invitation', 'invitedBy', userId);
+    await deleteIfColumnExists(pool, 'invitation', 'inviterId', userId);
+    await deleteIfColumnExists(pool, 'verification', 'userId', userId);
+    await pool.query('DELETE FROM "user" WHERE "id" = $1', [userId]);
+    await pool.query('COMMIT');
+
+    return c.json({ success: true, data: { userId } });
+  } catch (error: any) {
+    await pool.query('ROLLBACK');
+    console.error(`[ADMIN] Failed to remove user ${userId}:`, error);
+    return c.json(
+      {
+        success: false,
+        error: { code: 'USER_DELETE_FAILED', message: error.message },
+      },
+      500,
+    );
+  }
+});
+
+const ResetPasswordSchema = z.object({
+  password: z.string().min(8),
+});
+
+adminRoutes.post(
+  '/users/:userId/reset-password',
+  zValidator('json', ResetPasswordSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    try {
+      const result = await auth.api.setPassword({
+        headers: getCleanHeaders(c.req.raw.headers),
+        body: {
+          userId: c.req.param('userId'),
+          newPassword: body.password,
+        },
+      });
+      return c.json({ success: true, data: result });
+    } catch (error: any) {
+      console.error(`[ADMIN] Failed to reset password for user ${c.req.param('userId')}:`, error);
+      return c.json(
+        {
+          success: false,
+          error: { code: 'PASSWORD_RESET_FAILED', message: error.message },
+        },
+        500,
+      );
+    }
+  },
+);
+
+const AddOrgMemberSchema = z.object({
+  userId: z.string(),
+  role: z.enum(['owner', 'admin', 'member']),
+  organizationId: z.string(),
+});
+
+adminRoutes.post('/organizations/members', zValidator('json', AddOrgMemberSchema), async (c) => {
+  const body = c.req.valid('json');
+  try {
+    const pool = getAuthDbPool();
+    const existing = await pool.query(
+      `SELECT id FROM "member" WHERE "userId" = $1 AND "organizationId" = $2 LIMIT 1`,
+      [body.userId, body.organizationId],
+    );
+
+    if ((existing.rowCount ?? 0) > 0) {
+      await pool.query(
+        `UPDATE "member" SET role = $1 WHERE "userId" = $2 AND "organizationId" = $3`,
+        [body.role, body.userId, body.organizationId],
+      );
+      return c.json({ success: true, message: 'Member role updated successfully.' });
+    }
+
+    const result = await auth.api.addMember({
+      headers: getCleanHeaders(c.req.raw.headers),
+      body: {
+        userId: body.userId,
+        role: body.role,
+        organizationId: body.organizationId,
+      },
+    });
+
+    return c.json({ success: true, data: result });
+  } catch (error: any) {
+    console.error('[ADMIN] Failed to add member to organization:', error);
+    try {
+      const pool = getAuthDbPool();
+      const memberId = `member_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      await pool.query(
+        `INSERT INTO "member" (id, "organizationId", "userId", role, "createdAt") VALUES ($1, $2, $3, $4, $5)`,
+        [memberId, body.organizationId, body.userId, body.role, new Date().toISOString()],
+      );
+      return c.json({ success: true, message: 'Added member via fallback query.' });
+    } catch (dbError: any) {
+      console.error('[ADMIN] Fallback DB insert also failed:', dbError);
+      return c.json(
+        {
+          success: false,
+          error: { code: 'ADD_MEMBER_FAILED', message: dbError.message },
+        },
+        500,
+      );
+    }
+  }
 });
 
 adminRoutes.get('/operators', async (c) => {
   const users = await auth.api.listUsers({
-    headers: c.req.raw.headers,
+    headers: getCleanHeaders(c.req.raw.headers),
     query: {
       limit: c.req.query('limit') ?? '50',
       offset: c.req.query('offset') ?? '0',

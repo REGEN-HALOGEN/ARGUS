@@ -30,7 +30,7 @@ export default function UserOnboardingPage() {
 
       // Auto sign-in after successful registration
       await signIn.email({ email, password });
-      
+
       // We stay here and show a high-impact success state.
       setSuccess(true);
     } catch (err: any) {
@@ -61,28 +61,33 @@ export default function UserOnboardingPage() {
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.2 }}
+                  transition={{ type: 'spring', damping: 12, stiffness: 200, delay: 0.2 }}
                 >
                   <UserCircle2 className="h-10 w-10 text-emerald-500" />
                 </motion.div>
               </div>
-              
-              <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-2">Welcome aboard!</h2>
+
+              <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-2">
+                Welcome aboard!
+              </h2>
               <p className="text-sm text-muted-foreground max-w-[280px] mb-8">
-                Your account for <span className="text-foreground font-bold">{email}</span> has been created successfully.
+                Your account for <span className="text-foreground font-bold">{email}</span> has been
+                created successfully.
               </p>
 
               <div className="w-full space-y-4 text-left p-6 rounded-2xl bg-black/20 border border-white/5 mb-8">
                 <div className="flex gap-3">
                   <div className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                   <p className="text-xs text-muted-foreground/90 leading-relaxed">
-                    <strong className="text-foreground">Next Step:</strong> Contact your organization administrator to be added to a workspace.
+                    <strong className="text-foreground">Next Step:</strong> Contact your
+                    organization administrator to be added to a workspace.
                   </p>
                 </div>
                 <div className="flex gap-3">
                   <div className="mt-1 h-1.5 w-1.5 rounded-full bg-accent-500 shrink-0" />
                   <p className="text-xs text-muted-foreground/90 leading-relaxed">
-                    <strong className="text-foreground">Need a workspace?</strong> You can return to the hub to create a new organization yourself.
+                    <strong className="text-foreground">Need a workspace?</strong> You can return to
+                    the hub to create a new organization yourself.
                   </p>
                 </div>
               </div>
@@ -104,12 +109,19 @@ export default function UserOnboardingPage() {
               </div>
             </motion.div>
           ) : (
-            <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div
+              key="form"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
               <div className="flex flex-col items-center mb-8 relative z-10">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-500/10 border border-accent-500/20 mb-4">
                   <UserCircle2 className="h-6 w-6 text-accent-600 dark:text-accent-400" />
                 </div>
-                <h1 className="text-2xl font-extrabold text-foreground tracking-tight">User Sign Up</h1>
+                <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
+                  User Sign Up
+                </h1>
                 <p className="text-sm text-muted-foreground mt-1 text-center">
                   Create a user account with email and password
                 </p>
@@ -121,7 +133,7 @@ export default function UserOnboardingPage() {
                     {error}
                   </div>
                 )}
-                
+
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
                     Full Name
