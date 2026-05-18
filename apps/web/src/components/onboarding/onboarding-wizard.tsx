@@ -87,8 +87,8 @@ export function OnboardingWizard({ trigger }: { trigger: React.ReactNode }) {
                     <ShieldCheck className="h-5 w-5 text-primary-500" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-foreground">Setup Assistant</h2>
-                    <p className="text-xs text-muted-foreground">Find the right path for you</p>
+                    <Dialog.Title className="text-lg font-bold text-foreground">Setup Assistant</Dialog.Title>
+                    <Dialog.Description className="text-xs text-muted-foreground">Find the right path for you</Dialog.Description>
                   </div>
                 </div>
                 <Dialog.Close className="rounded-full p-2 hover:bg-white/5 transition-colors">
