@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{ ...account, user: account.user ?? sessionData?.user ?? null, loading }}
     >
       {loading ? (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0b0f19] transition-colors duration-300">
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background transition-colors duration-300">
           {/* Outer premium glow container */}
           <div className="relative flex flex-col items-center gap-6">
             {/* Soft background pulse glow */}
@@ -168,7 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               <img
                 src="/images/loader.svg"
                 alt="ARGUS Loading..."
-                className="relative z-10 h-20 w-20 animate-spin select-none pointer-events-none drop-shadow-[0_0_20px_rgba(59,130,246,0.35)] dark:drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
+                className="relative z-10 h-28 w-28 animate-spin select-none pointer-events-none drop-shadow-[0_0_25px_rgba(59,130,246,0.25)] dark:drop-shadow-[0_0_35px_rgba(59,130,246,0.45)]"
               />
             </div>
 

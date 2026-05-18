@@ -19,7 +19,7 @@ export default function RootLoading() {
           <img
             src="/images/loader.svg"
             alt="ARGUS Loading..."
-            className="relative z-10 h-20 w-20 animate-spin select-none pointer-events-none drop-shadow-[0_0_20px_rgba(59,130,246,0.35)] dark:drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
+            className="relative z-10 h-28 w-28 animate-spin select-none pointer-events-none drop-shadow-[0_0_25px_rgba(59,130,246,0.25)] dark:drop-shadow-[0_0_35px_rgba(59,130,246,0.45)]"
           />
         </div>
 
