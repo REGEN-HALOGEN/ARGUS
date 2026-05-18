@@ -14,7 +14,8 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import { motion } from 'framer-motion';
-import { Bug, Download, Filter, Loader2, Network, Server, Shield, Users, Zap } from 'lucide-react';
+import { Bug, Download, Filter, Network, Server, Shield, Users, Zap } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useEffect, useState } from 'react';
 import '@xyflow/react/dist/style.css';
 import { apiFetch } from '@/lib/api';
@@ -265,7 +266,7 @@ export default function GraphPage() {
       <div className="flex-1 relative rounded-2xl glass-card overflow-hidden">
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 text-primary-500 animate-spin" />
+            <Spinner size="md" />
           </div>
         ) : (
           <ReactFlow

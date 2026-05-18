@@ -2,7 +2,8 @@
 
 import { apiFetch } from '@/lib/api';
 import { motion } from 'framer-motion';
-import { ChevronRight, Globe, Loader2, Target, Users } from 'lucide-react';
+import { ChevronRight, Globe, Target, Users } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useEffect, useState } from 'react';
 
 interface ThreatActor {
@@ -79,7 +80,7 @@ export default function ThreatsPage() {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 text-primary-500 animate-spin" />
+          <Spinner size="md" />
         </div>
       ) : actors.length === 0 ? (
         <div className="glass-card p-12 text-center text-muted-foreground/70">
@@ -164,7 +165,7 @@ export default function ThreatsPage() {
                 >
                   {detailsLoading[actor.name] ? (
                     <div className="flex justify-center py-8">
-                      <Loader2 className="h-6 w-6 text-primary-500 animate-spin" />
+                      <Spinner size="sm" />
                     </div>
                   ) : (
                     <div className="mt-5 space-y-6">

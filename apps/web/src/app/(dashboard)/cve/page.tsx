@@ -2,7 +2,8 @@
 
 import { apiFetch } from '@/lib/api';
 import { motion } from 'framer-motion';
-import { ExternalLink, Filter, Loader2, Search } from 'lucide-react';
+import { ExternalLink, Filter, Search } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useEffect, useState } from 'react';
 
 interface CVE {
@@ -106,7 +107,7 @@ export default function CVEPage() {
       <div className="flex items-center gap-3">
         <div className="flex-1 flex items-center gap-2 rounded-xl bg-card-border/5 px-4 py-2.5 ring-1 ring-card-border">
           {isSearching ? (
-            <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+            <Spinner size="sm" className="mr-0.5" />
           ) : (
             <Search className="h-4 w-4 text-muted-foreground" />
           )}
@@ -194,7 +195,7 @@ export default function CVEPage() {
       <div className="glass-card overflow-hidden relative min-h-[400px]">
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 text-primary-500 animate-spin" />
+            <Spinner size="md" />
           </div>
         ) : (
           <div className="overflow-x-auto">

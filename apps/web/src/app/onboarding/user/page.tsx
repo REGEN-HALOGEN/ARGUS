@@ -3,7 +3,8 @@
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { signIn, signUp } from '@/lib/auth';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Loader2, UserCircle2 } from 'lucide-react';
+import { ArrowRight, UserCircle2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -182,7 +183,7 @@ export default function UserOnboardingPage() {
                   disabled={loading}
                   className="w-full mt-4 flex items-center justify-center gap-2 rounded-2xl bg-accent-500 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-accent-500/25 hover:bg-accent-600 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create account'}
+                  {loading ? <Spinner size="sm" className="mr-0.5" /> : 'Create account'}
                 </button>
 
                 <p className="text-center text-xs text-muted-foreground mt-8">

@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   KeyRound,
-  Loader2,
   Plus,
   ShieldCheck,
   Sparkles,
@@ -19,6 +18,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useEffect, useState } from 'react';
 
 type UserOrg = {
@@ -260,8 +260,8 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Spinner size="md" />
       </div>
     );
   }
@@ -572,7 +572,7 @@ export default function AdminPage() {
                     disabled={isResetting || resetSuccess}
                     className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-primary-500/20 hover:bg-primary-500/35 text-primary-300 border border-primary-500/30 transition-all cursor-pointer"
                   >
-                    {isResetting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {isResetting && <Spinner size="sm" className="mr-1.5" />}
                     Reset Password
                   </button>
                 </div>
@@ -742,7 +742,7 @@ export default function AdminPage() {
                     disabled={isAddingMember || addMemberSuccess}
                     className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-success-500/20 hover:bg-success-500/35 text-success-300 border border-success-500/30 transition-all cursor-pointer"
                   >
-                    {isAddingMember && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {isAddingMember && <Spinner size="sm" className="mr-1.5" />}
                     Add Member
                   </button>
                 </div>
@@ -822,7 +822,7 @@ export default function AdminPage() {
                     disabled={isDeleting}
                     className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-threat-500/20 hover:bg-threat-500/35 text-threat-300 border border-threat-500/30 transition-all cursor-pointer"
                   >
-                    {isDeleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {isDeleting && <Spinner size="sm" className="mr-1.5" />}
                     Permanently Delete
                   </button>
                 </div>

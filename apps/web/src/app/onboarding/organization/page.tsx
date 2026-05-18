@@ -10,7 +10,6 @@ import {
   Check,
   Crown,
   Database,
-  Loader2,
   Monitor,
   Plus,
   Server,
@@ -18,6 +17,7 @@ import {
   Trash2,
   UserCircle2,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
@@ -347,7 +347,7 @@ export default function OrganizationOnboardingPage() {
                 </div>
                 <button type="submit" disabled={accountLoading} className={btnPrimary}>
                   {accountLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Spinner size="sm" className="mr-0.5" />
                   ) : (
                     'Continue to organization setup'
                   )}
@@ -733,7 +733,7 @@ export default function OrganizationOnboardingPage() {
                   disabled={loading}
                   className={btnPrimary}
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Launch Workspace'}
+                  {loading ? <Spinner size="sm" className="mr-0.5" /> : 'Launch Workspace'}
                 </button>
               )}
             </div>

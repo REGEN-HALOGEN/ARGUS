@@ -3,7 +3,8 @@
 import { Markdown } from '@/components/ui/markdown';
 import { API_BASE, apiFetch } from '@/lib/api';
 import { motion } from 'framer-motion';
-import { BrainCircuit, Loader2, RotateCcw, Send, Sparkles } from 'lucide-react';
+import { BrainCircuit, RotateCcw, Send, Sparkles } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useEffect, useRef, useState } from 'react';
 
 const suggestedPrompts = [
@@ -173,8 +174,8 @@ export default function AnalystPage() {
                     msg.content ? (
                       <Markdown content={msg.content} />
                     ) : (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Analyzing graph data...
+                      <div className="flex items-center gap-2.5 text-muted-foreground">
+                        <Spinner size="sm" /> Analyzing graph data...
                       </div>
                     )
                   ) : (

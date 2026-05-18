@@ -11,13 +11,13 @@ import {
   EyeOff,
   Info,
   Key,
-  Loader2,
   Palette,
   Save,
   Settings as SettingsIcon,
   Shield,
   X,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
 
@@ -100,7 +100,7 @@ function SaveButton({
       }`}
     >
       {saving ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Spinner size="sm" className="mr-0.5" />
       ) : saved ? (
         <CheckCircle2 className="h-4 w-4" />
       ) : (

@@ -7,10 +7,10 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
-  Loader2,
   Newspaper,
   Zap,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useEffect, useState } from 'react';
 
 interface NewsItem {
@@ -105,7 +105,7 @@ export function NewsWidget({ collapsed }: { collapsed: boolean }) {
                 {loading && news.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
                     <div className="relative">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
+                      <Spinner size="sm" />
                       <div className="absolute inset-0 blur-lg bg-primary-500/20 animate-pulse" />
                     </div>
                     <span className="text-[10px] font-medium animate-pulse tracking-wide uppercase">
