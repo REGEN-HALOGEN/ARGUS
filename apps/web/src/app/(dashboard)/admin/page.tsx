@@ -322,7 +322,7 @@ export default function AdminPage() {
         <div className="border-b border-card-border bg-card/40 px-4 py-3 text-sm font-semibold text-foreground">
           Platform Users
         </div>
-        <div className="divide-y divide-white/[0.06]">
+        <div className="divide-y divide-card-border">
           {users?.map((user) => (
             <div key={user.id} className="grid grid-cols-[1fr_auto] gap-4 px-4 py-3">
               <div>
@@ -347,7 +347,7 @@ export default function AdminPage() {
               <div className="flex items-center gap-3">
                 <RoleBadge role={user.role ?? 'user'} variant="platform" />
 
-                <div className="flex items-center gap-1.5 border-l border-white/[0.08] pl-3 ml-1">
+                <div className="flex items-center gap-1.5 border-l border-card-border pl-3 ml-1">
                   <button
                     onClick={() => {
                       setAddMemberUser(user);
@@ -445,7 +445,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </div>
-                <div className="divide-y divide-white/[0.06]">
+                <div className="divide-y divide-card-border">
                   {org.members && org.members.length > 0 ? (
                     org.members.map((member) => (
                       <div key={member.id} className="px-4 py-3 grid grid-cols-[1fr_auto] gap-4">
@@ -484,7 +484,7 @@ export default function AdminPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="relative w-full max-w-md overflow-hidden rounded-xl border border-card-border bg-[#0a0d14]/95 p-6 shadow-2xl backdrop-blur-md"
+              className="relative w-full max-w-md overflow-hidden rounded-xl border border-card-border bg-card/95 p-6 shadow-2xl backdrop-blur-md"
             >
               <div className="flex items-center justify-between border-b border-card-border pb-3">
                 <div className="flex items-center gap-2">
@@ -593,7 +593,7 @@ export default function AdminPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="relative w-full max-w-md overflow-hidden rounded-xl border border-card-border bg-[#0a0d14]/95 p-6 shadow-2xl backdrop-blur-md"
+              className="relative w-full max-w-md overflow-hidden rounded-xl border border-card-border bg-card/95 p-6 shadow-2xl backdrop-blur-md"
             >
               <div className="flex items-center justify-between border-b border-card-border pb-3">
                 <div className="flex items-center gap-2">
@@ -647,11 +647,11 @@ export default function AdminPage() {
                       required
                       className="w-full rounded-lg bg-card/60 border border-card-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary-500/50 cursor-pointer"
                     >
-                      <option value="" disabled className="bg-[#0c0f16]">
+                      <option value="" disabled className="bg-card text-foreground">
                         Choose an organization
                       </option>
                       {organizations.map((org) => (
-                        <option key={org.id} value={org.id} className="bg-[#0c0f16]">
+                        <option key={org.id} value={org.id} className="bg-card text-foreground">
                           {org.name} ({org.slug})
                         </option>
                       ))}
@@ -671,11 +671,11 @@ export default function AdminPage() {
                       required
                       className="w-full rounded-lg bg-card/60 border border-card-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary-500/50 cursor-pointer"
                     >
-                      <option value="" disabled className="bg-[#0c0f16]">
+                      <option value="" disabled className="bg-card text-foreground">
                         Choose a user
                       </option>
                       {users.map((u) => (
-                        <option key={u.id} value={u.id} className="bg-[#0c0f16]">
+                        <option key={u.id} value={u.id} className="bg-card text-foreground">
                           {u.name || 'Unnamed'} ({u.email})
                         </option>
                       ))}
@@ -763,7 +763,7 @@ export default function AdminPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="relative w-full max-w-md overflow-hidden rounded-xl border border-threat-500/30 bg-[#0a0d14]/95 p-6 shadow-2xl backdrop-blur-md"
+              className="relative w-full max-w-md overflow-hidden rounded-xl border border-threat-500/30 bg-card/95 p-6 shadow-2xl backdrop-blur-md"
             >
               <div className="flex items-center justify-between border-b border-threat-500/20 pb-3">
                 <div className="flex items-center gap-2">

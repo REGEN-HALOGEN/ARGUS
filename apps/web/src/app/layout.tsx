@@ -9,7 +9,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className="bg-background text-foreground antialiased selection:bg-primary-500/30 transition-colors duration-300 overflow-x-hidden">
+      <body
+        suppressHydrationWarning
+        className="bg-background text-foreground antialiased selection:bg-primary-500/30 transition-colors duration-300 overflow-x-hidden"
+      >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>

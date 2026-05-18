@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/components/providers/auth-provider';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { clearActiveTenantId } from '@/lib/api';
 import { signOut } from '@/lib/auth';
 import { motion } from 'framer-motion';
@@ -36,6 +37,8 @@ export function Header() {
 
       {/* Right section */}
       <div className="flex items-center gap-2">
+        <ThemeToggle />
+
         {/* Notifications */}
         <div className="relative">
           <button
