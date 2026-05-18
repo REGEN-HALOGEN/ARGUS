@@ -4,7 +4,7 @@ import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
 import { Globe } from '@/components/ui/globe';
 import { Logo } from '@/components/ui/logo';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { ArrowRight, Building2, UserCircle2 } from 'lucide-react';
 import Link from 'next/link';
 

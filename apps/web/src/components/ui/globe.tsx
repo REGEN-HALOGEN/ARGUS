@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import createGlobe, { type COBEOptions } from 'cobe';
-import { useMotionValue, useSpring } from 'framer-motion';
+import { useMotionValue, useSpring } from 'motion/react';
 import { useEffect, useRef } from 'react';
 
 const MOVEMENT_DAMPING = 1400;
@@ -80,23 +80,28 @@ export function Globe({
     window.addEventListener('resize', onResize);
     onResize();
 
-    const globe = createGlobe(canvasRef.current!, {
-      ...config,
-      width: widthRef.current * 2,
-      height: widthRef.current * 2,
-      onRender: (state) => {
-        if (!pointerInteracting.current) phiRef.current += 0.005;
-        state.phi = phiRef.current + rs.get();
-        state.width = widthRef.current * 2;
-        state.height = widthRef.current * 2;
-      },
-    });
+    let globe: any;
 
-    setTimeout(() => {
-      if (canvasRef.current) canvasRef.current.style.opacity = '1';
-    }, 0);
+    if (canvasRef.current) {
+      globe = createGlobe(canvasRef.current, {
+        ...config,
+        width: widthRef.current * 2,
+        height: widthRef.current * 2,
+        onRender: (state) => {
+          if (!pointerInteracting.current) phiRef.current += 0.005;
+          state.phi = phiRef.current + rs.get();
+          state.width = widthRef.current * 2;
+          state.height = widthRef.current * 2;
+        },
+      });
+
+      setTimeout(() => {
+        if (canvasRef.current) canvasRef.current.style.opacity = '1';
+      }, 0);
+    }
+
     return () => {
-      globe.destroy();
+      if (globe) globe.destroy();
       window.removeEventListener('resize', onResize);
     };
   }, [rs, config]);
