@@ -1,18 +1,210 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import * as React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 
-export function ThemeToggle() {
+export type TransitionVariant =
+  | 'circle'
+  | 'square'
+  | 'triangle'
+  | 'diamond'
+  | 'hexagon'
+  | 'rectangle'
+  | 'star';
+
+interface ThemeToggleProps extends React.ComponentPropsWithoutRef<'button'> {
+  duration?: number;
+  variant?: TransitionVariant;
+  /** When true, the transition expands from the viewport center instead of the button center. */
+  fromCenter?: boolean;
+}
+
+function polygonCollapsed(cx: number, cy: number, vertexCount: number): string {
+  const pairs = Array.from({ length: vertexCount }, () => `${cx}px ${cy}px`).join(', ');
+  return `polygon(${pairs})`;
+}
+
+function getThemeTransitionClipPaths(
+  variant: TransitionVariant,
+  cx: number,
+  cy: number,
+  maxRadius: number,
+  viewportWidth: number,
+  viewportHeight: number,
+): [string, string] {
+  switch (variant) {
+    case 'circle':
+      return [`circle(0px at ${cx}px ${cy}px)`, `circle(${maxRadius}px at ${cx}px ${cy}px)`];
+    case 'square': {
+      const halfW = Math.max(cx, viewportWidth - cx);
+      const halfH = Math.max(cy, viewportHeight - cy);
+      const halfSide = Math.max(halfW, halfH) * 1.05;
+      const end = [
+        `${cx - halfSide}px ${cy - halfSide}px`,
+        `${cx + halfSide}px ${cy - halfSide}px`,
+        `${cx + halfSide}px ${cy + halfSide}px`,
+        `${cx - halfSide}px ${cy + halfSide}px`,
+      ].join(', ');
+      return [polygonCollapsed(cx, cy, 4), `polygon(${end})`];
+    }
+    case 'triangle': {
+      const scale = maxRadius * 2.2;
+      const dx = (Math.sqrt(3) / 2) * scale;
+      const verts = [
+        `${cx}px ${cy - scale}px`,
+        `${cx + dx}px ${cy + 0.5 * scale}px`,
+        `${cx - dx}px ${cy + 0.5 * scale}px`,
+      ].join(', ');
+      return [polygonCollapsed(cx, cy, 3), `polygon(${verts})`];
+    }
+    case 'diamond': {
+      const R = maxRadius * Math.SQRT2;
+      const end = [
+        `${cx}px ${cy - R}px`,
+        `${cx + R}px ${cy}px`,
+        `${cx}px ${cy + R}px`,
+        `${cx - R}px ${cy}px`,
+      ].join(', ');
+      return [polygonCollapsed(cx, cy, 4), `polygon(${end})`];
+    }
+    case 'hexagon': {
+      const R = maxRadius * Math.SQRT2;
+      const verts: string[] = [];
+      for (let i = 0; i < 6; i++) {
+        const a = -Math.PI / 2 + (i * Math.PI) / 3;
+        verts.push(`${cx + R * Math.cos(a)}px ${cy + R * Math.sin(a)}px`);
+      }
+      return [polygonCollapsed(cx, cy, 6), `polygon(${verts.join(', ')})`];
+    }
+    case 'rectangle': {
+      const halfW = Math.max(cx, viewportWidth - cx);
+      const halfH = Math.max(cy, viewportHeight - cy);
+      const end = [
+        `${cx - halfW}px ${cy - halfH}px`,
+        `${cx + halfW}px ${cy - halfH}px`,
+        `${cx + halfW}px ${cy + halfH}px`,
+        `${cx - halfW}px ${cy + halfH}px`,
+      ].join(', ');
+      return [polygonCollapsed(cx, cy, 4), `polygon(${end})`];
+    }
+    case 'star': {
+      const R = maxRadius * Math.SQRT2 * 1.03;
+      const innerRatio = 0.42;
+      const starPolygon = (radius: number) => {
+        const verts: string[] = [];
+        for (let i = 0; i < 5; i++) {
+          const outerA = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+          verts.push(`${cx + radius * Math.cos(outerA)}px ${cy + radius * Math.sin(outerA)}px`);
+          const innerA = outerA + Math.PI / 5;
+          verts.push(
+            `${cx + radius * innerRatio * Math.cos(innerA)}px ${cy + radius * innerRatio * Math.sin(innerA)}px`,
+          );
+        }
+        return `polygon(${verts.join(', ')})`;
+      };
+      const startR = Math.max(2, R * 0.025);
+      return [starPolygon(startR), starPolygon(R)];
+    }
+    default:
+      return [`circle(0px at ${cx}px ${cy}px)`, `circle(${maxRadius}px at ${cx}px ${cy}px)`];
+  }
+}
+
+export function ThemeToggle({
+  className,
+  duration = 500,
+  variant = 'circle',
+  fromCenter = false,
+  ...props
+}: ThemeToggleProps) {
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Avoid hydration mismatch
-  React.useEffect(() => {
+  useEffect(() => {
     setMounted(true);
   }, []);
+
+  const toggleTheme = useCallback(() => {
+    const button = buttonRef.current;
+    if (!button) return;
+
+    const isDark = resolvedTheme === 'dark';
+    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+
+    let x: number;
+    let y: number;
+    if (fromCenter) {
+      x = viewportWidth / 2;
+      y = viewportHeight / 2;
+    } else {
+      const { top, left, width, height } = button.getBoundingClientRect();
+      x = left + width / 2;
+      y = top + height / 2;
+    }
+
+    const maxRadius = Math.hypot(Math.max(x, viewportWidth - x), Math.max(y, viewportHeight - y));
+
+    const applyTheme = () => {
+      setTheme(isDark ? 'light' : 'dark');
+    };
+
+    if (typeof document.startViewTransition !== 'function') {
+      applyTheme();
+      return;
+    }
+
+    const clipPath = getThemeTransitionClipPaths(
+      variant,
+      x,
+      y,
+      maxRadius,
+      viewportWidth,
+      viewportHeight,
+    );
+
+    const root = document.documentElement;
+    root.dataset.magicuiThemeVt = 'active';
+    root.style.setProperty('--magicui-theme-toggle-vt-duration', `${duration}ms`);
+    root.style.setProperty('--magicui-theme-vt-clip-from', clipPath[0]);
+
+    const cleanup = () => {
+      delete root.dataset.magicuiThemeVt;
+      root.style.removeProperty('--magicui-theme-toggle-vt-duration');
+      root.style.removeProperty('--magicui-theme-vt-clip-from');
+    };
+
+    const transition = document.startViewTransition(() => {
+      flushSync(applyTheme);
+    });
+    if (typeof transition?.finished?.finally === 'function') {
+      transition.finished.finally(cleanup);
+    } else {
+      cleanup();
+    }
+
+    const ready = transition?.ready;
+    if (ready && typeof ready.then === 'function') {
+      ready.then(() => {
+        document.documentElement.animate(
+          {
+            clipPath,
+          },
+          {
+            duration,
+            easing: variant === 'star' ? 'linear' : 'ease-in-out',
+            fill: 'forwards',
+            pseudoElement: '::view-transition-new(root)',
+          },
+        );
+      });
+    }
+  }, [variant, fromCenter, duration, resolvedTheme, setTheme]);
 
   if (!mounted) {
     return <div className="h-9 w-9 rounded-lg bg-card/50 ring-1 border border-card-border" />;
@@ -22,37 +214,17 @@ export function ThemeToggle() {
 
   return (
     <button
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-card-border/10 text-muted-foreground ring-1 ring-card-border transition-all hover:bg-card-border/20 hover:text-foreground active:scale-95"
+      type="button"
+      ref={buttonRef}
+      onClick={toggleTheme}
+      className={cn(
+        'relative flex h-9 w-9 items-center justify-center rounded-lg bg-card-border/10 text-muted-foreground ring-1 ring-card-border transition-all hover:bg-card-border/20 hover:text-foreground active:scale-95',
+        className,
+      )}
       aria-label="Toggle theme"
+      {...props}
     >
-      <AnimatePresence mode="wait" initial={false}>
-        {isDark ? (
-          <motion.div
-            key="moon"
-            initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
-            animate={{ opacity: 1, rotate: 0, scale: 1 }}
-            exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Moon className="h-[18px] w-[18px]" />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="sun"
-            initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
-            animate={{ opacity: 1, rotate: 0, scale: 1 }}
-            exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Sun className="h-[18px] w-[18px]" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
     </button>
   );
-}
-
-function useState(arg0: boolean): [any, any] {
-  return React.useState(arg0);
 }
