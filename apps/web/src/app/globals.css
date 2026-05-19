@@ -349,8 +349,8 @@ body {
 .react-flow__edge-textbg {
   fill: var(--background) !important;
   fill-opacity: 0.95 !important;
-  rx: 4;
-  ry: 4;
+  rx: 16 !important;
+  ry: 16 !important;
 }
 
 .react-flow__edge-text {
@@ -377,9 +377,17 @@ body {
 }
 
 .react-flow__minimap {
-  background: var(--card-bg) !important;
+  background-color: rgba(var(--background-rgb), 0.45) !important;
   border: 1px solid var(--card-border) !important;
   border-radius: 12px !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.react-flow__minimap-mask {
+  fill: rgba(var(--foreground-rgb), 0.04) !important;
+  stroke: var(--card-border) !important;
+  stroke-width: 1.5;
 }
 
 .react-flow__handle {

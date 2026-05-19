@@ -1,5 +1,6 @@
 'use client';
 
+import { Spinner } from '@/components/ui/spinner';
 import {
   Background,
   ConnectionLineType,
@@ -15,7 +16,6 @@ import {
 } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import { Bug, Download, Filter, Network, Server, Shield, Users, Zap } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
 import { useEffect, useState } from 'react';
 import '@xyflow/react/dist/style.css';
 import { apiFetch } from '@/lib/api';
@@ -27,11 +27,11 @@ const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
 
 const nodeWidth = 200;
-const nodeHeight = 80;
+const nodeHeight = 90;
 
 const getLayoutedElements = (nodes: any[], edges: any[], direction = 'LR') => {
   const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 60, ranksep: 100 });
+  dagreGraph.setGraph({ rankdir: direction, nodesep: 150, ranksep: 240 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
@@ -75,15 +75,20 @@ function ArgusNode({ data }: any) {
 
   const colors =
     {
-      asset: 'text-primary-400 bg-primary-500/15 ring-primary-500/30',
-      cve: 'text-threat-400 bg-threat-500/15 ring-threat-500/30',
-      threat_actor: 'text-warning-400 bg-warning-500/15 ring-warning-500/30',
-      attack_technique: 'text-accent-400 bg-accent-500/15 ring-accent-500/30',
-      crown_jewel: 'text-success-400 bg-success-500/15 ring-success-500/30',
-    }[type as string] || 'text-muted-foreground bg-slate-500/15 ring-slate-500/30';
+      asset:
+        'text-primary-600 dark:text-primary-400 bg-primary-500/10 dark:bg-primary-500/15 ring-primary-500/20 dark:ring-primary-500/30',
+      cve: 'text-threat-600 dark:text-threat-400 bg-threat-500/10 dark:bg-threat-500/15 ring-threat-500/20 dark:ring-threat-500/30',
+      threat_actor:
+        'text-warning-600 dark:text-warning-400 bg-warning-500/10 dark:bg-warning-500/15 ring-warning-500/20 dark:ring-warning-500/30',
+      attack_technique:
+        'text-accent-600 dark:text-accent-400 bg-accent-500/10 dark:bg-accent-500/15 ring-accent-500/20 dark:ring-accent-500/30',
+      crown_jewel:
+        'text-success-600 dark:text-success-400 bg-success-500/10 dark:bg-success-500/15 ring-success-500/20 dark:ring-success-500/30',
+    }[type as string] ||
+    'text-muted-foreground bg-slate-500/10 dark:bg-slate-500/15 ring-slate-500/20 dark:ring-slate-500/30';
 
   return (
-    <div className="w-[200px] rounded-xl bg-card border border-card-border shadow-xl overflow-hidden">
+    <div className="w-[200px] rounded-2xl bg-card border border-card-border shadow-xl overflow-hidden transition-all hover:shadow-2xl">
       <Handle
         type="target"
         position={Position.Left}
@@ -92,20 +97,20 @@ function ArgusNode({ data }: any) {
       <div className="p-3">
         <div className="flex items-start gap-3">
           <div
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-1 ${colors}`}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 ${colors}`}
           >
             <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-foreground truncate">{label}</p>
-            <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider truncate mt-0.5">
+            <span className="inline-block text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-500/10 dark:bg-slate-500/15 text-muted-foreground/80 mt-1">
               {type.replace('_', ' ')}
-            </p>
+            </span>
           </div>
         </div>
         {properties?.severity && (
           <div className="mt-2 flex justify-end">
-            <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-threat-500/20 text-threat-400 font-bold tracking-wider">
+            <span className="text-[9px] uppercase px-2 py-0.5 rounded-full bg-threat-500/10 dark:bg-threat-500/20 text-threat-600 dark:text-threat-400 font-bold tracking-wider">
               {properties.severity}
             </span>
           </div>
@@ -185,8 +190,8 @@ export default function GraphPage() {
         style: { stroke: 'var(--muted-foreground)', strokeWidth: 2, opacity: 0.6 },
         labelStyle: { fill: 'var(--foreground)', fontSize: 12, fontWeight: 700 },
         labelBgStyle: { fill: 'var(--background)', fillOpacity: 0.95 },
-        labelBgPadding: [6, 4],
-        labelBgBorderRadius: 4,
+        labelBgPadding: [10, 6],
+        labelBgBorderRadius: 16,
         markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--muted-foreground)' },
       }));
 
@@ -303,8 +308,7 @@ export default function GraphPage() {
                     return '#64748b';
                 }
               }}
-              maskColor="rgba(var(--background-rgb), 0.7)"
-              className="bg-card/50 border border-card-border rounded-xl backdrop-blur-md"
+              className="border border-card-border rounded-xl backdrop-blur-md"
             />
           </ReactFlow>
         )}
