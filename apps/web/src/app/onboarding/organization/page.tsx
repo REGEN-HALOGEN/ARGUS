@@ -1,5 +1,6 @@
 'use client';
 
+import { Spinner } from '@/components/ui/spinner';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { apiFetch, setActiveTenantId } from '@/lib/api';
 import { signIn, signUp, useSession } from '@/lib/auth';
@@ -17,7 +18,6 @@ import {
   Trash2,
   UserCircle2,
 } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
@@ -354,7 +354,10 @@ export default function OrganizationOnboardingPage() {
                 </button>
                 <p className="text-xs text-muted-foreground/70">
                   Already have an account?{' '}
-                  <Link href="/login" className="text-emerald-300 hover:text-emerald-200">
+                  <Link
+                    href="/login"
+                    className="text-emerald-600 dark:text-emerald-300 hover:text-emerald-500 dark:hover:text-emerald-200"
+                  >
                     Sign in
                   </Link>
                 </p>
@@ -399,10 +402,12 @@ export default function OrganizationOnboardingPage() {
                     <select
                       value={industry}
                       onChange={(e) => setIndustry(e.target.value)}
-                      className={`${inputCls} bg-slate-950`}
+                      className={inputCls}
                     >
                       {INDUSTRIES.map((i) => (
-                        <option key={i}>{i}</option>
+                        <option key={i} className="bg-background text-foreground">
+                          {i}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -416,7 +421,7 @@ export default function OrganizationOnboardingPage() {
                             key={p.id}
                             type="button"
                             onClick={() => toggleProvider(p.id)}
-                            className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm ring-1 transition-all ${sel ? 'bg-emerald-500/20 text-emerald-200 ring-emerald-500/40' : 'bg-white/3 text-muted-foreground/80 ring-white/6 hover:ring-white/20'}`}
+                            className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm ring-1 transition-all ${sel ? 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-200 ring-emerald-500/30 dark:ring-emerald-500/40' : 'bg-background/50 dark:bg-white/3 text-muted-foreground ring-1 ring-card-border dark:ring-white/6 hover:bg-background/80 dark:hover:bg-white/5 hover:ring-card-border/80'}`}
                           >
                             {p.label}
                             {sel && <Check className="h-4 w-4" />}
@@ -425,7 +430,7 @@ export default function OrganizationOnboardingPage() {
                       })}
                     </div>
                   </div>
-                  <label className="flex items-center justify-between rounded-lg bg-white/3 px-4 py-3 ring-1 ring-white/6">
+                  <label className="flex items-center justify-between rounded-lg bg-background/50 dark:bg-white/3 px-4 py-3 ring-1 ring-card-border dark:ring-white/6">
                     <span className="flex items-center gap-3 text-sm text-muted-foreground/80">
                       <Server className="h-4 w-4 text-muted-foreground" />
                       On-premises assets
@@ -457,7 +462,7 @@ export default function OrganizationOnboardingPage() {
                   {servers.map((srv) => (
                     <div
                       key={srv.id}
-                      className="rounded-xl bg-background border-card-border space-y-3"
+                      className="space-y-3 bg-transparent border-b border-card-border/50 pb-5 last:border-b-0 last:pb-0"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
@@ -477,10 +482,12 @@ export default function OrganizationOnboardingPage() {
                           <select
                             value={srv.role}
                             onChange={(e) => updateServer(srv.id, { role: e.target.value })}
-                            className={`${inputCls} bg-slate-950`}
+                            className={inputCls}
                           >
                             {SERVER_ROLES.map((r) => (
-                              <option key={r}>{r}</option>
+                              <option key={r} className="bg-background text-foreground">
+                                {r}
+                              </option>
                             ))}
                           </select>
                         </div>
@@ -489,10 +496,12 @@ export default function OrganizationOnboardingPage() {
                           <select
                             value={srv.os}
                             onChange={(e) => updateServer(srv.id, { os: e.target.value })}
-                            className={`${inputCls} bg-slate-950`}
+                            className={inputCls}
                           >
                             {OS_OPTIONS.map((o) => (
-                              <option key={o}>{o}</option>
+                              <option key={o} className="bg-background text-foreground">
+                                {o}
+                              </option>
                             ))}
                           </select>
                         </div>
@@ -559,7 +568,7 @@ export default function OrganizationOnboardingPage() {
                   {dataStores.map((ds) => (
                     <div
                       key={ds.id}
-                      className="rounded-xl bg-background border-card-border space-y-3"
+                      className="space-y-3 bg-transparent border-b border-card-border/50 pb-5 last:border-b-0 last:pb-0"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
@@ -579,10 +588,12 @@ export default function OrganizationOnboardingPage() {
                           <select
                             value={ds.type}
                             onChange={(e) => updateDataStore(ds.id, { type: e.target.value })}
-                            className={`${inputCls} bg-slate-950`}
+                            className={inputCls}
                           >
                             {DB_TYPES.map((t) => (
-                              <option key={t}>{t}</option>
+                              <option key={t} className="bg-background text-foreground">
+                                {t}
+                              </option>
                             ))}
                           </select>
                         </div>
@@ -591,10 +602,12 @@ export default function OrganizationOnboardingPage() {
                           <select
                             value={ds.purpose}
                             onChange={(e) => updateDataStore(ds.id, { purpose: e.target.value })}
-                            className={`${inputCls} bg-slate-950`}
+                            className={inputCls}
                           >
                             {DB_PURPOSES.map((p) => (
-                              <option key={p}>{p}</option>
+                              <option key={p} className="bg-background text-foreground">
+                                {p}
+                              </option>
                             ))}
                           </select>
                         </div>
@@ -637,13 +650,15 @@ export default function OrganizationOnboardingPage() {
                         key={ds.id}
                         type="button"
                         onClick={() => toggleCrownJewel(ds.id)}
-                        className={`flex items-center justify-between w-full rounded-lg px-4 py-3 text-sm ring-1 transition-all ${selected ? 'bg-amber-500/15 text-amber-200 ring-amber-500/40' : 'bg-white/3 text-muted-foreground/80 ring-white/6 hover:ring-white/20'}`}
+                        className={`flex items-center justify-between w-full rounded-lg px-4 py-3 text-sm ring-1 transition-all ${selected ? 'bg-amber-500/10 dark:bg-amber-500/15 text-amber-600 dark:text-amber-200 ring-amber-500/30 dark:ring-amber-500/40' : 'bg-background/50 dark:bg-white/3 text-muted-foreground ring-1 ring-card-border dark:ring-white/6 hover:bg-background/80 dark:hover:bg-white/5 hover:ring-card-border/80'}`}
                       >
                         <span className="flex items-center gap-3">
                           <Database className="h-4 w-4" />
                           {ds.type} — {ds.purpose}
                         </span>
-                        {selected && <Shield className="h-4 w-4 text-amber-400" />}
+                        {selected && (
+                          <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        )}
                       </button>
                     );
                   })}
@@ -656,19 +671,19 @@ export default function OrganizationOnboardingPage() {
               <div className="space-y-5">
                 <h2 className="text-xl font-semibold text-foreground">Review your workspace</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
+                  <div className="rounded-lg bg-background/50 dark:bg-white/3 p-4 ring-1 ring-card-border dark:ring-white/6">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
                       Organization
                     </p>
                     <p className="mt-2 text-sm font-medium text-foreground">{orgName}</p>
                   </div>
-                  <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
+                  <div className="rounded-lg bg-background/50 dark:bg-white/3 p-4 ring-1 ring-card-border dark:ring-white/6">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
                       Industry
                     </p>
                     <p className="mt-2 text-sm font-medium text-foreground">{industry}</p>
                   </div>
-                  <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
+                  <div className="rounded-lg bg-background/50 dark:bg-white/3 p-4 ring-1 ring-card-border dark:ring-white/6">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
                       Servers
                     </p>
@@ -677,7 +692,7 @@ export default function OrganizationOnboardingPage() {
                       group(s)
                     </p>
                   </div>
-                  <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
+                  <div className="rounded-lg bg-background/50 dark:bg-white/3 p-4 ring-1 ring-card-border dark:ring-white/6">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
                       Data Stores
                     </p>
@@ -685,15 +700,15 @@ export default function OrganizationOnboardingPage() {
                       {dataStores.length} database(s)
                     </p>
                   </div>
-                  <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
+                  <div className="rounded-lg bg-background/50 dark:bg-white/3 p-4 ring-1 ring-card-border dark:ring-white/6">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
                       Crown Jewels
                     </p>
-                    <p className="mt-2 text-sm font-medium text-amber-300">
+                    <p className="mt-2 text-sm font-medium text-amber-600 dark:text-amber-300">
                       {crownJewelIds.size} critical asset(s)
                     </p>
                   </div>
-                  <div className="rounded-lg bg-white/3 p-4 ring-1 ring-white/6">
+                  <div className="rounded-lg bg-background/50 dark:bg-white/3 p-4 ring-1 ring-card-border dark:ring-white/6">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
                       Providers
                     </p>

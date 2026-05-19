@@ -3,6 +3,8 @@ import type React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
 
+import { motion } from 'framer-motion';
+
 export const BackgroundRippleEffect = ({
   rows = 15,
   cols = 30,
@@ -19,6 +21,8 @@ export const BackgroundRippleEffect = ({
   const [rippleKey, setRippleKey] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ rows, cols });
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isMouseOver, setIsMouseOver] = useState(false);
 
   // Dynamically calculate rows and cols based on viewport
   useEffect(() => {
@@ -36,6 +40,24 @@ export const BackgroundRippleEffect = ({
     return () => window.removeEventListener('resize', updateDimensions);
   }, [cellSize]);
 
+  // Track mouse coordinates for the interactive spotlight
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+      setIsMouseOver(true);
+    };
+    const handleMouseLeave = () => {
+      setIsMouseOver(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseleave', handleMouseLeave);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, []);
+
   return (
     <div
       ref={containerRef}
@@ -46,6 +68,33 @@ export const BackgroundRippleEffect = ({
       )}
     >
       <div className="relative h-full w-full overflow-hidden flex items-center justify-center">
+        {/* Slow moving ambient glows (Shadcn / Magic UI style) */}
+        <motion.div
+          animate={{
+            x: [0, 80, -60, 0],
+            y: [0, -100, 50, 0],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: 'easeInOut',
+          }}
+          className="absolute -top-40 -left-40 w-96 h-96 bg-primary-500/10 dark:bg-primary-500/5 rounded-full blur-3xl pointer-events-none"
+        />
+        <motion.div
+          animate={{
+            x: [0, -90, 70, 0],
+            y: [0, 80, -70, 0],
+          }}
+          transition={{
+            duration: 30,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: 'easeInOut',
+          }}
+          className="absolute -bottom-40 -right-40 w-96 h-96 bg-accent-500/10 dark:bg-accent-500/5 rounded-full blur-3xl pointer-events-none"
+        />
+
+        {/* Div Grid background */}
         <DivGrid
           key={`base-${rippleKey}`}
           className="opacity-40"
@@ -61,6 +110,17 @@ export const BackgroundRippleEffect = ({
           }}
           interactive
         />
+
+        {/* Interactive hover mouse spotlight */}
+        {isMouseOver && (
+          <div
+            className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-300"
+            style={{
+              background: `radial-gradient(circle 350px at ${mousePos.x}px ${mousePos.y}px, rgba(59, 130, 246, 0.08), transparent 80%)`,
+            }}
+          />
+        )}
+
         {/* Soft Masking for better focus on content */}
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,var(--background)_100%)]" />
       </div>
