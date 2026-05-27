@@ -31,7 +31,7 @@ const nodeHeight = 90;
 
 const getLayoutedElements = (nodes: any[], edges: any[], direction = 'LR') => {
   const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 150, ranksep: 240 });
+  dagreGraph.setGraph({ rankdir: direction, nodesep: 220, ranksep: 420 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
@@ -185,7 +185,7 @@ export default function GraphPage() {
         source: e.source,
         target: e.target,
         label: e.type,
-        type: 'smoothstep',
+        type: 'default',
         animated: true,
         style: { stroke: 'var(--muted-foreground)', strokeWidth: 2, opacity: 0.6 },
         labelStyle: { fill: 'var(--foreground)', fontSize: 12, fontWeight: 700 },
@@ -280,7 +280,7 @@ export default function GraphPage() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             nodeTypes={nodeTypes}
-            connectionLineType={ConnectionLineType.SmoothStep}
+            connectionLineType={ConnectionLineType.Bezier}
             fitView
             proOptions={{ hideAttribution: true }}
             className="bg-background"

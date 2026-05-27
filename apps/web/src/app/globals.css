@@ -377,17 +377,24 @@ body {
 }
 
 .react-flow__minimap {
-  background-color: rgba(var(--background-rgb), 0.45) !important;
-  border: 1px solid var(--card-border) !important;
+  background-color: transparent !important;
+  border: 1px solid rgba(var(--foreground-rgb), 0.08) !important;
   border-radius: 12px !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
 }
 
 .react-flow__minimap-mask {
-  fill: rgba(var(--foreground-rgb), 0.04) !important;
-  stroke: var(--card-border) !important;
+  fill: rgba(var(--foreground-rgb), 0.03) !important;
+  stroke: rgba(var(--foreground-rgb), 0.15) !important;
   stroke-width: 1.5;
+}
+
+.react-flow__minimap-node {
+  rx: 8 !important;
+  ry: 8 !important;
+  fill-opacity: 0.75 !important;
 }
 
 .react-flow__handle {
