@@ -25,12 +25,6 @@ export function loadRootEnv(): void {
   }
   loaded = true;
 
-  // Never fall back to a repository .env in production runtimes.
-  // Production deployments must rely on injected environment variables only.
-  if (process.env.NODE_ENV === 'production') {
-    return;
-  }
-
   const envPath = findEnvPath();
   if (!envPath) {
     return;
