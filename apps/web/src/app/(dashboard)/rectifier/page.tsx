@@ -46,10 +46,8 @@ export default function RectifierPage() {
 
   async function loadDatabases() {
     try {
-      const res = await apiFetch<{ success: boolean; data: DatabaseAsset[] }>('/rectifier');
-      if (res.success) {
-        setDatabases(res.data);
-      }
+      const res = await apiFetch<DatabaseAsset[]>('/rectifier');
+      setDatabases(res || []);
     } catch (error) {
       console.error('Failed to load crown jewel databases:', error);
     } finally {
@@ -64,16 +62,14 @@ export default function RectifierPage() {
   const handleResolve = async (assetId: string) => {
     setResolvingId(assetId);
     try {
-      const res = await apiFetch<{ success: boolean }>('/rectifier/resolve', {
+      await apiFetch('/rectifier/resolve', {
         method: 'POST',
         body: JSON.stringify({ assetId }),
       });
-      if (res.success) {
-        // Optimistic UI update or reload
-        setDatabases((prev) =>
-          prev.map((db) => (db.id === assetId ? { ...db, safe: true, vulnerabilities: [] } : db))
-        );
-      }
+      // Optimistic UI update or reload
+      setDatabases((prev) =>
+        prev.map((db) => (db.id === assetId ? { ...db, safe: true, vulnerabilities: [] } : db))
+      );
     } catch (error) {
       console.error('Failed to resolve database vulnerabilities:', error);
     } finally {
@@ -86,7 +82,7 @@ export default function RectifierPage() {
     setAiSolution(null);
     setAiLoading(true);
     try {
-      const res = await apiFetch<{ success: boolean; solution: string }>('/rectifier/analyze', {
+      const res = await apiFetch<{ solution: string }>('/rectifier/analyze', {
         method: 'POST',
         body: JSON.stringify({ cveId, assetName }),
       });

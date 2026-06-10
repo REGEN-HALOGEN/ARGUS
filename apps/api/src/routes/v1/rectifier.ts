@@ -94,7 +94,7 @@ rectifierRoutes.post('/analyze', async (c) => {
 
     return c.json({
       success: true,
-      solution: response,
+      data: { solution: response },
     });
   } catch (error: any) {
     return c.json({
