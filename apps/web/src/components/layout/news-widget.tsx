@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from '@/components/providers/auth-provider';
 import { apiFetch } from '@/lib/api';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -40,11 +41,14 @@ const itemVariants = {
 };
 
 export function NewsWidget({ collapsed }: { collapsed: boolean }) {
+  const { user } = useAuth();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
+
     async function loadNews(isInitial = false) {
       if (isInitial) setLoading(true);
       try {
@@ -52,8 +56,10 @@ export function NewsWidget({ collapsed }: { collapsed: boolean }) {
         if (data && Array.isArray(data)) {
           setNews(data);
         }
-      } catch (err) {
-        console.error('Failed to load news', err);
+      } catch (err: any) {
+        if (!err.silent) {
+          console.error('Failed to load news', err);
+        }
       } finally {
         if (isInitial) setLoading(false);
       }
@@ -63,9 +69,9 @@ export function NewsWidget({ collapsed }: { collapsed: boolean }) {
 
     const interval = setInterval(() => loadNews(), 10 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
-  if (collapsed) return null;
+  if (!user || collapsed) return null;
 
   return (
     <div className="mt-auto px-2 py-4 w-full border-t border-sidebar-border/30 bg-background/50 backdrop-blur-sm">

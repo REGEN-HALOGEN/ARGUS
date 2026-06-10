@@ -5,10 +5,12 @@ import { Globe } from '@/components/ui/globe';
 import { Logo } from '@/components/ui/logo';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { motion } from 'motion/react';
-import { ArrowRight, Building2, UserCircle2 } from 'lucide-react';
+import { useAuth } from '@/components/providers/auth-provider';
+import { ArrowRight, Building2, UserCircle2, MailOpen } from 'lucide-react';
 import Link from 'next/link';
 
 export function WelcomePanel() {
+  const { user } = useAuth();
   return (
     <main className="relative z-10 min-h-screen px-4 py-12 bg-transparent select-none">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
@@ -32,22 +34,37 @@ export function WelcomePanel() {
                 AI-powered relationship graph for security threats. Map exposure, understand risk,
                 and act fast.
               </p>
-              <div className="flex flex-wrap gap-3 mt-4">
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-primary-500/25 transition hover:bg-primary-600 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Sign in
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <OnboardingWizard
-                  trigger={
-                    <button className="inline-flex items-center gap-2 rounded-full border border-card-border bg-card/50 px-7 py-3 text-sm font-bold text-foreground transition hover:bg-card hover:border-card-border/80 cursor-pointer">
-                      Get Started
-                    </button>
-                  }
-                />
-              </div>
+              {user ? (
+                <div className="mt-4 rounded-xl border border-primary-500/20 bg-primary-500/10 p-5 backdrop-blur-sm">
+                  <div className="flex items-start gap-3">
+                    <MailOpen className="h-5 w-5 text-primary-400 mt-0.5 shrink-0" />
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">Waiting for an invitation?</h3>
+                      <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                        Your account is ready. Ask your organization administrator to invite you via email. 
+                        Once invited, you'll see a notification in the top right bell icon to accept and join their workspace.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-3 mt-4">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-primary-500/25 transition hover:bg-primary-600 hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Sign in
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <OnboardingWizard
+                    trigger={
+                      <button className="inline-flex items-center gap-2 rounded-full border border-card-border bg-card/50 px-7 py-3 text-sm font-bold text-foreground transition hover:bg-card hover:border-card-border/80 cursor-pointer">
+                        Get Started
+                      </button>
+                    }
+                  />
+                </div>
+              )}
             </div>
 
             {/* Premium Interactive Globe & Central Logo Backing */}
@@ -68,43 +85,45 @@ export function WelcomePanel() {
         </header>
 
         {/* ── Selection Paths ────────────────────────────────────────── */}
-        <section id="signup" className="grid gap-6 md:grid-cols-2">
-          <div className="group rounded-2xl border border-card-border bg-card p-6 transition-all hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-50/10 dark:bg-accent-500/10 transition-transform group-hover:scale-110">
-              <UserCircle2 className="h-6 w-6 text-accent-600 dark:text-accent-400" />
+        {!user && (
+          <section id="signup" className="grid gap-6 md:grid-cols-2">
+            <div className="group rounded-2xl border border-card-border bg-card p-6 transition-all hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-50/10 dark:bg-accent-500/10 transition-transform group-hover:scale-110">
+                <UserCircle2 className="h-6 w-6 text-accent-600 dark:text-accent-400" />
+              </div>
+              <h2 className="mt-4 text-xl font-bold text-foreground">Individual User</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Create a user account with email and password. Your admin can invite you to an
+                organization later.
+              </p>
+              <Link
+                href="/onboarding/user"
+                className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-accent-600 dark:text-accent-400 transition-colors hover:text-accent-700 dark:hover:text-accent-300"
+              >
+                User sign up
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-            <h2 className="mt-4 text-xl font-bold text-foreground">Individual User</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Create a user account with email and password. Your admin can invite you to an
-              organization later.
-            </p>
-            <Link
-              href="/onboarding/user"
-              className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-accent-600 dark:text-accent-400 transition-colors hover:text-accent-700 dark:hover:text-accent-300"
-            >
-              User sign up
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
 
-          <div className="group rounded-2xl border border-card-border bg-card p-6 transition-all hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50/10 dark:bg-emerald-500/10 transition-transform group-hover:scale-110">
-              <Building2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            <div className="group rounded-2xl border border-card-border bg-card p-6 transition-all hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50/10 dark:bg-emerald-500/10 transition-transform group-hover:scale-110">
+                <Building2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h2 className="mt-4 text-xl font-bold text-foreground">Organisation</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Set up your organization workspace and seed your tenant graph. Includes account
+                creation.
+              </p>
+              <Link
+                href="/onboarding/organization"
+                className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-emerald-600 dark:text-emerald-400 transition-colors hover:text-emerald-700 dark:hover:text-emerald-300"
+              >
+                Organisation onboarding
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-            <h2 className="mt-4 text-xl font-bold text-foreground">Organisation</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Set up your organization workspace and seed your tenant graph. Includes account
-              creation.
-            </p>
-            <Link
-              href="/onboarding/organization"
-              className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-emerald-600 dark:text-emerald-400 transition-colors hover:text-emerald-700 dark:hover:text-emerald-300"
-            >
-              Organisation onboarding
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* ── Scroll Details Section ────────────────────────────────── */}
         <motion.div

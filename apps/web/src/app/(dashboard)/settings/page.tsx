@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/components/providers/auth-provider';
+import { apiFetch } from '@/lib/api';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   CheckCircle2,
@@ -14,6 +15,10 @@ import {
   RefreshCw,
   Wifi,
   WifiOff,
+  Plus,
+  UserPlus,
+  Mail,
+  AlertTriangle,
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useTheme } from 'next-themes';
@@ -102,15 +107,156 @@ function AppearancePanel() {
   );
 }
 
+/* ─── Role Badge Component ──────────────────────────────────────── */
+
+function RoleBadge({
+  role,
+}: { role: string }) {
+  const styles: Record<string, string> = {
+    super_admin: 'bg-primary-500/15 text-primary-300 ring-primary-500/30',
+    owner: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+    org_admin: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+    admin: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+    operator: 'bg-blue-500/15 text-blue-300 ring-blue-500/30',
+    analyst: 'bg-violet-500/15 text-violet-300 ring-violet-500/30',
+    viewer: 'bg-slate-500/15 text-muted-foreground/80 ring-slate-500/30',
+    member: 'bg-slate-500/15 text-muted-foreground/80 ring-slate-500/30',
+    user: 'bg-slate-500/15 text-muted-foreground/80 ring-slate-500/30',
+  };
+
+  const labels: Record<string, string> = {
+    super_admin: 'Platform Admin',
+    owner: 'Owner',
+    org_admin: 'Org Admin',
+    admin: 'Admin',
+    operator: 'Operator',
+    analyst: 'Analyst',
+    viewer: 'Viewer',
+    member: 'Member',
+    user: 'User',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ring-1 ${styles[role] ?? styles.user}`}
+    >
+      {labels[role] ?? role}
+    </span>
+  );
+}
+
 /* ─── Panel: Access Control ──────────────────────────────────────── */
 
 function AccessControlPanel() {
   const { user, platformRole, orgRole } = useAuth();
 
+  const roleLabels: Record<string, string> = {
+    super_admin: 'Super Admin',
+    org_admin: 'Org Admin',
+    operator: 'Operator',
+    analyst: 'Analyst',
+    viewer: 'Viewer',
+    owner: 'Owner',
+    admin: 'Admin',
+    member: 'Member',
+  };
+
+  const displayPlatformRole = platformRole ? (roleLabels[platformRole] ?? platformRole) : 'Standard';
+  const displayOrgRole = orgRole ? (roleLabels[orgRole] ?? orgRole) : 'None';
+
+  // State for members and invitations
+  const [members, setMembers] = useState<any[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'org_admin' | 'operator' | 'analyst' | 'viewer'>('viewer');
+  const [inviting, setInviting] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState(false);
+  const [inviteError, setInviteError] = useState('');
+  const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
+
+  // Fetch members
+  const fetchMembers = useCallback(async () => {
+    if (orgRole !== 'org_admin' && orgRole !== 'operator') return;
+    setLoadingMembers(true);
+    try {
+      const data = await apiFetch<any[]>('/organization/members');
+      setMembers(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.error('Failed to load organization members:', err);
+    } finally {
+      setLoadingMembers(false);
+    }
+  }, [orgRole]);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
+
+  // Handle invitation
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail) return;
+
+    setInviting(true);
+    setInviteError('');
+    setInviteSuccess(false);
+
+    try {
+      await apiFetch('/organization/invites', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: inviteEmail,
+          role: inviteRole,
+        }),
+      });
+
+      setInviteSuccess(true);
+      setInviteEmail('');
+      setInviteRole('viewer');
+      
+      // Reload members
+      fetchMembers();
+      
+      setTimeout(() => {
+        setInviteSuccess(false);
+      }, 3000);
+    } catch (err: any) {
+      setInviteError(err.message || 'Failed to send invitation');
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  // Handle role update
+  const handleUpdateRole = async (memberId: string, newRole: string) => {
+    setUpdatingMemberId(memberId);
+    setActionError('');
+
+    try {
+      await apiFetch('/organization/members/role', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          memberId,
+          role: newRole,
+        }),
+      });
+      // Refresh the members list
+      await fetchMembers();
+    } catch (err: any) {
+      setActionError(err.message || 'Failed to update member role');
+    } finally {
+      setUpdatingMemberId(null);
+    }
+  };
+
+  const isOrgAdmin = orgRole === 'org_admin';
+  const canViewMembers = orgRole === 'org_admin' || orgRole === 'operator';
+
   return (
     <div>
       <InfoBanner text="Access control is managed per-organization. Contact your org admin to modify roles." />
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Current user */}
         <div className="rounded-xl bg-background/50 border border-card-border p-4">
           <h4 className="text-sm font-semibold text-foreground mb-3">Your Permissions</h4>
@@ -119,14 +265,14 @@ function AccessControlPanel() {
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
                 Platform Role
               </p>
-              <p className="text-sm font-semibold text-foreground">{platformRole ?? 'Standard'}</p>
+              <p className="text-sm font-semibold text-foreground">{displayPlatformRole}</p>
             </div>
             <div className="rounded-lg bg-background/40 border border-card-border p-3">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
                 Organization Role
               </p>
-              <p className="text-sm font-semibold text-foreground capitalize">
-                {orgRole ?? 'None'}
+              <p className="text-sm font-semibold text-foreground">
+                {displayOrgRole}
               </p>
             </div>
             <div className="rounded-lg bg-background/40 border border-card-border p-3">
@@ -143,6 +289,149 @@ function AccessControlPanel() {
             </div>
           </div>
         </div>
+
+        {/* Invite Member Section (Org Admin Only) */}
+        {isOrgAdmin && (
+          <div className="rounded-xl bg-background/50 border border-card-border p-4">
+            <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-primary-400" />
+              Invite New Member
+            </h4>
+            <p className="text-xs text-muted-foreground mb-4">
+              Invite a registered user to join this organization. They will receive a notification to accept.
+            </p>
+            <form onSubmit={handleInvite} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="md:col-span-2 space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="user@example.com"
+                      required
+                      className="w-full rounded-lg bg-background/60 border border-card-border pl-10 pr-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary-500/50"
+                    />
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/60" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                    Select Role
+                  </label>
+                  <select
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value as any)}
+                    className="w-full rounded-lg bg-background/60 border border-card-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary-500/50 cursor-pointer"
+                  >
+                    <option value="viewer" className="bg-card text-foreground">Viewer</option>
+                    <option value="analyst" className="bg-card text-foreground">Analyst</option>
+                    <option value="operator" className="bg-card text-foreground">Operator</option>
+                    <option value="org_admin" className="bg-card text-foreground">Org Admin</option>
+                  </select>
+                </div>
+              </div>
+
+              {inviteError && (
+                <div className="rounded-lg bg-threat-500/10 border border-threat-500/20 p-3 text-xs text-threat-300 flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-threat-400" />
+                  <span>{inviteError}</span>
+                </div>
+              )}
+
+              {inviteSuccess && (
+                <div className="rounded-lg bg-success-500/10 border border-success-500/20 p-3 text-xs text-success-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-success-400" />
+                  <span>Invitation sent successfully!</span>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={inviting || inviteSuccess}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-primary-500/20 hover:bg-primary-500/35 text-primary-300 border border-primary-500/30 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {inviting ? (
+                    <Spinner size="sm" className="mr-1" />
+                  ) : (
+                    <Plus className="h-3.5 w-3.5" />
+                  )}
+                  Send Invitation
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Organization Members Section */}
+        {canViewMembers && (
+          <div className="rounded-xl bg-background/50 border border-card-border p-4">
+            <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Shield className="h-4 w-4 text-emerald-400" />
+              Organization Members
+            </h4>
+
+            {actionError && (
+              <div className="rounded-lg bg-threat-500/10 border border-threat-500/20 p-3 text-xs text-threat-300 flex items-start gap-2 mb-3">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-threat-400" />
+                <span>{actionError}</span>
+              </div>
+            )}
+
+            {loadingMembers ? (
+              <div className="flex items-center justify-center py-6">
+                <Spinner size="sm" />
+              </div>
+            ) : members.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">No organization members found.</p>
+            ) : (
+              <div className="divide-y divide-card-border">
+                {members.map((member) => {
+                  const isSelf = member.userId === user?.id;
+                  return (
+                    <div key={member.id} className="py-3 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {member.user?.name || 'Unnamed user'}
+                          {isSelf && <span className="text-xs text-muted-foreground/60 ml-1.5">(You)</span>}
+                        </p>
+                        <p className="text-xs text-muted-foreground/70 truncate">{member.user?.email}</p>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        {isOrgAdmin && !isSelf ? (
+                          <div className="relative flex items-center gap-2">
+                            <select
+                              value={member.role}
+                              disabled={updatingMemberId === member.id}
+                              onChange={(e) => handleUpdateRole(member.id, e.target.value)}
+                              className="rounded bg-background/60 border border-card-border px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary-500/50 cursor-pointer disabled:opacity-50"
+                            >
+                              <option value="viewer">Viewer</option>
+                              <option value="analyst">Analyst</option>
+                              <option value="operator">Operator</option>
+                              <option value="org_admin">Org Admin</option>
+                            </select>
+                            {updatingMemberId === member.id && (
+                              <Spinner size="sm" className="h-3.5 w-3.5" />
+                            )}
+                          </div>
+                        ) : (
+                          <RoleBadge role={member.role} />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* RBAC overview */}
         <div className="rounded-xl bg-background/50 border border-card-border p-4">

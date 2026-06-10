@@ -128,7 +128,7 @@ export default function AdminPage() {
   const [addMemberOrg, setAddMemberOrg] = useState<Organization | null>(null);
   const [selectedOrgId, setSelectedOrgId] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [memberRole, setMemberRole] = useState<'owner' | 'admin' | 'member'>('member');
+  const [memberRole, setMemberRole] = useState<'org_admin' | 'operator' | 'analyst' | 'viewer'>('viewer');
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [addMemberSuccess, setAddMemberSuccess] = useState(false);
   const [addMemberError, setAddMemberError] = useState('');
@@ -233,7 +233,7 @@ export default function AdminPage() {
         setAddMemberOrg(null);
         setSelectedOrgId('');
         setSelectedUserId('');
-        setMemberRole('member');
+        setMemberRole('viewer');
         setAddMemberSuccess(false);
       }, 1500);
     } catch (err: any) {
@@ -659,7 +659,7 @@ export default function AdminPage() {
                     setAddMemberOrg(null);
                     setSelectedOrgId('');
                     setSelectedUserId('');
-                    setMemberRole('member');
+                    setMemberRole('viewer');
                   }}
                   className="rounded-lg p-1 text-muted-foreground hover:bg-card/50 hover:text-foreground transition-colors cursor-pointer"
                 >
@@ -743,8 +743,8 @@ export default function AdminPage() {
                   <label className="text-xs font-medium text-muted-foreground">
                     Role in Organization
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(['member', 'admin', 'owner'] as const).map((roleOption) => {
+                  <div className="grid grid-cols-4 gap-2">
+                    {(['org_admin', 'operator', 'analyst', 'viewer'] as const).map((roleOption) => {
                       const isActive = memberRole === roleOption;
                       return (
                         <button
@@ -757,7 +757,7 @@ export default function AdminPage() {
                               : 'bg-card/40 border-card-border hover:bg-card/70 text-muted-foreground'
                           }`}
                         >
-                          {roleOption}
+                          {roleOption.replace('_', ' ')}
                         </button>
                       );
                     })}
@@ -786,7 +786,7 @@ export default function AdminPage() {
                       setAddMemberOrg(null);
                       setSelectedOrgId('');
                       setSelectedUserId('');
-                      setMemberRole('member');
+                      setMemberRole('viewer');
                     }}
                     className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-card-border hover:bg-card/50 text-muted-foreground transition-colors cursor-pointer"
                   >

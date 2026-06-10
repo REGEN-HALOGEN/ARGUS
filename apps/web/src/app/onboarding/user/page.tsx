@@ -6,15 +6,25 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, UserCircle2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/components/providers/auth-provider';
 
 export default function UserOnboardingPage() {
+  const router = useRouter();
+  const { user } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+
+  // If a user is already logged in (or just registered), smoothly drop them into the hub
+  useEffect(() => {
+    if (user) {
+      router.replace('/onboarding');
+    }
+  }, [user, router]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +41,10 @@ export default function UserOnboardingPage() {
 
       // Auto sign-in after successful registration
       await signIn.email({ email, password });
-
-      // We stay here and show a high-impact success state.
-      setSuccess(true);
+      
+      // We don't need to do anything else here.
+      // The AuthProvider will detect the new session, show the loading screen,
+      // and when it remounts, the useEffect above will seamlessly redirect to /onboarding.
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration.');
     } finally {
@@ -51,65 +62,6 @@ export default function UserOnboardingPage() {
         <div className="absolute -top-16 -left-16 h-40 w-40 rounded-full bg-accent-500/10 blur-3xl pointer-events-none" />
 
         <AnimatePresence mode="wait">
-          {success ? (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center text-center py-4 relative z-10"
-            >
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6 shadow-lg shadow-emerald-500/10">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', damping: 12, stiffness: 200, delay: 0.2 }}
-                >
-                  <UserCircle2 className="h-10 w-10 text-emerald-500" />
-                </motion.div>
-              </div>
-
-              <h2 className="text-3xl font-extrabold text-foreground tracking-tight mb-2">
-                Welcome aboard!
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-[280px] mb-8">
-                Your account for <span className="text-foreground font-bold">{email}</span> has been
-                created successfully.
-              </p>
-
-              <div className="w-full space-y-4 text-left p-6 rounded-2xl bg-black/20 border border-white/5 mb-8">
-                <div className="flex gap-3">
-                  <div className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <p className="text-xs text-muted-foreground/90 leading-relaxed">
-                    <strong className="text-foreground">Next Step:</strong> Contact your
-                    organization administrator to be added to a workspace.
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <div className="mt-1 h-1.5 w-1.5 rounded-full bg-accent-500 shrink-0" />
-                  <p className="text-xs text-muted-foreground/90 leading-relaxed">
-                    <strong className="text-foreground">Need a workspace?</strong> You can return to
-                    the hub to create a new organization yourself.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3 w-full">
-                <Link
-                  href="/login"
-                  className="flex items-center justify-center gap-2 w-full rounded-2xl bg-accent-500 py-4 text-sm font-bold text-white shadow-lg shadow-accent-500/25 transition hover:bg-accent-600 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Go to Dashboard
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/onboarding"
-                  className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-widest pt-2"
-                >
-                  Back to Hub
-                </Link>
-              </div>
-            </motion.div>
-          ) : (
             <motion.div
               key="form"
               initial={{ opacity: 0 }}
@@ -194,7 +146,6 @@ export default function UserOnboardingPage() {
                 </p>
               </form>
             </motion.div>
-          )}
         </AnimatePresence>
       </div>
     </div>

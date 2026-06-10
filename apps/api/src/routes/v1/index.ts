@@ -14,6 +14,7 @@ import { dashboardRoutes } from './dashboard';
 import { graphRoutes } from './graph';
 import { healthRoutes } from './health';
 import { ingestionRoutes } from './ingestion';
+import { invitationRoutes } from './invitations';
 import { meRoutes } from './me';
 import { newsRoutes } from './news';
 import { onboardingRoutes } from './onboarding';
@@ -34,6 +35,10 @@ v1Routes.route('/me', meRoutes);
 v1Routes.use('/onboarding', requireAuth());
 v1Routes.use('/onboarding/*', requireAuth());
 v1Routes.route('/onboarding', onboardingRoutes);
+
+v1Routes.use('/invitations', requireAuth());
+v1Routes.use('/invitations/*', requireAuth());
+v1Routes.route('/invitations', invitationRoutes);
 
 v1Routes.use('/graph', requireTenant());
 v1Routes.use('/graph/*', requireTenant());
