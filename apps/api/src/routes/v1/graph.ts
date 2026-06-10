@@ -28,19 +28,44 @@ graphRoutes.get('/', async (c) => {
     const data = await withCache(`tenant:${tenantId}:graph:full`, 60, () =>
       fetchGraphData(
         `
-        MATCH (n)-[r]->(m)
-        WHERE (
-             n.tenantId = $tenantId
-             OR m.tenantId = $tenantId
-             OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(n) }
-             OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(m) }
-          )
-          AND (n.tenantId = $tenantId OR n.tenantId IS NULL
-               OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(n) })
-          AND (m.tenantId = $tenantId OR m.tenantId IS NULL
-               OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(m) })
+        CALL {
+          // 1. Core Tenant Topology
+          MATCH (n)-[r]->(m)
+          WHERE n.tenantId = $tenantId AND m.tenantId = $tenantId
+          RETURN n, r, m
+          
+          UNION
+          
+          // 2. Top 3 CVEs per Asset
+          MATCH (n:Asset {tenantId: $tenantId})-[r:HAS_VULNERABILITY]->(m:CVE)
+          WITH n, r, m ORDER BY coalesce(r.riskScore, 0) DESC
+          WITH n, collect({r: r, m: m})[..3] as topVulns
+          UNWIND topVulns as tv
+          RETURN n, tv.r as r, tv.m as m
+        
+          UNION
+        
+          // 3. Threat Actors exploiting those top CVEs
+          MATCH (n:Asset {tenantId: $tenantId})-[rVuln:HAS_VULNERABILITY]->(m:CVE)
+          WITH n, rVuln, m ORDER BY coalesce(rVuln.riskScore, 0) DESC
+          WITH n, collect(m)[..3] as topCVEs
+          UNWIND topCVEs as cve
+          MATCH (ta:ThreatActor)-[r:EXPLOITS]->(cve)
+          RETURN ta as n, r, cve as m
+        
+          UNION
+        
+          // 4. Attack Techniques used by those Threat Actors
+          MATCH (n:Asset {tenantId: $tenantId})-[rVuln:HAS_VULNERABILITY]->(m:CVE)
+          WITH n, rVuln, m ORDER BY coalesce(rVuln.riskScore, 0) DESC
+          WITH n, collect(m)[..3] as topCVEs
+          UNWIND topCVEs as cve
+          MATCH (ta:ThreatActor)-[:EXPLOITS]->(cve)
+          MATCH (ta)-[r:USES_TECHNIQUE]->(tech:AttackTechnique)
+          RETURN ta as n, r, tech as m
+        }
         RETURN n, r, m
-        LIMIT 200
+        LIMIT 500
         `,
         { tenantId },
       ),
