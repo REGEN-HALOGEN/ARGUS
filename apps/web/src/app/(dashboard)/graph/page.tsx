@@ -17,6 +17,8 @@ import {
 } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import {
+  ArrowDownUp,
+  ArrowRightLeft,
   Bug,
   Crown,
   Filter,
@@ -30,16 +32,33 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import '@xyflow/react/dist/style.css';
 import { apiFetch } from '@/lib/api';
 import dagre from 'dagre';
+import { useTheme } from 'next-themes';
 
-// ─── Colors (hardcoded for light/dark consistency) ───────────────
+// ─── Theme-Aware Color Palettes ──────────────────────────────────
 
-const NODE_COLORS = {
-  asset: { bg: '#1e3a5f', border: '#2563eb', text: '#93c5fd', icon: '#60a5fa', accent: '#3b82f6' },
-  cve: { bg: '#4c1d1d', border: '#dc2626', text: '#fca5a5', icon: '#f87171', accent: '#ef4444' },
-  crown_jewel: { bg: '#064e3b', border: '#059669', text: '#6ee7b7', icon: '#34d399', accent: '#10b981' },
-  threat_actor: { bg: '#451a03', border: '#d97706', text: '#fcd34d', icon: '#fbbf24', accent: '#f59e0b' },
-  attack_technique: { bg: '#2e1065', border: '#7c3aed', text: '#c4b5fd', icon: '#a78bfa', accent: '#8b5cf6' },
-} as const;
+function getNodeColors(isDark: boolean) {
+  return isDark
+    ? {
+        asset: { bg: '#1e3a5f', border: '#2563eb', text: '#93c5fd', icon: '#60a5fa', accent: '#3b82f6' },
+        cve: { bg: '#4c1d1d', border: '#dc2626', text: '#fca5a5', icon: '#f87171', accent: '#ef4444' },
+        crown_jewel: { bg: '#064e3b', border: '#059669', text: '#6ee7b7', icon: '#34d399', accent: '#10b981' },
+        threat_actor: { bg: '#451a03', border: '#d97706', text: '#fcd34d', icon: '#fbbf24', accent: '#f59e0b' },
+        attack_technique: { bg: '#2e1065', border: '#7c3aed', text: '#c4b5fd', icon: '#a78bfa', accent: '#8b5cf6' },
+      }
+    : {
+        asset: { bg: '#eff6ff', border: '#3b82f6', text: '#1e3a5f', icon: '#2563eb', accent: '#3b82f6' },
+        cve: { bg: '#fef2f2', border: '#ef4444', text: '#7f1d1d', icon: '#dc2626', accent: '#ef4444' },
+        crown_jewel: { bg: '#ecfdf5', border: '#10b981', text: '#064e3b', icon: '#059669', accent: '#10b981' },
+        threat_actor: { bg: '#fffbeb', border: '#f59e0b', text: '#451a03', icon: '#d97706', accent: '#f59e0b' },
+        attack_technique: { bg: '#f5f3ff', border: '#8b5cf6', text: '#2e1065', icon: '#7c3aed', accent: '#8b5cf6' },
+      };
+}
+
+function getCanvasColors(isDark: boolean) {
+  return isDark
+    ? { bg: '#080d19', gridColor: '#1e293b', labelBg: '#0f172a', minimapMask: 'rgba(0,0,0,0.6)' }
+    : { bg: '#f8fafc', gridColor: '#cbd5e1', labelBg: '#ffffff', minimapMask: 'rgba(0,0,0,0.08)' };
+}
 
 const EDGE_COLORS = {
   HAS_VULNERABILITY: { stroke: '#ef4444', critical: '#dc2626', high: '#f59e0b', medium: '#6b7280' },
@@ -50,15 +69,19 @@ const EDGE_COLORS = {
   USES_TECHNIQUE: { stroke: '#8b5cf6' },
 } as const;
 
-// ─── Dagre Layout (fresh instance per call) ──────────────────────
+// ─── Dagre Layout ────────────────────────────────────────────────
 
 const NODE_WIDTH = 220;
 const NODE_HEIGHT = 80;
 
-function getLayoutedElements(nodes: any[], edges: any[]) {
+type LayoutDir = 'LR' | 'TB';
+
+function getLayoutedElements(nodes: any[], edges: any[], direction: LayoutDir) {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: 'LR', nodesep: 55, ranksep: 160, marginx: 40, marginy: 40 });
+  g.setGraph({ rankdir: direction, nodesep: 55, ranksep: 160, marginx: 40, marginy: 40 });
+
+  const isHorizontal = direction === 'LR';
 
   for (const node of nodes) {
     const h = node.data?.type === 'cve' ? 60 : node.data?.type === 'attack_technique' ? 50 : NODE_HEIGHT;
@@ -75,8 +98,8 @@ function getLayoutedElements(nodes: any[], edges: any[]) {
     const pos = g.node(node.id);
     return {
       ...node,
-      targetPosition: Position.Left,
-      sourcePosition: Position.Right,
+      targetPosition: isHorizontal ? Position.Left : Position.Top,
+      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
       position: { x: pos.x - NODE_WIDTH / 2, y: pos.y - (pos.height || NODE_HEIGHT) / 2 },
     };
   });
@@ -87,29 +110,30 @@ function getLayoutedElements(nodes: any[], edges: any[]) {
 // ─── Node Components ─────────────────────────────────────────────
 
 const AssetNode = memo(({ data }: any) => {
-  const { label, properties } = data;
+  const { label, properties, colors, sourcePosition, targetPosition } = data;
+  const c = colors?.asset;
   const vulnCount = data.vulnCount || 0;
   const topCvss = data.topCvss || 0;
   const isInternetFacing = properties?.internetFacing === true;
 
   return (
     <div className="graph-node-asset w-[220px] rounded-xl overflow-hidden"
-         style={{ background: NODE_COLORS.asset.bg, border: `1px solid ${NODE_COLORS.asset.border}40` }}>
-      <Handle type="target" position={Position.Left}
-              style={{ background: NODE_COLORS.asset.accent, border: 'none', width: 6, height: 6 }} />
+         style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}>
+      <Handle type="target" position={targetPosition ?? Position.Left}
+              style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
       {/* Left accent bar */}
-      <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: NODE_COLORS.asset.accent }} />
+      <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: c?.accent }} />
       <div className="p-3 pl-4">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-               style={{ background: `${NODE_COLORS.asset.accent}20`, border: `1px solid ${NODE_COLORS.asset.accent}30` }}>
-            <Server className="h-4 w-4" style={{ color: NODE_COLORS.asset.icon }} />
+               style={{ background: `${c?.accent}20`, border: `1px solid ${c?.accent}30` }}>
+            <Server className="h-4 w-4" style={{ color: c?.icon }} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold truncate" style={{ color: NODE_COLORS.asset.text }}>{label}</p>
+            <p className="text-xs font-semibold truncate" style={{ color: c?.text }}>{label}</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               {properties?.os && (
-                <span className="text-[9px] opacity-60" style={{ color: NODE_COLORS.asset.text }}>
+                <span className="text-[9px] opacity-60" style={{ color: c?.text }}>
                   {properties.os}
                 </span>
               )}
@@ -119,7 +143,7 @@ const AssetNode = memo(({ data }: any) => {
         <div className="flex items-center gap-1.5 mt-2">
           {isInternetFacing && (
             <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                  style={{ background: `${NODE_COLORS.asset.accent}20`, color: NODE_COLORS.asset.icon }}>
+                  style={{ background: `${c?.accent}20`, color: c?.icon }}>
               <Globe className="h-2.5 w-2.5" /> WAN
             </span>
           )}
@@ -139,15 +163,16 @@ const AssetNode = memo(({ data }: any) => {
           )}
         </div>
       </div>
-      <Handle type="source" position={Position.Right}
-              style={{ background: NODE_COLORS.asset.accent, border: 'none', width: 6, height: 6 }} />
+      <Handle type="source" position={sourcePosition ?? Position.Right}
+              style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
     </div>
   );
 });
 AssetNode.displayName = 'AssetNode';
 
 const CVENode = memo(({ data }: any) => {
-  const { label, properties } = data;
+  const { label, properties, colors, sourcePosition, targetPosition } = data;
+  const c = colors?.cve;
   const severity = properties?.severity ?? 'medium';
   const cvss = typeof properties?.cvss === 'object' && properties?.cvss?.toNumber
     ? properties.cvss.toNumber() : Number(properties?.cvss ?? 0);
@@ -156,17 +181,17 @@ const CVENode = memo(({ data }: any) => {
 
   return (
     <div className={`w-[200px] rounded-xl overflow-hidden ${isCritical ? 'graph-node-cve-critical' : ''}`}
-         style={{ background: NODE_COLORS.cve.bg, border: `1px solid ${NODE_COLORS.cve.border}40` }}>
-      <Handle type="target" position={Position.Left}
-              style={{ background: NODE_COLORS.cve.accent, border: 'none', width: 6, height: 6 }} />
+         style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}>
+      <Handle type="target" position={targetPosition ?? Position.Left}
+              style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
       <div className="p-2.5">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-               style={{ background: `${NODE_COLORS.cve.accent}20`, border: `1px solid ${NODE_COLORS.cve.accent}30` }}>
-            <Bug className="h-3.5 w-3.5" style={{ color: NODE_COLORS.cve.icon }} />
+               style={{ background: `${c?.accent}20`, border: `1px solid ${c?.accent}30` }}>
+            <Bug className="h-3.5 w-3.5" style={{ color: c?.icon }} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold font-mono truncate" style={{ color: NODE_COLORS.cve.text }}>{label}</p>
+            <p className="text-[11px] font-bold font-mono truncate" style={{ color: c?.text }}>{label}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 mt-2">
@@ -186,34 +211,35 @@ const CVENode = memo(({ data }: any) => {
           )}
         </div>
       </div>
-      <Handle type="source" position={Position.Right}
-              style={{ background: NODE_COLORS.cve.accent, border: 'none', width: 6, height: 6 }} />
+      <Handle type="source" position={sourcePosition ?? Position.Right}
+              style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
     </div>
   );
 });
 CVENode.displayName = 'CVENode';
 
 const CrownJewelNode = memo(({ data }: any) => {
-  const { label, properties } = data;
+  const { label, properties, colors, sourcePosition, targetPosition } = data;
+  const c = colors?.crown_jewel;
 
   return (
     <div className="graph-node-crown-jewel w-[220px] rounded-xl overflow-hidden relative"
-         style={{ background: NODE_COLORS.crown_jewel.bg, border: `1.5px solid ${NODE_COLORS.crown_jewel.border}80` }}>
-      <Handle type="target" position={Position.Left}
-              style={{ background: NODE_COLORS.crown_jewel.accent, border: 'none', width: 7, height: 7 }} />
+         style={{ background: c?.bg, border: `1.5px solid ${c?.border}80` }}>
+      <Handle type="target" position={targetPosition ?? Position.Left}
+              style={{ background: c?.accent, border: 'none', width: 7, height: 7 }} />
       {/* Rotating ring accent */}
       <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full border border-dashed opacity-40"
-           style={{ borderColor: NODE_COLORS.crown_jewel.accent, animation: 'crown-ring-spin 8s linear infinite' }} />
+           style={{ borderColor: c?.accent, animation: 'crown-ring-spin 8s linear infinite' }} />
       <div className="p-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-               style={{ background: `${NODE_COLORS.crown_jewel.accent}25`, border: `1px solid ${NODE_COLORS.crown_jewel.accent}40` }}>
-            <Crown className="h-5 w-5" style={{ color: NODE_COLORS.crown_jewel.icon }} />
+               style={{ background: `${c?.accent}25`, border: `1px solid ${c?.accent}40` }}>
+            <Crown className="h-5 w-5" style={{ color: c?.icon }} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold truncate" style={{ color: NODE_COLORS.crown_jewel.text }}>{label}</p>
+            <p className="text-xs font-bold truncate" style={{ color: c?.text }}>{label}</p>
             <span className="text-[9px] font-bold uppercase tracking-widest mt-0.5 block"
-                  style={{ color: `${NODE_COLORS.crown_jewel.icon}aa` }}>
+                  style={{ color: `${c?.icon}aa` }}>
               ★ Crown Jewel
             </span>
           </div>
@@ -221,44 +247,45 @@ const CrownJewelNode = memo(({ data }: any) => {
         {properties?.businessImpact && (
           <div className="mt-2">
             <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded"
-                  style={{ background: `${NODE_COLORS.crown_jewel.accent}20`, color: NODE_COLORS.crown_jewel.icon }}>
+                  style={{ background: `${c?.accent}20`, color: c?.icon }}>
               {properties.businessImpact} impact
             </span>
           </div>
         )}
       </div>
-      <Handle type="source" position={Position.Right}
-              style={{ background: NODE_COLORS.crown_jewel.accent, border: 'none', width: 7, height: 7 }} />
+      <Handle type="source" position={sourcePosition ?? Position.Right}
+              style={{ background: c?.accent, border: 'none', width: 7, height: 7 }} />
     </div>
   );
 });
 CrownJewelNode.displayName = 'CrownJewelNode';
 
 const ThreatActorNode = memo(({ data }: any) => {
-  const { label, properties } = data;
+  const { label, properties, colors, sourcePosition, targetPosition } = data;
+  const c = colors?.threat_actor;
 
   return (
     <div className="graph-node-threat-actor w-[210px] rounded-xl overflow-hidden"
-         style={{ background: NODE_COLORS.threat_actor.bg, border: `1px solid ${NODE_COLORS.threat_actor.border}40` }}>
-      <Handle type="target" position={Position.Left}
-              style={{ background: NODE_COLORS.threat_actor.accent, border: 'none', width: 6, height: 6 }} />
+         style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}>
+      <Handle type="target" position={targetPosition ?? Position.Left}
+              style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
       <div className="p-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-               style={{ background: `${NODE_COLORS.threat_actor.accent}20`, border: `1px solid ${NODE_COLORS.threat_actor.accent}30` }}>
-            <Users className="h-4 w-4" style={{ color: NODE_COLORS.threat_actor.icon }} />
+               style={{ background: `${c?.accent}20`, border: `1px solid ${c?.accent}30` }}>
+            <Users className="h-4 w-4" style={{ color: c?.icon }} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold truncate" style={{ color: NODE_COLORS.threat_actor.text }}>{label}</p>
+            <p className="text-xs font-bold truncate" style={{ color: c?.text }}>{label}</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               {properties?.country && (
-                <span className="text-[9px] opacity-70" style={{ color: NODE_COLORS.threat_actor.text }}>
+                <span className="text-[9px] opacity-70" style={{ color: c?.text }}>
                   {properties.country}
                 </span>
               )}
               {properties?.sophistication && (
                 <span className="text-[9px] font-bold uppercase px-1 py-0 rounded"
-                      style={{ background: `${NODE_COLORS.threat_actor.accent}20`, color: NODE_COLORS.threat_actor.icon }}>
+                      style={{ background: `${c?.accent}20`, color: c?.icon }}>
                   {properties.sophistication}
                 </span>
               )}
@@ -266,36 +293,37 @@ const ThreatActorNode = memo(({ data }: any) => {
           </div>
         </div>
       </div>
-      <Handle type="source" position={Position.Right}
-              style={{ background: NODE_COLORS.threat_actor.accent, border: 'none', width: 6, height: 6 }} />
+      <Handle type="source" position={sourcePosition ?? Position.Right}
+              style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
     </div>
   );
 });
 ThreatActorNode.displayName = 'ThreatActorNode';
 
 const TechniqueNode = memo(({ data }: any) => {
-  const { label, properties } = data;
+  const { label, properties, colors, sourcePosition, targetPosition } = data;
+  const c = colors?.attack_technique;
 
   return (
     <div className="w-[180px] rounded-lg overflow-hidden"
-         style={{ background: NODE_COLORS.attack_technique.bg, border: `1px solid ${NODE_COLORS.attack_technique.border}30` }}>
-      <Handle type="target" position={Position.Left}
-              style={{ background: NODE_COLORS.attack_technique.accent, border: 'none', width: 5, height: 5 }} />
+         style={{ background: c?.bg, border: `1px solid ${c?.border}30` }}>
+      <Handle type="target" position={targetPosition ?? Position.Left}
+              style={{ background: c?.accent, border: 'none', width: 5, height: 5 }} />
       <div className="p-2">
         <div className="flex items-center gap-2">
-          <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: NODE_COLORS.attack_technique.icon }} />
+          <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: c?.icon }} />
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold truncate" style={{ color: NODE_COLORS.attack_technique.text }}>{label}</p>
+            <p className="text-[10px] font-semibold truncate" style={{ color: c?.text }}>{label}</p>
             {properties?.mitreId && (
-              <span className="text-[8px] font-mono font-bold opacity-60" style={{ color: NODE_COLORS.attack_technique.text }}>
+              <span className="text-[8px] font-mono font-bold opacity-60" style={{ color: c?.text }}>
                 {properties.mitreId}
               </span>
             )}
           </div>
         </div>
       </div>
-      <Handle type="source" position={Position.Right}
-              style={{ background: NODE_COLORS.attack_technique.accent, border: 'none', width: 5, height: 5 }} />
+      <Handle type="source" position={sourcePosition ?? Position.Right}
+              style={{ background: c?.accent, border: 'none', width: 5, height: 5 }} />
     </div>
   );
 });
@@ -311,7 +339,7 @@ const nodeTypes = {
 
 // ─── Edge Styling Helper ─────────────────────────────────────────
 
-function buildEdgeStyle(edgeType: string, properties: any) {
+function buildEdgeStyle(edgeType: string, properties: any, labelBgFill: string) {
   const riskScore = properties?.riskScore;
   const riskRating = properties?.riskRating;
 
@@ -325,7 +353,7 @@ function buildEdgeStyle(edgeType: string, properties: any) {
         animated: riskRating === 'critical',
         label: riskScore ? `Risk: ${typeof riskScore === 'object' && riskScore?.toNumber ? riskScore.toNumber() : riskScore}` : undefined,
         labelStyle: { fill: color, fontSize: 9, fontWeight: 700, letterSpacing: '0.5px' },
-        labelBgStyle: { fill: '#0f172a', fillOpacity: 0.9 },
+        labelBgStyle: { fill: labelBgFill, fillOpacity: 0.9 },
       };
     }
     case 'CAN_ACCESS':
@@ -335,7 +363,7 @@ function buildEdgeStyle(edgeType: string, properties: any) {
         animated: false,
         label: edgeType.replace('_', ' '),
         labelStyle: { fill: '#60a5fa', fontSize: 8, fontWeight: 600, opacity: 0.7 },
-        labelBgStyle: { fill: '#0f172a', fillOpacity: 0.85 },
+        labelBgStyle: { fill: labelBgFill, fillOpacity: 0.85 },
       };
     case 'HOSTS':
       return {
@@ -343,7 +371,7 @@ function buildEdgeStyle(edgeType: string, properties: any) {
         animated: true,
         label: 'HOSTS',
         labelStyle: { fill: '#34d399', fontSize: 9, fontWeight: 700 },
-        labelBgStyle: { fill: '#0f172a', fillOpacity: 0.9 },
+        labelBgStyle: { fill: labelBgFill, fillOpacity: 0.9 },
       };
     case 'EXPLOITS':
       return {
@@ -351,7 +379,7 @@ function buildEdgeStyle(edgeType: string, properties: any) {
         animated: true,
         label: 'EXPLOITS',
         labelStyle: { fill: '#f87171', fontSize: 9, fontWeight: 700 },
-        labelBgStyle: { fill: '#0f172a', fillOpacity: 0.9 },
+        labelBgStyle: { fill: labelBgFill, fillOpacity: 0.9 },
       };
     case 'USES_TECHNIQUE':
       return {
@@ -367,7 +395,7 @@ function buildEdgeStyle(edgeType: string, properties: any) {
         animated: false,
         label: edgeType,
         labelStyle: { fill: '#94a3b8', fontSize: 8, fontWeight: 600 },
-        labelBgStyle: { fill: '#0f172a', fillOpacity: 0.85 },
+        labelBgStyle: { fill: labelBgFill, fillOpacity: 0.85 },
       };
   }
 }
@@ -449,6 +477,13 @@ export default function GraphPage() {
     new Set(['asset', 'cve', 'threat_actor', 'attack_technique', 'crown_jewel']),
   );
 
+  const [layoutDir, setLayoutDir] = useState<LayoutDir>('LR');
+
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+  const nodeColors = useMemo(() => getNodeColors(isDark), [isDark]);
+  const canvasColors = useMemo(() => getCanvasColors(isDark), [isDark]);
+
   const toggleFilter = useCallback((type: string) => {
     setVisibleTypes((prev) => {
       const next = new Set(prev);
@@ -495,7 +530,14 @@ export default function GraphPage() {
     const flowNodes = filteredNodes.map((n: any) => ({
       id: n.id,
       type: n.type,
-      data: { type: n.type, label: n.label, properties: n.properties, vulnCount: n.vulnCount, topCvss: n.topCvss },
+      data: {
+        type: n.type,
+        label: n.label,
+        properties: n.properties,
+        vulnCount: n.vulnCount,
+        topCvss: n.topCvss,
+        colors: nodeColors,
+      },
       position: { x: 0, y: 0 },
     }));
 
@@ -503,7 +545,7 @@ export default function GraphPage() {
     const flowEdges = dedupedEdges
       .filter((e: any) => visibleNodeIds.has(e.source) && visibleNodeIds.has(e.target))
       .map((e: any) => {
-        const edgeStyle = buildEdgeStyle(e.type, e.properties);
+        const edgeStyle = buildEdgeStyle(e.type, e.properties, canvasColors.labelBg);
         return {
           id: e.id,
           source: e.source,
@@ -521,17 +563,17 @@ export default function GraphPage() {
         };
       });
 
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges, layoutDir);
     setNodes(layoutedNodes);
     setEdges(layoutedEdges);
-  }, [rawData, visibleTypes, setNodes, setEdges]);
+  }, [rawData, visibleTypes, setNodes, setEdges, layoutDir, nodeColors, canvasColors]);
 
   const filterItems = [
-    { id: 'asset', label: 'Assets', icon: Server, color: NODE_COLORS.asset.accent },
-    { id: 'crown_jewel', label: 'Crown Jewels', icon: Crown, color: NODE_COLORS.crown_jewel.accent },
-    { id: 'cve', label: 'Vulnerabilities', icon: Bug, color: NODE_COLORS.cve.accent },
-    { id: 'threat_actor', label: 'Threat Actors', icon: Users, color: NODE_COLORS.threat_actor.accent },
-    { id: 'attack_technique', label: 'Techniques', icon: Zap, color: NODE_COLORS.attack_technique.accent },
+    { id: 'asset', label: 'Assets', icon: Server, color: nodeColors.asset.accent },
+    { id: 'crown_jewel', label: 'Crown Jewels', icon: Crown, color: nodeColors.crown_jewel.accent },
+    { id: 'cve', label: 'Vulnerabilities', icon: Bug, color: nodeColors.cve.accent },
+    { id: 'threat_actor', label: 'Threat Actors', icon: Users, color: nodeColors.threat_actor.accent },
+    { id: 'attack_technique', label: 'Techniques', icon: Zap, color: nodeColors.attack_technique.accent },
   ];
 
   return (
@@ -554,6 +596,17 @@ export default function GraphPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 relative">
+          {/* Layout toggle */}
+          <button
+            onClick={() => setLayoutDir((d) => (d === 'LR' ? 'TB' : 'LR'))}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all bg-card/50 text-muted-foreground border border-card-border hover:bg-card/80 hover:text-foreground"
+            title={layoutDir === 'LR' ? 'Switch to vertical layout' : 'Switch to horizontal layout'}
+          >
+            {layoutDir === 'LR' ? <ArrowDownUp className="h-4 w-4" /> : <ArrowRightLeft className="h-4 w-4" />}
+            {layoutDir === 'LR' ? 'Vertical' : 'Horizontal'}
+          </button>
+
+          {/* Filters */}
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all ${
@@ -622,47 +675,48 @@ export default function GraphPage() {
             minZoom={0.05}
             maxZoom={3}
             proOptions={{ hideAttribution: true }}
-            style={{ background: '#080d19' }}
+            style={{ background: canvasColors.bg }}
           >
             <Background
-              color="#1e293b"
+              color={canvasColors.gridColor}
               gap={28}
               size={1}
             />
             <Controls
               showInteractive={false}
-              position="bottom-right"
+              position="top-right"
             />
             <MiniMap
               nodeColor={(node: any) => {
                 const colors: Record<string, string> = {
-                  asset: NODE_COLORS.asset.accent,
-                  cve: NODE_COLORS.cve.accent,
-                  crown_jewel: NODE_COLORS.crown_jewel.accent,
-                  threat_actor: NODE_COLORS.threat_actor.accent,
-                  attack_technique: NODE_COLORS.attack_technique.accent,
+                  asset: nodeColors.asset.accent,
+                  cve: nodeColors.cve.accent,
+                  crown_jewel: nodeColors.crown_jewel.accent,
+                  threat_actor: nodeColors.threat_actor.accent,
+                  attack_technique: nodeColors.attack_technique.accent,
                 };
                 return colors[node.type] || '#64748b';
               }}
-              style={{ background: 'rgba(8, 13, 25, 0.7)' }}
-              className="border border-card-border rounded-xl"
-              maskColor="rgba(255, 255, 255, 0.04)"
+              maskColor={canvasColors.minimapMask}
+              pannable
+              zoomable
+              style={{ width: 160, height: 100 }}
             />
           </ReactFlow>
         )}
 
         {/* Legend */}
         <div className="absolute bottom-6 left-6 z-10 flex flex-col gap-1.5 rounded-xl p-3 border border-card-border shadow-lg"
-             style={{ background: 'rgba(8, 13, 25, 0.85)', backdropFilter: 'blur(12px)' }}>
+             style={{ background: isDark ? 'rgba(8, 13, 25, 0.85)' : 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(12px)' }}>
           <h4 className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">
             Legend
           </h4>
           {[
-            { label: 'Asset', color: NODE_COLORS.asset.accent, icon: Server },
-            { label: 'CVE (Top Risk)', color: NODE_COLORS.cve.accent, icon: Bug },
-            { label: 'Crown Jewel', color: NODE_COLORS.crown_jewel.accent, icon: Crown },
-            { label: 'Threat Actor', color: NODE_COLORS.threat_actor.accent, icon: Users },
-            { label: 'Technique', color: NODE_COLORS.attack_technique.accent, icon: Zap },
+            { label: 'Asset', color: nodeColors.asset.accent, icon: Server },
+            { label: 'CVE (Top Risk)', color: nodeColors.cve.accent, icon: Bug },
+            { label: 'Crown Jewel', color: nodeColors.crown_jewel.accent, icon: Crown },
+            { label: 'Threat Actor', color: nodeColors.threat_actor.accent, icon: Users },
+            { label: 'Technique', color: nodeColors.attack_technique.accent, icon: Zap },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full" style={{ background: item.color }} />

@@ -165,11 +165,25 @@ function calculateRisk(
   internetFacing: boolean,
   hopsToCrown: number,
 ): { score: number; rating: string } {
-  const exposureMultiplier = internetFacing ? 1.5 : 1.0;
-  const proximityMultiplier =
-    hopsToCrown <= 1 ? 1.8 : hopsToCrown <= 2 ? 1.4 : hopsToCrown <= 3 ? 1.1 : 0.8;
-  const raw = (cvss / 10) * exposureMultiplier * proximityMultiplier * 100;
-  const score = Math.min(100, Math.round(raw));
+  // Base severity (0-40 points) — non-linear scale from CVSS
+  const severityScore = Math.pow(cvss / 10, 1.5) * 40;
+
+  // Exposure factor (0-25 points)
+  const exposureScore = internetFacing ? 25 : 10;
+
+  // Proximity to crown jewels (0-35 points)
+  const proximityScore =
+    hopsToCrown <= 0
+      ? 35
+      : hopsToCrown <= 1
+        ? 28
+        : hopsToCrown <= 2
+          ? 20
+          : hopsToCrown <= 3
+            ? 12
+            : 5;
+
+  const score = Math.min(100, Math.round(severityScore + exposureScore + proximityScore));
   const rating = score >= 80 ? 'critical' : score >= 60 ? 'high' : score >= 40 ? 'medium' : 'low';
   return { score, rating };
 }
