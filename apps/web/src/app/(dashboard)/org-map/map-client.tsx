@@ -277,7 +277,7 @@ function GraphScene({ nodes, links, nodeDistance, isDark }: { nodes: any[]; link
 export default function MapClient() {
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
-  const [nodeDistance, setNodeDistance] = useState(120);
+  const [nodeDistance, setNodeDistance] = useState(60);
 
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== 'light';
@@ -361,8 +361,8 @@ export default function MapClient() {
           </div>
           <input
             type="range"
-            min="50"
-            max="400"
+            min="10"
+            max="100"
             value={nodeDistance}
             onChange={(e) => setNodeDistance(Number(e.target.value))}
             style={{
