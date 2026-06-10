@@ -88,19 +88,29 @@ rectifierRoutes.post('/analyze', async (c) => {
   try {
     const prompt = `Provide a short, direct and highly actionable remediation plan to secure the database asset "${assetName}" which is affected by vulnerability "${cveId}". The plan should include specific technical steps to fix/mitigate the problem, patching details, and configuration best practices. Please use clean markdown structure.`;
     
-    const response = await chat([{ role: 'user', content: prompt }], {
-      systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST,
-    });
+    // Add a 15-second timeout to prevent the UI from hanging on rate limit retries
+    const timeoutPromise = new Promise<string>((_, reject) => 
+      setTimeout(() => reject(new Error('Rate limit timeout: Gemini API is overloaded (429)')), 15000)
+    );
+
+    const response = await Promise.race([
+      chat([{ role: 'user', content: prompt }], { systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST }),
+      timeoutPromise
+    ]);
 
     return c.json({
       success: true,
       data: { solution: response },
     });
   } catch (error: any) {
+    const isRateLimit = error.message?.includes('429') || error.message?.includes('timeout');
+    const fallbackSolution = isRateLimit 
+      ? `### ⚠️ AI Analysis Rate Limited\n\nThe Gemini API is currently experiencing high traffic or has hit its free-tier rate limit (429).\n\n**General Remediation for ${cveId}:**\n1. Check the official vendor patch release.\n2. Update the affected package to the latest version.\n3. Temporarily restrict network access to the affected service.`
+      : `AI analysis failed: ${error.message}. Please verify your Gemini API key is configured correctly.`;
+
     return c.json({
-      success: false,
-      error: { message: error.message || 'AI analysis failed' },
-      solution: `AI analysis failed: ${error.message}. Please verify your Gemini API key is configured correctly.`
+      success: true, // Return as success so the UI displays the fallback markdown gracefully
+      data: { solution: fallbackSolution },
     });
   }
 });
