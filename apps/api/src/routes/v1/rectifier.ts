@@ -16,8 +16,8 @@ rectifierRoutes.get('/', async (c) => {
   const session = getNeo4jDriver().session();
   try {
     const result = await session.run(
-      `MATCH (a:Asset {tenantId: $tenantId, type: 'database'})
-       WHERE a.criticality = 'critical' OR (a)-[:HOSTS]->(:CrownJewel)
+      `MATCH (a:Asset {tenantId: $tenantId})
+       WHERE a.type = 'database' OR a.type = 'Database'
        OPTIONAL MATCH (a)-[r:HAS_VULNERABILITY]->(cv:CVE)
        RETURN a, collect(cv) AS vulnerabilities`,
       { tenantId }

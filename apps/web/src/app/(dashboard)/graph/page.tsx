@@ -110,7 +110,7 @@ function getLayoutedElements(nodes: any[], edges: any[], direction: LayoutDir) {
 // ─── Node Components ─────────────────────────────────────────────
 
 const AssetNode = memo(({ data }: any) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   let { label } = data;
   const { properties, colors, sourcePosition, targetPosition } = data;
   const c = colors?.asset;
@@ -130,13 +130,12 @@ const AssetNode = memo(({ data }: any) => {
   }
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="graph-node-asset w-[220px] rounded-xl overflow-hidden"
-           style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}>
+    <div className="relative">
+      <div 
+        className="graph-node-asset w-[220px] rounded-xl overflow-hidden cursor-pointer"
+        style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <Handle type="target" position={targetPosition ?? Position.Left}
                 style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
         {/* Left accent bar */}
@@ -185,15 +184,20 @@ const AssetNode = memo(({ data }: any) => {
                 style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
       </div>
 
-      {isHovered && (
-        <div className="absolute z-50 bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-[280px] rounded-xl p-3 border border-card-border shadow-2xl backdrop-blur-xl bg-card/95 text-foreground text-xs space-y-2">
-          <div className="font-bold border-b border-card-border pb-1 mb-1.5 flex items-center justify-between">
-            <span className="truncate">{label}</span>
-            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-black"
-                  style={{ background: properties?.criticality === 'critical' ? '#dc262620' : '#4b556320',
-                           color: properties?.criticality === 'critical' ? '#fca5a5' : '#9ca3af' }}>
-              {properties?.criticality || 'medium'}
-            </span>
+      {isOpen && (
+        <div className="absolute z-50 bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-[320px] rounded-xl p-4 border border-card-border shadow-2xl bg-card text-foreground text-xs space-y-3 cursor-default">
+          <div className="font-bold border-b border-card-border pb-2 mb-2 flex items-center justify-between">
+            <span className="truncate text-sm">{label}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-black"
+                    style={{ background: properties?.criticality === 'critical' ? '#dc262620' : '#4b556320',
+                             color: properties?.criticality === 'critical' ? '#fca5a5' : '#9ca3af' }}>
+                {properties?.criticality || 'medium'}
+              </span>
+              <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="text-muted-foreground hover:text-foreground">
+                ✕
+              </button>
+            </div>
           </div>
           <div className="space-y-1 opacity-90 text-[11px]">
             <p><strong className="opacity-75">Hostname:</strong> <span className="font-mono text-primary-300">{properties?.hostname || 'N/A'}</span></p>
@@ -230,7 +234,7 @@ const AssetNode = memo(({ data }: any) => {
 AssetNode.displayName = 'AssetNode';
 
 const CVENode = memo(({ data }: any) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const { label, properties, colors, sourcePosition, targetPosition } = data;
   const c = colors?.cve;
   const severity = properties?.severity ?? 'medium';
@@ -240,13 +244,12 @@ const CVENode = memo(({ data }: any) => {
   const isCritical = severity === 'critical' || cvss >= 9;
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className={`w-[200px] rounded-xl overflow-hidden ${isCritical ? 'graph-node-cve-critical' : ''}`}
-           style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}>
+    <div className="relative">
+      <div 
+        className={`w-[200px] rounded-xl overflow-hidden cursor-pointer ${isCritical ? 'graph-node-cve-critical' : ''}`}
+        style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <Handle type="target" position={targetPosition ?? Position.Left}
                 style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
         <div className="p-2.5">
@@ -280,13 +283,18 @@ const CVENode = memo(({ data }: any) => {
                 style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
       </div>
 
-      {isHovered && (
-        <div className="absolute z-50 bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-[280px] rounded-xl p-3 border border-card-border shadow-2xl backdrop-blur-xl bg-card/95 text-foreground text-xs space-y-2">
-          <div className="font-bold border-b border-card-border pb-1 mb-1.5 flex items-center justify-between">
-            <span className="font-mono text-red-300">{label}</span>
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">
-              CVSS {cvss.toFixed(1)}
-            </span>
+      {isOpen && (
+        <div className="absolute z-50 bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-[320px] rounded-xl p-4 border border-card-border shadow-2xl bg-card text-foreground text-xs space-y-3 cursor-default">
+          <div className="font-bold border-b border-card-border pb-2 mb-2 flex items-center justify-between">
+            <span className="font-mono text-red-300 text-sm">{label}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">
+                CVSS {cvss.toFixed(1)}
+              </span>
+              <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="text-muted-foreground hover:text-foreground">
+                ✕
+              </button>
+            </div>
           </div>
           <div className="space-y-1 text-[11px]">
             <p className="opacity-95 leading-relaxed text-muted-foreground">{properties?.description || 'No description available.'}</p>
