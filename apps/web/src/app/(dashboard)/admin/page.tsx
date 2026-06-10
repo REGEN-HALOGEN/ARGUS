@@ -381,26 +381,30 @@ export default function AdminPage() {
                   >
                     <UserPlus className="h-4 w-4" />
                   </button>
-                  <button
-                    onClick={() => {
-                      setResetPasswordUser(user);
-                      setNewPassword('');
-                      setShowPassword(false);
-                    }}
-                    title="Reset Password"
-                    className="p-1.5 rounded-md hover:bg-primary-500/10 text-muted-foreground hover:text-primary-400 transition-all hover:scale-105 cursor-pointer"
-                  >
-                    <KeyRound className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setDeleteUser(user);
-                    }}
-                    title="Remove User"
-                    className="p-1.5 rounded-md hover:bg-threat-500/10 text-muted-foreground hover:text-threat-400 transition-all hover:scale-105 cursor-pointer"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {user.role !== 'super_admin' && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setResetPasswordUser(user);
+                          setNewPassword('');
+                          setShowPassword(false);
+                        }}
+                        title="Reset Password"
+                        className="p-1.5 rounded-md hover:bg-primary-500/10 text-muted-foreground hover:text-primary-400 transition-all hover:scale-105 cursor-pointer"
+                      >
+                        <KeyRound className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDeleteUser(user);
+                        }}
+                        title="Remove User"
+                        className="p-1.5 rounded-md hover:bg-threat-500/10 text-muted-foreground hover:text-threat-400 transition-all hover:scale-105 cursor-pointer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
