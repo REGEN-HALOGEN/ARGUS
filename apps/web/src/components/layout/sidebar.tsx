@@ -57,18 +57,21 @@ const navItems = [
     label: 'CVE Intelligence',
     icon: Shield,
     orgRoles: ['viewer', 'analyst', 'operator', 'org_admin'],
+    platformRoles: ['super_admin'],
   },
   {
     href: '/threats',
     label: 'Threat Actors',
     icon: Users,
     orgRoles: ['analyst', 'operator', 'org_admin'],
+    platformRoles: ['super_admin'],
   },
   {
     href: '/settings',
     label: 'Settings',
     icon: Settings,
     orgRoles: ['viewer', 'analyst', 'operator', 'org_admin'],
+    platformRoles: ['super_admin'],
   },
   {
     href: '/admin',
@@ -83,9 +86,17 @@ function canViewItem(
   platformRole: PlatformRole | null,
   orgRole: OrgRole | null,
 ) {
-  if ('platformRoles' in item && item.platformRoles?.some((role) => role === platformRole))
+  // Super admins are strictly platform-level. They should only see platform-authorized views,
+  // even if they were accidentally added to an organization.
+  if (platformRole === 'super_admin') {
+    return 'platformRoles' in item && item.platformRoles?.includes('super_admin');
+  }
+
+  // Regular users only see views authorized for their org role
+  if ('orgRoles' in item && item.orgRoles?.some((role) => role === orgRole)) {
     return true;
-  if ('orgRoles' in item && item.orgRoles?.some((role) => role === orgRole)) return true;
+  }
+  
   return false;
 }
 

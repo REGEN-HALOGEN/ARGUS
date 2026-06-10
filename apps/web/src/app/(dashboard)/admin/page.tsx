@@ -674,7 +674,9 @@ export default function AdminPage() {
                       <option value="" disabled className="bg-card text-foreground">
                         Choose a user
                       </option>
-                      {users.map((u) => (
+                      {users
+                        .filter((u) => u.role !== 'super_admin')
+                        .map((u) => (
                         <option key={u.id} value={u.id} className="bg-card text-foreground">
                           {u.name || 'Unnamed'} ({u.email})
                         </option>
