@@ -242,6 +242,30 @@ adminRoutes.delete('/users/:userId', async (c) => {
   }
 });
 
+adminRoutes.delete('/organizations/:orgId', async (c) => {
+  const orgId = c.req.param('orgId');
+  const pool = getAuthDbPool();
+  try {
+    await pool.query('BEGIN');
+    await deleteIfColumnExists(pool, 'member', 'organizationId', orgId);
+    await deleteIfColumnExists(pool, 'invitation', 'organizationId', orgId);
+    await pool.query('DELETE FROM "organization" WHERE "id" = $1', [orgId]);
+    await pool.query('COMMIT');
+
+    return c.json({ success: true, data: { orgId } });
+  } catch (error: any) {
+    await pool.query('ROLLBACK');
+    console.error(`[ADMIN] Failed to remove organization ${orgId}:`, error);
+    return c.json(
+      {
+        success: false,
+        error: { code: 'ORG_DELETE_FAILED', message: error.message },
+      },
+      500,
+    );
+  }
+});
+
 const ResetPasswordSchema = z.object({
   password: z.string().min(8),
 });

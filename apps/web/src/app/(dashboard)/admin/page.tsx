@@ -137,6 +137,10 @@ export default function AdminPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  const [deleteOrg, setDeleteOrg] = useState<Organization | null>(null);
+  const [isDeletingOrg, setIsDeletingOrg] = useState(false);
+  const [deleteOrgError, setDeleteOrgError] = useState('');
+
   const fetchData = () => {
     apiFetch<AdminUsersResponse>('/admin/users?limit=25')
       .then((data: AdminUsersResponse) => setUsers(data.users ?? []))
@@ -255,6 +259,25 @@ export default function AdminPage() {
       setDeleteError(err.message || 'Failed to remove user.');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteOrganization = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deleteOrg) return;
+
+    setIsDeletingOrg(true);
+    setDeleteOrgError('');
+    try {
+      await apiFetch(`/admin/organizations/${deleteOrg.id}`, {
+        method: 'DELETE',
+      });
+      fetchData();
+      setDeleteOrg(null);
+    } catch (err: any) {
+      setDeleteOrgError(err.message || 'Failed to remove organization.');
+    } finally {
+      setIsDeletingOrg(false);
     }
   };
 
@@ -439,6 +462,15 @@ export default function AdminPage() {
                         <Plus className="h-3 w-3" />
                         Add Member
                       </button>
+                      <button
+                        onClick={() => {
+                          setDeleteOrg(org);
+                        }}
+                        title="Remove Organization"
+                        className="p-1.5 rounded-md hover:bg-threat-500/10 text-muted-foreground hover:text-threat-400 transition-all hover:scale-105 cursor-pointer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                       <span className="rounded-md bg-card/50 px-2 py-1 text-xs text-muted-foreground">
                         {org.memberCount} member{org.memberCount !== 1 ? 's' : ''}
                       </span>
@@ -455,8 +487,25 @@ export default function AdminPage() {
                           </p>
                           <p className="text-xs text-muted-foreground/70">{member.user?.email}</p>
                         </div>
-                        <div className="self-center">
+                        <div className="self-center flex items-center gap-2">
                           <RoleBadge role={member.role} variant="org" />
+                          <div className="flex items-center gap-1.5 border-l border-card-border pl-2 ml-1">
+                            <button
+                              onClick={() => {
+                                setResetPasswordUser({
+                                  id: member.userId,
+                                  name: member.user?.name,
+                                  email: member.user?.email,
+                                });
+                                setNewPassword('');
+                                setShowPassword(false);
+                              }}
+                              title="Reset Password"
+                              className="p-1 rounded-md hover:bg-primary-500/10 text-muted-foreground hover:text-primary-400 transition-all hover:scale-105 cursor-pointer"
+                            >
+                              <KeyRound className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -825,6 +874,82 @@ export default function AdminPage() {
                     className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-threat-500/20 hover:bg-threat-500/35 text-threat-300 border border-threat-500/30 transition-all cursor-pointer"
                   >
                     {isDeleting && <Spinner size="sm" className="mr-1.5" />}
+                    Permanently Delete
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Remove Organization Confirmation Dialog */}
+        {deleteOrg && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              className="relative w-full max-w-md overflow-hidden rounded-xl border border-threat-500/30 bg-card/95 p-6 shadow-2xl backdrop-blur-md"
+            >
+              <div className="flex items-center justify-between border-b border-threat-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-threat-400" />
+                  <h3 className="text-base font-semibold text-threat-300">Remove Organization</h3>
+                </div>
+                <button
+                  onClick={() => setDeleteOrg(null)}
+                  className="rounded-lg p-1 text-muted-foreground hover:bg-card/50 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleDeleteOrganization} className="mt-4 space-y-4">
+                <div className="rounded-lg bg-threat-500/10 border border-threat-500/20 p-3.5 text-xs text-threat-300 space-y-2">
+                  <p className="font-semibold">⚠️ CRITICAL WARNING</p>
+                  <p className="leading-relaxed">
+                    This action is **irreversible**. Removing this organization will permanently delete:
+                  </p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li>The organization profile and configuration</li>
+                    <li>All its active memberships ({deleteOrg.memberCount} members)</li>
+                    <li>Pending invitations associated with this organization</li>
+                  </ul>
+                </div>
+
+                <div className="text-sm">
+                  <p className="text-xs text-muted-foreground">Organization Details:</p>
+                  <p className="font-medium text-foreground mt-0.5">
+                    {deleteOrg.name} ({deleteOrg.slug})
+                  </p>
+                </div>
+
+                {deleteOrgError && (
+                  <div className="rounded-lg bg-threat-500/10 border border-threat-500/20 p-3 text-xs text-threat-300 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-threat-400" />
+                    <span>{deleteOrgError}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteOrg(null)}
+                    className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-card-border hover:bg-card/50 text-muted-foreground transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isDeletingOrg}
+                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-threat-500/20 hover:bg-threat-500/35 text-threat-300 border border-threat-500/30 transition-all cursor-pointer"
+                  >
+                    {isDeletingOrg && <Spinner size="sm" className="mr-1.5" />}
                     Permanently Delete
                   </button>
                 </div>
