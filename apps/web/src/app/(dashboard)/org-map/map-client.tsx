@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes';
 import { Spinner } from '@/components/ui/spinner';
 import * as THREE from 'three';
 
-// ─── Types ───────────────────────────────────────────────────────
+// ─── Node visual config ──────────────────────────────────────────
 
 interface NodeMeta {
   color: string;
@@ -15,8 +15,6 @@ interface NodeMeta {
   label: string;
   shape: 'box' | 'tetrahedron' | 'octahedron' | 'cone' | 'torus' | 'sphere';
 }
-
-// ─── Node visual config ──────────────────────────────────────────
 
 const NODE_CONFIG: Record<string, NodeMeta> = {
   asset:            { color: '#4f8ff7', emissive: '#2563eb', label: 'Asset',       shape: 'box' },
@@ -50,9 +48,7 @@ function getNodeMeta(node: any): NodeMeta {
 
 function getNodeLabel(node: any): string {
   const p = node.properties || {};
-  return (
-    p.name || p.hostname || p.cveId || p.ipAddress || p.title || p.mitreId || node.label || ''
-  );
+  return p.name || p.hostname || p.cveId || p.ipAddress || p.title || p.mitreId || node.label || '';
 }
 
 function getNodeSize(node: any): number {
@@ -65,36 +61,24 @@ function getNodeSize(node: any): number {
   }
 }
 
-// ─── Geometry builders (cached per type) ─────────────────────────
+// ─── Geometry factory (cached) ───────────────────────────────────
 
-const geometryCache = new Map<string, THREE.BufferGeometry>();
+const geoCache = new Map<string, THREE.BufferGeometry>();
 
-function getGeometry(shape: NodeMeta['shape'], size: number): THREE.BufferGeometry {
-  const key = `${shape}-${size}`;
-  if (geometryCache.has(key)) return geometryCache.get(key)!;
-
-  let geo: THREE.BufferGeometry;
+function makeGeometry(shape: NodeMeta['shape'], size: number): THREE.BufferGeometry {
+  const key = `${shape}_${size}`;
+  if (geoCache.has(key)) return geoCache.get(key)!;
+  let g: THREE.BufferGeometry;
   switch (shape) {
-    case 'box':
-      geo = new THREE.BoxGeometry(size * 1.6, size * 1.6, size * 1.6);
-      break;
-    case 'tetrahedron':
-      geo = new THREE.TetrahedronGeometry(size * 1.3);
-      break;
-    case 'octahedron':
-      geo = new THREE.OctahedronGeometry(size * 1.3);
-      break;
-    case 'cone':
-      geo = new THREE.ConeGeometry(size, size * 2.2, 6);
-      break;
-    case 'torus':
-      geo = new THREE.TorusGeometry(size * 0.9, size * 0.35, 12, 24);
-      break;
-    default:
-      geo = new THREE.SphereGeometry(size, 20, 20);
+    case 'box':         g = new THREE.BoxGeometry(size * 1.6, size * 1.6, size * 1.6); break;
+    case 'tetrahedron': g = new THREE.TetrahedronGeometry(size * 1.3); break;
+    case 'octahedron':  g = new THREE.OctahedronGeometry(size * 1.3); break;
+    case 'cone':        g = new THREE.ConeGeometry(size, size * 2.2, 6); break;
+    case 'torus':       g = new THREE.TorusGeometry(size * 0.9, size * 0.35, 12, 24); break;
+    default:            g = new THREE.SphereGeometry(size, 20, 20);
   }
-  geometryCache.set(key, geo);
-  return geo;
+  geoCache.set(key, g);
+  return g;
 }
 
 // ─── Component ───────────────────────────────────────────────────
@@ -104,30 +88,11 @@ export default function MapClient() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState<any>(null);
-  const [containerSize, setContainerSize] = useState<{ w: number; h: number } | null>(null);
 
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== 'light';
-
-  // ─── Resize observer ────────────────────────────────────────────
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const measure = () => {
-      const rect = el.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        setContainerSize({ w: Math.floor(rect.width), h: Math.floor(rect.height) });
-      }
-    };
-
-    measure();
-    const ro = new ResizeObserver(() => measure());
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   // ─── Fetch graph data ──────────────────────────────────────────
   useEffect(() => {
@@ -135,13 +100,15 @@ export default function MapClient() {
       try {
         const res = await apiFetch<{ nodes: any[]; edges: any[] }>('/graph');
         if (res?.nodes && res?.edges) {
-          const links = res.edges.map((e: any) => ({
-            source: e.source,
-            target: e.target,
-            type: e.type,
-            id: e.id,
-          }));
-          setGraphData({ nodes: res.nodes, links });
+          setGraphData({
+            nodes: res.nodes,
+            links: res.edges.map((e: any) => ({
+              source: e.source,
+              target: e.target,
+              type: e.type,
+              id: e.id,
+            })),
+          });
         }
       } catch (err) {
         console.error('[OrgMap] Failed to load graph:', err);
@@ -151,14 +118,12 @@ export default function MapClient() {
     })();
   }, []);
 
-  // ─── D3 force tuning ──────────────────────────────────────────
+  // ─── D3 forces ─────────────────────────────────────────────────
   useEffect(() => {
     const fg = fgRef.current;
     if (!fg) return;
-    const charge = expanded ? -500 : -150;
-    const dist = expanded ? 180 : 60;
-    fg.d3Force('charge')?.strength(charge);
-    fg.d3Force('link')?.distance(dist);
+    fg.d3Force('charge')?.strength(expanded ? -500 : -150);
+    fg.d3Force('link')?.distance(expanded ? 180 : 60);
     fg.d3ReheatSimulation();
   }, [expanded, graphData]);
 
@@ -169,70 +134,58 @@ export default function MapClient() {
       const size = getNodeSize(node);
       const group = new THREE.Group();
 
-      // Primary mesh — uses MeshPhongMaterial which works well with default lights
-      const geo = getGeometry(meta.shape, size);
-      const mat = new THREE.MeshPhongMaterial({
+      // Main mesh
+      const mat = new THREE.MeshLambertMaterial({
         color: meta.color,
         emissive: meta.emissive,
-        emissiveIntensity: 0.45,
-        shininess: 80,
+        emissiveIntensity: 0.5,
         transparent: true,
         opacity: 0.92,
       });
-      const mesh = new THREE.Mesh(geo, mat);
-      group.add(mesh);
+      group.add(new THREE.Mesh(makeGeometry(meta.shape, size), mat));
 
-      // Outer glow shell
-      const glowGeo = new THREE.SphereGeometry(size * 2, 12, 12);
+      // Glow
       const glowMat = new THREE.MeshBasicMaterial({
         color: meta.color,
         transparent: true,
-        opacity: 0.08,
+        opacity: 0.07,
         side: THREE.BackSide,
       });
-      group.add(new THREE.Mesh(glowGeo, glowMat));
+      group.add(new THREE.Mesh(new THREE.SphereGeometry(size * 2, 10, 10), glowMat));
 
-      // Floating text label
+      // Label
       const label = getNodeLabel(node);
       if (label) {
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d')!;
         canvas.width = 512;
         canvas.height = 64;
+        const ctx = canvas.getContext('2d')!;
         ctx.clearRect(0, 0, 512, 64);
 
-        // Background pill
         const text = label.length > 28 ? label.slice(0, 26) + '…' : label;
-        ctx.font = '600 26px Inter, system-ui, -apple-system, sans-serif';
-        const textWidth = ctx.measureText(text).width;
-        const pillW = Math.min(textWidth + 32, 500);
-        const pillX = (512 - pillW) / 2;
+        ctx.font = '600 26px Inter, system-ui, sans-serif';
+        const tw = ctx.measureText(text).width;
+        const pw = Math.min(tw + 32, 500);
+        const px = (512 - pw) / 2;
 
-        ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.85)';
+        ctx.fillStyle = isDark ? 'rgba(15,23,42,0.75)' : 'rgba(255,255,255,0.85)';
         ctx.beginPath();
-        ctx.roundRect(pillX, 8, pillW, 48, 12);
+        ctx.roundRect(px, 8, pw, 48, 12);
         ctx.fill();
-
-        // Border
-        ctx.strokeStyle = isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(100, 116, 139, 0.2)';
+        ctx.strokeStyle = isDark ? 'rgba(148,163,184,0.2)' : 'rgba(100,116,139,0.2)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Text
         ctx.fillStyle = isDark ? '#e2e8f0' : '#1e293b';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, 256, 34);
 
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.minFilter = THREE.LinearFilter;
-        const spriteMat = new THREE.SpriteMaterial({
-          map: texture,
-          transparent: true,
-          opacity: 0.9,
-          depthWrite: false,
-        });
-        const sprite = new THREE.Sprite(spriteMat);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.minFilter = THREE.LinearFilter;
+        const sprite = new THREE.Sprite(
+          new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }),
+        );
         sprite.scale.set(28, 3.5, 1);
         sprite.position.set(0, size * 2.2 + 4, 0);
         group.add(sprite);
@@ -247,174 +200,129 @@ export default function MapClient() {
   const handleNodeClick = useCallback((node: any) => {
     const fg = fgRef.current;
     if (!fg || node.x == null) return;
-    const dist = 100;
-    const ratio = 1 + dist / Math.hypot(node.x, node.y, node.z || 0);
+    const d = 100;
+    const r = 1 + d / Math.hypot(node.x, node.y, node.z || 0);
     fg.cameraPosition(
-      { x: node.x * ratio, y: node.y * ratio, z: (node.z || 0) * ratio },
+      { x: node.x * r, y: node.y * r, z: (node.z || 0) * r },
       { x: node.x, y: node.y, z: node.z || 0 },
       1200,
     );
   }, []);
 
-  // ─── Theme colors ─────────────────────────────────────────────
+  // ─── Theme colours ─────────────────────────────────────────────
   const bgColor = isDark ? '#060b18' : '#f1f5f9';
-  const panelBg = isDark ? 'rgba(6, 11, 24, 0.85)' : 'rgba(255, 255, 255, 0.92)';
-  const panelBorder = isDark ? 'rgba(51, 65, 85, 0.5)' : 'rgba(203, 213, 225, 0.7)';
-  const textPrimary = isDark ? '#f1f5f9' : '#0f172a';
-  const textMuted = isDark ? '#94a3b8' : '#64748b';
+  const panelBg = isDark ? 'rgba(6,11,24,0.88)' : 'rgba(255,255,255,0.92)';
+  const panelBorder = isDark ? 'rgba(51,65,85,0.5)' : 'rgba(203,213,225,0.7)';
+  const txtMain = isDark ? '#f1f5f9' : '#0f172a';
+  const txtMuted = isDark ? '#94a3b8' : '#64748b';
 
-  // ─── Loading state ─────────────────────────────────────────────
+  // ─── Loading ───────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center" style={{ background: bgColor }}>
+      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: bgColor }}>
         <Spinner size="lg" />
       </div>
     );
   }
 
-  // ─── Empty state ───────────────────────────────────────────────
+  // ─── Empty ─────────────────────────────────────────────────────
   if (graphData.nodes.length === 0) {
     return (
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4" style={{ background: bgColor }}>
-        <div
-          className="h-16 w-16 rounded-2xl flex items-center justify-center"
-          style={{ background: isDark ? 'rgba(51,65,85,0.3)' : 'rgba(203,213,225,0.4)', border: `1px solid ${panelBorder}` }}
-        >
-          <svg className="h-8 w-8" style={{ color: textMuted }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 10h.01M15 10h.01M9.5 15.5a3.5 3.5 0 015 0" />
-          </svg>
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: bgColor }}>
+        <div style={{ width: 64, height: 64, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${panelBorder}`, background: isDark ? 'rgba(51,65,85,0.3)' : 'rgba(203,213,225,0.4)' }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={txtMuted} strokeWidth="1.5"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M9.5 15.5a3.5 3.5 0 015 0"/></svg>
         </div>
-        <h3 className="text-base font-semibold" style={{ color: textPrimary }}>No graph data</h3>
-        <p className="text-sm max-w-xs text-center" style={{ color: textMuted }}>
-          Your organisation has no assets or connections yet. Run the ingestion pipeline to populate.
-        </p>
+        <p style={{ color: txtMain, fontWeight: 600, fontSize: 16 }}>No graph data</p>
+        <p style={{ color: txtMuted, fontSize: 13, maxWidth: 280, textAlign: 'center' }}>Run the ingestion pipeline to populate your organisation graph.</p>
       </div>
     );
   }
 
-  // ─── Main render ───────────────────────────────────────────────
+  // ─── Main ──────────────────────────────────────────────────────
   return (
-    <div ref={containerRef} className="absolute inset-0" style={{ background: bgColor }}>
-      {containerSize && (
-        <ForceGraph3D
-          ref={fgRef}
-          width={containerSize.w}
-          height={containerSize.h}
-          graphData={graphData}
-          nodeThreeObject={nodeThreeObject}
-          nodeThreeObjectExtend={false}
-          linkColor={(link: any) => LINK_COLORS[link.type] || 'rgba(100,116,139,0.3)'}
-          linkWidth={1.2}
-          linkOpacity={0.6}
-          linkDirectionalParticles={2}
-          linkDirectionalParticleWidth={1.8}
-          linkDirectionalParticleSpeed={0.005}
-          linkDirectionalParticleColor={(link: any) => LINK_COLORS[link.type] || 'rgba(100,116,139,0.5)'}
-          backgroundColor={bgColor}
-          onNodeClick={handleNodeClick}
-          onNodeHover={(node: any) => setHovered(node || null)}
-          enableNodeDrag
-          cooldownTicks={200}
-          d3AlphaDecay={0.015}
-          d3VelocityDecay={0.25}
-        />
-      )}
+    <div ref={wrapRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <ForceGraph3D
+        ref={fgRef}
+        graphData={graphData}
+        nodeThreeObject={nodeThreeObject}
+        nodeThreeObjectExtend={false}
+        linkColor={(link: any) => LINK_COLORS[link.type] || 'rgba(100,116,139,0.3)'}
+        linkWidth={1.2}
+        linkOpacity={0.6}
+        linkDirectionalParticles={2}
+        linkDirectionalParticleWidth={1.8}
+        linkDirectionalParticleSpeed={0.005}
+        linkDirectionalParticleColor={(link: any) => LINK_COLORS[link.type] || 'rgba(100,116,139,0.5)'}
+        backgroundColor={bgColor}
+        onNodeClick={handleNodeClick}
+        onNodeHover={(node: any) => setHovered(node || null)}
+        enableNodeDrag
+        cooldownTicks={200}
+        d3AlphaDecay={0.015}
+        d3VelocityDecay={0.25}
+      />
 
-      {/* ─── Top-left controls ───────────────────────────────────── */}
-      <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-        {/* Stats badge */}
-        <div
-          className="rounded-lg px-3 py-2 text-xs font-medium backdrop-blur-md"
-          style={{ background: panelBg, border: `1px solid ${panelBorder}`, color: textMuted }}
-        >
-          <span style={{ color: textPrimary, fontWeight: 700 }}>{graphData.nodes.length}</span> nodes ·{' '}
-          <span style={{ color: textPrimary, fontWeight: 700 }}>{graphData.links.length}</span> connections
+      {/* ── Top-left: stats + expand ────────────────────────────── */}
+      <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 10 }}>
+        <div style={{ background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: txtMuted, backdropFilter: 'blur(12px)' }}>
+          <span style={{ color: txtMain, fontWeight: 700 }}>{graphData.nodes.length}</span> nodes ·{' '}
+          <span style={{ color: txtMain, fontWeight: 700 }}>{graphData.links.length}</span> connections
         </div>
-
-        {/* Expand / Compress */}
         <button
           onClick={() => setExpanded((p) => !p)}
-          className="rounded-lg px-3 py-2 text-xs font-semibold backdrop-blur-md transition-all duration-200 cursor-pointer"
           style={{
-            background: expanded
-              ? isDark ? 'rgba(37, 99, 235, 0.25)' : 'rgba(37, 99, 235, 0.15)'
-              : panelBg,
+            background: expanded ? (isDark ? 'rgba(37,99,235,0.25)' : 'rgba(37,99,235,0.15)') : panelBg,
             border: `1px solid ${expanded ? (isDark ? 'rgba(96,165,250,0.5)' : 'rgba(37,99,235,0.4)') : panelBorder}`,
-            color: expanded ? (isDark ? '#93c5fd' : '#2563eb') : textPrimary,
+            borderRadius: 8,
+            padding: '8px 12px',
+            fontSize: 12,
+            fontWeight: 600,
+            color: expanded ? (isDark ? '#93c5fd' : '#2563eb') : txtMain,
+            cursor: 'pointer',
+            backdropFilter: 'blur(12px)',
           }}
         >
           {expanded ? '⟵ Compress Nodes' : '⟶ Expand Nodes'}
         </button>
       </div>
 
-      {/* ─── Legend (top-right) ───────────────────────────────────── */}
-      <div
-        className="absolute top-4 right-4 rounded-xl p-4 backdrop-blur-md z-10"
-        style={{ background: panelBg, border: `1px solid ${panelBorder}` }}
-      >
-        <h3
-          className="text-[10px] font-bold uppercase tracking-widest mb-3"
-          style={{ color: textMuted }}
-        >
-          Entity Types
-        </h3>
-        <div className="space-y-2.5">
-          {Object.entries(NODE_CONFIG).map(([, cfg]) => (
-            <div key={cfg.label} className="flex items-center gap-2.5">
-              <div
-                className="w-3 h-3 rounded-sm"
-                style={{
-                  background: cfg.color,
-                  boxShadow: `0 0 6px ${cfg.color}50`,
-                }}
-              />
-              <span className="text-xs font-medium" style={{ color: textPrimary }}>{cfg.label}</span>
-              <span className="text-[10px] ml-auto" style={{ color: textMuted }}>
-                {cfg.shape === 'box' ? '■' : cfg.shape === 'tetrahedron' ? '▲' : cfg.shape === 'octahedron' ? '◆' : cfg.shape === 'cone' ? '▼' : cfg.shape === 'torus' ? '○' : '●'}
-              </span>
-            </div>
-          ))}
-        </div>
+      {/* ── Top-right: legend ───────────────────────────────────── */}
+      <div style={{ position: 'absolute', top: 16, right: 16, background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 12, padding: 16, backdropFilter: 'blur(12px)', zIndex: 10 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 1.5, color: txtMuted, marginBottom: 10 }}>Entity Types</div>
+        {Object.entries(NODE_CONFIG).map(([, cfg]) => (
+          <div key={cfg.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <div style={{ width: 12, height: 12, borderRadius: 3, background: cfg.color, boxShadow: `0 0 6px ${cfg.color}50` }} />
+            <span style={{ fontSize: 12, fontWeight: 500, color: txtMain }}>{cfg.label}</span>
+            <span style={{ fontSize: 10, marginLeft: 'auto', color: txtMuted }}>
+              {cfg.shape === 'box' ? '■' : cfg.shape === 'tetrahedron' ? '▲' : cfg.shape === 'octahedron' ? '◆' : cfg.shape === 'cone' ? '▼' : '○'}
+            </span>
+          </div>
+        ))}
       </div>
 
-      {/* ─── Hover tooltip ────────────────────────────────────────── */}
+      {/* ── Hover tooltip ───────────────────────────────────────── */}
       {hovered && (
-        <div
-          className="absolute bottom-20 left-1/2 -translate-x-1/2 rounded-xl px-5 py-3 backdrop-blur-md z-20 transition-opacity"
-          style={{ background: panelBg, border: `1px solid ${panelBorder}` }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="w-3 h-3 rounded-sm"
-              style={{ background: getNodeMeta(hovered).color, boxShadow: `0 0 8px ${getNodeMeta(hovered).color}60` }}
-            />
+        <div style={{ position: 'absolute', bottom: 72, left: '50%', transform: 'translateX(-50%)', background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 12, padding: '10px 20px', backdropFilter: 'blur(12px)', zIndex: 20, whiteSpace: 'nowrap' as const }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 12, height: 12, borderRadius: 3, background: getNodeMeta(hovered).color, boxShadow: `0 0 8px ${getNodeMeta(hovered).color}60` }} />
             <div>
-              <div className="text-sm font-semibold" style={{ color: textPrimary }}>
-                {getNodeLabel(hovered) || 'Unknown'}
-              </div>
-              <div className="text-[11px]" style={{ color: textMuted }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: txtMain }}>{getNodeLabel(hovered) || 'Unknown'}</div>
+              <div style={{ fontSize: 11, color: txtMuted }}>
                 {getNodeMeta(hovered).label}
-                {hovered.properties?.criticality && ` · ${hovered.properties.criticality}`}
-                {hovered.properties?.severity && ` · ${hovered.properties.severity}`}
-                {hovered.properties?.cvss != null && ` · CVSS ${hovered.properties.cvss}`}
+                {hovered.properties?.criticality ? ` · ${hovered.properties.criticality}` : ''}
+                {hovered.properties?.severity ? ` · ${hovered.properties.severity}` : ''}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── Controls hint (bottom-left) ──────────────────────────── */}
-      <div
-        className="absolute bottom-4 left-4 rounded-lg px-3 py-2.5 text-[11px] leading-relaxed backdrop-blur-md z-10"
-        style={{ background: panelBg, border: `1px solid ${panelBorder}`, color: textMuted }}
-      >
-        <div className="flex items-center gap-4">
-          <span>🖱 Drag → Rotate</span>
-          <span>⌥ Drag → Pan</span>
-          <span>Scroll → Zoom</span>
-          <span>Click → Focus</span>
-        </div>
+      {/* ── Bottom-left: controls ───────────────────────────────── */}
+      <div style={{ position: 'absolute', bottom: 16, left: 16, background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 8, padding: '8px 14px', fontSize: 11, color: txtMuted, backdropFilter: 'blur(12px)', zIndex: 10, display: 'flex', gap: 16 }}>
+        <span>🖱 Drag → Rotate</span>
+        <span>⌥ Drag → Pan</span>
+        <span>Scroll → Zoom</span>
+        <span>Click → Focus</span>
       </div>
     </div>
   );
