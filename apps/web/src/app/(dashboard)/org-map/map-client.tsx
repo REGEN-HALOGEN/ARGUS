@@ -194,6 +194,11 @@ function GraphScene({ nodes, links, nodeDistance, isDark }: { nodes: any[]; link
   const linkRefs = useRef<Record<string, THREE.Line>>({});
   const [hovered, setHovered] = useState<any>(null);
 
+  const distanceRef = useRef(nodeDistance);
+  useEffect(() => {
+    distanceRef.current = nodeDistance;
+  }, [nodeDistance]);
+
   // Initialize D3 physics simulation
   useEffect(() => {
     // Give nodes initial random positions to prevent zero-distance errors
@@ -206,7 +211,34 @@ function GraphScene({ nodes, links, nodeDistance, isDark }: { nodes: any[]; link
     const simulation = forceSimulation(nodes)
       .force('link', forceLink(links).id((d: any) => d.id).distance(nodeDistance))
       .force('charge', forceManyBody().strength(-3 * nodeDistance))
-      .force('center', forceCenter(0, 0, 0));
+      .force('center', forceCenter(0, 0, 0))
+      .force('concentric', (alpha: number) => {
+        const radiusByType: Record<string, number> = {
+          crown_jewel: 0,
+          asset: 100,
+          cve: 200,
+          threat_actor: 280,
+          attack_technique: 360,
+        };
+        for (const node of nodes) {
+          const type = getType(node);
+          const targetRadius = (radiusByType[type] ?? 200) * (distanceRef.current / 60);
+          if (targetRadius === 0) {
+            node.vx += (0 - node.x) * 0.05 * alpha;
+            node.vy += (0 - node.y) * 0.05 * alpha;
+            node.vz += (0 - node.z) * 0.05 * alpha;
+          } else {
+            const dx = node.x || 0;
+            const dy = node.y || 0;
+            const dz = node.z || 0;
+            const currentRadius = Math.sqrt(dx*dx + dy*dy + dz*dz) || 1;
+            const factor = (targetRadius - currentRadius) / currentRadius * 0.08 * alpha;
+            node.vx += dx * factor;
+            node.vy += dy * factor;
+            node.vz += dz * factor;
+          }
+        }
+      });
     
     simulationRef.current = simulation;
 
@@ -278,6 +310,9 @@ export default function MapClient() {
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [nodeDistance, setNodeDistance] = useState(60);
+  const [visibleTypes, setVisibleTypes] = useState<Set<string>>(
+    new Set(['asset', 'cve', 'crown_jewel', 'threat_actor', 'attack_technique'])
+  );
 
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== 'light';
@@ -305,6 +340,31 @@ export default function MapClient() {
       }
     })();
   }, []);
+
+  const toggleType = (type: string) => {
+    setVisibleTypes(prev => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        if (next.size > 1) next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  };
+
+  const filteredNodes = useMemo(() => {
+    return graphData.nodes.filter(n => visibleTypes.has(getType(n)));
+  }, [graphData.nodes, visibleTypes]);
+
+  const filteredLinks = useMemo(() => {
+    const visibleNodeIds = new Set(filteredNodes.map(n => n.id));
+    return graphData.links.filter(l => {
+      const sId = l.source.id || l.source;
+      const tId = l.target.id || l.target;
+      return visibleNodeIds.has(sId) && visibleNodeIds.has(tId);
+    });
+  }, [graphData.links, filteredNodes]);
 
   // ─── Theme ─────────────────────────────────────────────────────
   const bg = isDark ? '#060b18' : '#f8fafc';
@@ -338,14 +398,14 @@ export default function MapClient() {
       {/* R3F Canvas */}
       <Canvas camera={{ position: [0, 0, 400], fov: 60 }}>
         <OrbitControls makeDefault enableDamping dampingFactor={0.1} />
-        <GraphScene nodes={graphData.nodes} links={graphData.links} nodeDistance={nodeDistance} isDark={isDark} />
+        <GraphScene nodes={filteredNodes} links={filteredLinks} nodeDistance={nodeDistance} isDark={isDark} />
       </Canvas>
 
       {/* ── Top-left UI ─────────────────────────────────────────── */}
       <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 10 }}>
         <div style={{ background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: txtDim, backdropFilter: 'blur(12px)' }}>
-          <span style={{ color: txt, fontWeight: 700 }}>{graphData.nodes.length}</span> nodes ·{' '}
-          <span style={{ color: txt, fontWeight: 700 }}>{graphData.links.length}</span> connections
+          <span style={{ color: txt, fontWeight: 700 }}>{filteredNodes.length}</span> nodes ·{' '}
+          <span style={{ color: txt, fontWeight: 700 }}>{filteredLinks.length}</span> connections
         </div>
         <div style={{
           background: panelBg,
@@ -374,17 +434,43 @@ export default function MapClient() {
         </div>
       </div>
 
-      {/* ── Top-right UI ────────────────────────────────────────── */}
-      <div style={{ position: 'absolute', top: 16, right: 16, background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 12, padding: 16, backdropFilter: 'blur(12px)', zIndex: 10, pointerEvents: 'none' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: txtDim, marginBottom: 10 }}>Entity Types</div>
-        {Object.entries(TYPE_COLORS).map(([key]) => (
-          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <span style={{ fontSize: '14px', width: '20px', display: 'inline-flex', justifyContent: 'center' }}>
-              {EMOJI_MAP[key] || '❓'}
-            </span>
-            <span style={{ fontSize: 12, fontWeight: 500, color: txt }}>{TYPE_LABELS[key] || key}</span>
-          </div>
-        ))}
+      {/* ── Top-right UI (Filter Panel) ─────────────────────────── */}
+      <div style={{ position: 'absolute', top: 16, right: 16, background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 12, padding: 16, backdropFilter: 'blur(12px)', zIndex: 10 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: txtDim, marginBottom: 12 }}>Filter Entities</div>
+        {Object.entries(TYPE_COLORS).map(([key]) => {
+          const isVisible = visibleTypes.has(key);
+          return (
+            <label
+              key={key}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                marginBottom: 8,
+                cursor: 'pointer',
+                userSelect: 'none',
+                opacity: isVisible ? 1 : 0.45,
+                transition: 'opacity 0.2s',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={isVisible}
+                onChange={() => toggleType(key)}
+                style={{
+                  width: 14,
+                  height: 14,
+                  cursor: 'pointer',
+                  accentColor: '#3b82f6',
+                }}
+              />
+              <span style={{ fontSize: '14px', width: '20px', display: 'inline-flex', justifyContent: 'center' }}>
+                {EMOJI_MAP[key] || '❓'}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: txt }}>{TYPE_LABELS[key] || key}</span>
+            </label>
+          );
+        })}
       </div>
 
       {/* ── Bottom-left UI ──────────────────────────────────────── */}
