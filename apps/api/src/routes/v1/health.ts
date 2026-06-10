@@ -96,6 +96,38 @@ healthRoutes.get('/services', async (c) => {
       uri: 'PostgreSQL',
     });
   }
+  // 5. Google Gemini (LLM)
+  const llmStart = Date.now();
+  try {
+    const apiKey = env.GEMINI_API_KEY;
+    if (!apiKey) {
+      results.push({
+        name: 'Gemini (LLM)',
+        status: 'disconnected',
+        latencyMs: 0,
+        uri: 'No API key configured',
+      });
+    } else {
+      // List models endpoint — validates key without using tokens
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}&pageSize=1`,
+        { signal: AbortSignal.timeout(5000) },
+      );
+      results.push({
+        name: 'Gemini (LLM)',
+        status: res.ok ? 'connected' : 'disconnected',
+        latencyMs: Date.now() - llmStart,
+        uri: 'Google Generative AI',
+      });
+    }
+  } catch {
+    results.push({
+      name: 'Gemini (LLM)',
+      status: 'disconnected',
+      latencyMs: Date.now() - llmStart,
+      uri: 'Google Generative AI',
+    });
+  }
 
   return c.json({ success: true, data: results });
 });
