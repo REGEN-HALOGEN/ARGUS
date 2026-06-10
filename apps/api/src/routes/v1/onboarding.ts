@@ -214,13 +214,14 @@ async function buildTenantGraph(tenantId: string, input: OnboardingInput) {
         const hostname = `${orgSlug}-${slugify(group.role)}-${String(i + 1).padStart(2, '0')}`;
         await session.run(
           `MERGE (s:Asset {id: $id})
-           SET s.tenantId = $tenantId, s.hostname = $hostname, s.type = 'server',
+           SET s.tenantId = $tenantId, s.hostname = $hostname, s.name = $name, s.type = 'server',
                s.role = $role, s.os = $os, s.osVersion = $osVersion,
                s.internetFacing = $internetFacing, s.criticality = 'medium'`,
           {
             id: nodeId,
             tenantId,
             hostname,
+            name: `${group.role} ${i + 1}`,
             role: group.role,
             os: group.os,
             osVersion: group.osVersion,
@@ -245,13 +246,14 @@ async function buildTenantGraph(tenantId: string, input: OnboardingInput) {
       const isCrown = crownSet.has(i);
       await session.run(
         `MERGE (d:Asset {id: $id})
-         SET d.tenantId = $tenantId, d.hostname = $hostname, d.type = 'database',
+         SET d.tenantId = $tenantId, d.hostname = $hostname, d.name = $name, d.type = 'database',
              d.dbType = $dbType, d.purpose = $purpose, d.internetFacing = false,
              d.criticality = $criticality`,
         {
           id: nodeId,
           tenantId,
           hostname,
+          name: `${ds.purpose} DB`,
           dbType: ds.type,
           purpose: ds.purpose,
           criticality: isCrown ? 'critical' : 'high',

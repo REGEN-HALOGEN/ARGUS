@@ -110,11 +110,23 @@ function getLayoutedElements(nodes: any[], edges: any[], direction: LayoutDir) {
 // ─── Node Components ─────────────────────────────────────────────
 
 const AssetNode = memo(({ data }: any) => {
-  const { label, properties, colors, sourcePosition, targetPosition } = data;
+  let { label } = data;
+  const { properties, colors, sourcePosition, targetPosition } = data;
   const c = colors?.asset;
   const vulnCount = data.vulnCount || 0;
   const topCvss = data.topCvss || 0;
   const isInternetFacing = properties?.internetFacing === true;
+
+  if (properties?.type === 'server' && properties?.role) {
+    let index = '';
+    const match = properties.hostname?.match(/-(\d+)$/);
+    if (match) {
+       index = parseInt(match[1], 10).toString();
+    }
+    label = index ? `${properties.role} ${index}` : properties.role;
+  } else if (properties?.type === 'database' && properties?.purpose) {
+    label = `${properties.purpose} DB`;
+  }
 
   return (
     <div className="graph-node-asset w-[220px] rounded-xl overflow-hidden"

@@ -48,10 +48,28 @@ export async function fetchGraphData(
     if (!v?.labels || !v?.properties) return;
     const id = v.elementId ?? v.identity?.toString();
     if (id && !nodesMap.has(id)) {
+      let label = v.properties.name ?? v.properties.hostname ?? v.properties.cveId ?? id;
+
+      if (v.labels.includes('Asset')) {
+        console.log('[Graph] Asset node:', v.properties.hostname, 'type:', v.properties.type, 'role:', v.properties.role, 'purpose:', v.properties.purpose);
+        if (v.properties.type === 'server' && v.properties.role) {
+          let index = '';
+          const match = v.properties.hostname?.match(/-(\d+)$/);
+          if (match) {
+             index = parseInt(match[1], 10).toString();
+          }
+          label = index ? `${v.properties.role} ${index}` : v.properties.role;
+          console.log('[Graph] Computed server label:', label);
+        } else if (v.properties.type === 'database' && v.properties.purpose) {
+          label = `${v.properties.purpose} DB`;
+          console.log('[Graph] Computed db label:', label);
+        }
+      }
+
       nodesMap.set(id, {
         id,
         type: mapLabel(v.labels[0]),
-        label: v.properties.name ?? v.properties.hostname ?? v.properties.cveId ?? id,
+        label,
         properties: v.properties,
       });
     }
