@@ -22,10 +22,6 @@ const baseEnvSchema = z.object({
   NEO4J_USER: z.string().default('neo4j'),
   NEO4J_PASSWORD: z.string().default('argus_dev_password'),
 
-  // Qdrant
-  QDRANT_URL: z.string().url().default('http://localhost:6333'),
-  QDRANT_API_KEY: z.string().optional(),
-
   // Valkey
   VALKEY_URL: z.string().default('redis://localhost:6379'),
 

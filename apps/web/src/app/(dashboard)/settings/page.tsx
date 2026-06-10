@@ -45,7 +45,7 @@ const sections: SettingsSection[] = [
     id: 'database',
     label: 'Database',
     icon: Database,
-    description: 'Neo4j, Qdrant, and Valkey connection status',
+    description: 'Neo4j and Valkey connection status',
   },
 ];
 
@@ -223,7 +223,6 @@ function DatabasePanel() {
       // Set all as disconnected on failure
       setServices([
         { name: 'Neo4j', status: 'disconnected', latencyMs: null, uri: 'unknown' },
-        { name: 'Qdrant', status: 'disconnected', latencyMs: null, uri: 'unknown' },
         { name: 'Valkey (Redis)', status: 'disconnected', latencyMs: null, uri: 'unknown' },
         { name: 'Supabase (Auth)', status: 'disconnected', latencyMs: null, uri: 'unknown' },
       ]);

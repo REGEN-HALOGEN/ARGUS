@@ -30,12 +30,21 @@ export async function initializeSchema(): Promise<void> {
       'CREATE INDEX technique_tactic IF NOT EXISTS FOR (t:AttackTechnique) ON (t.tactic)',
     ];
 
+    // Full-text indexes (Lucene-backed, for semantic-like search)
+    const fulltextIndexes = [
+      'CREATE FULLTEXT INDEX cve_fulltext IF NOT EXISTS FOR (c:CVE) ON EACH [c.cveId, c.description, c.severity]',
+    ];
+
     for (const constraint of constraints) {
       await session.run(constraint);
     }
 
     for (const index of indexes) {
       await session.run(index);
+    }
+
+    for (const ftIndex of fulltextIndexes) {
+      await session.run(ftIndex);
     }
 
     console.info('✅ Neo4j schema initialized successfully');

@@ -1,4 +1,4 @@
-import { searchCVEs } from '@argus/ai';
+import { searchCVEsFullText } from '@argus/graph';
 import { withCache } from '@argus/cache';
 import { getNeo4jDriver } from '@argus/graph';
 import { PaginationSchema } from '@argus/types';
@@ -75,19 +75,23 @@ cveRoutes.get('/', zValidator('query', PaginationSchema), async (c) => {
   }
 });
 
-// ─── Semantic Search CVEs ────────────────────────────────────────
+// ─── Semantic Search CVEs (Neo4j Full-Text) ──────────────────────
 
 cveRoutes.get('/semantic-search', async (c) => {
   const query = c.req.query('q') ?? '';
   const tenantId = c.get('tenantId');
   if (!query) return c.json({ success: true, data: [], meta: { query } });
 
-  const cves = await withCache(`tenant:${tenantId}:cve:semantic:${query}`, 300, async () => {
-    const qdrantResults = await searchCVEs(query, 5);
-    return qdrantResults.map((r) => r.payload);
-  });
+  try {
+    const cves = await withCache(`tenant:${tenantId}:cve:semantic:${query}`, 300, async () => {
+      return searchCVEsFullText(query, 10);
+    });
 
-  return c.json({ success: true, data: cves, meta: { query } });
+    return c.json({ success: true, data: cves, meta: { query } });
+  } catch (error) {
+    console.error('[CVE] Semantic search failed:', (error as Error).message);
+    return c.json({ success: true, data: [], meta: { query } });
+  }
 });
 
 // ─── Search CVEs ─────────────────────────────────────────────────

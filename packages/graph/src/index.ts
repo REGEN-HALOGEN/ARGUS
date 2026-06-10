@@ -2,7 +2,8 @@
 // Neo4j graph engine with query service, traversal, and schema management
 
 export { getNeo4jDriver, getSession, testConnection, closeDriver } from './driver';
-export { executeQuery, executeReadOnlyQuery, fetchGraphData } from './queries';
+export { executeQuery, executeReadOnlyQuery, fetchGraphData, searchCVEsFullText } from './queries';
+export type { CVESearchResult } from './queries';
 export {
   findShortestPath,
   findAllPaths,

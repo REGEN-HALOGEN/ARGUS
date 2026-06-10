@@ -37,26 +37,7 @@ healthRoutes.get('/services', async (c) => {
     });
   }
 
-  // 2. Qdrant
-  const qdrantStart = Date.now();
-  try {
-    const res = await fetch(`${env.QDRANT_URL}/healthz`, { signal: AbortSignal.timeout(5000) });
-    results.push({
-      name: 'Qdrant',
-      status: res.ok ? 'connected' : 'disconnected',
-      latencyMs: Date.now() - qdrantStart,
-      uri: env.QDRANT_URL,
-    });
-  } catch {
-    results.push({
-      name: 'Qdrant',
-      status: 'disconnected',
-      latencyMs: Date.now() - qdrantStart,
-      uri: env.QDRANT_URL,
-    });
-  }
-
-  // 3. Valkey (Redis)
+  // 2. Valkey (Redis)
   const valkeyStart = Date.now();
   try {
     const { getCacheClient } = await import('@argus/cache');

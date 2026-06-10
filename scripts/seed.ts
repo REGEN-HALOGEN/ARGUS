@@ -3,7 +3,7 @@
  * Seeds the graph database with example cybersecurity data
  */
 
-import { indexCVE, initQdrant } from '@argus/ai';
+
 import neo4j from '../packages/graph/node_modules/neo4j-driver';
 
 const NEO4J_URI = process.env.NEO4J_URI ?? 'bolt://localhost:7687';
@@ -21,9 +21,6 @@ async function seed() {
     await session.run('MATCH (n) DETACH DELETE n');
     console.info('  ✓ Cleared existing data');
 
-    // Initialize Qdrant
-    await initQdrant();
-    console.info('  ✓ Initialized Qdrant collection');
 
     // ── Assets ──
     const assets = [
@@ -153,9 +150,8 @@ async function seed() {
         `CREATE (c:CVE {cveId: $cveId, severity: $severity, cvss: $cvss, exploitedInWild: $exploitedInWild, description: $description})`,
         c,
       );
-      await indexCVE(c.cveId, c.description, c.severity, c.cvss);
     }
-    console.info(`  ✓ Created ${cves.length} CVEs and indexed them in Qdrant`);
+    console.info(`  ✓ Created ${cves.length} CVEs`);
 
     // ── Threat Actors ──
     const actors = [

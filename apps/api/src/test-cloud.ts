@@ -50,21 +50,6 @@ async function testConnections() {
     console.error('❌ Redis Failed:', err.message);
   }
 
-  // 4. Qdrant Cloud
-  console.log('\n4. Testing Qdrant Cloud...');
-  try {
-    const res = await fetch(`${env.QDRANT_URL}/healthz`, {
-      headers: env.QDRANT_API_KEY ? { 'api-key': env.QDRANT_API_KEY } : {},
-    });
-    if (res.ok) {
-      console.log('✅ Qdrant Connected (Health OK)');
-    } else {
-      console.error('❌ Qdrant Failed:', res.status, res.statusText);
-    }
-  } catch (err: any) {
-    console.error('❌ Qdrant Failed:', err.message);
-  }
-
   console.log('\n🏁 Tests Finished.');
   process.exit(0);
 }

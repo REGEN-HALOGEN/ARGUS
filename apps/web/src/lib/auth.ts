@@ -5,6 +5,11 @@ import { createAuthClient } from 'better-auth/react';
 const authClient: any = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:4000/api/v1/auth',
   plugins: [organizationClient()],
+  sessionOptions: {
+    // Prevent the entire app from refetching session + /me + dashboard data
+    // every time the user alt-tabs back to the browser window.
+    refetchOnWindowFocus: false,
+  },
 });
 
 export const signIn: any = authClient.signIn;

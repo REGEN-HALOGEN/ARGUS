@@ -109,3 +109,99 @@ function mapLabel(label: string): GraphNode['type'] {
   };
   return mapping[label] ?? 'asset';
 }
+
+// ─── Full-Text CVE Search ────────────────────────────────────────
+
+/**
+ * Sanitize user input for Lucene full-text query syntax.
+ * Escapes special characters that could cause query parse errors.
+ */
+function sanitizeLuceneQuery(query: string): string {
+  // Escape Lucene special characters: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
+  return query.replace(/([+\-&|!(){}[\]^"~*?:\\/])/g, '\\$1');
+}
+
+export interface CVESearchResult {
+  cveId: string;
+  description: string;
+  severity: string;
+  cvss: number;
+  exploitedInWild: boolean;
+  score: number;
+}
+
+/**
+ * Search CVEs using Neo4j's built-in full-text index (Lucene-backed).
+ * Supports fuzzy matching by appending ~ to each term.
+ * Falls back to wildcard search if full-text index is not yet created.
+ */
+export async function searchCVEsFullText(
+  query: string,
+  limit = 10,
+): Promise<CVESearchResult[]> {
+  const session = getSession();
+  try {
+    // Build a fuzzy Lucene query: each word gets ~ for fuzzy matching
+    const sanitized = sanitizeLuceneQuery(query.trim());
+    const terms = sanitized.split(/\s+/).filter(Boolean);
+    const luceneQuery = terms.map((t) => `${t}~`).join(' ');
+
+    const result = await session.run(
+      `CALL db.index.fulltext.queryNodes('cve_fulltext', $query)
+       YIELD node, score
+       RETURN node, score
+       ORDER BY score DESC
+       LIMIT $limit`,
+      { query: luceneQuery, limit: typeof limit === 'number' ? limit : 10 },
+    );
+
+    return result.records.map((record) => {
+      const props = record.get('node').properties;
+      const score = record.get('score');
+      return {
+        cveId: props.cveId,
+        description: props.description,
+        severity: props.severity,
+        cvss: typeof props.cvss === 'object' && props.cvss?.toNumber
+          ? props.cvss.toNumber()
+          : Number(props.cvss ?? 0),
+        exploitedInWild: props.exploitedInWild ?? false,
+        score: typeof score === 'object' && score?.toNumber
+          ? score.toNumber()
+          : Number(score ?? 0),
+      };
+    });
+  } catch (error) {
+    // Fallback: if full-text index doesn't exist yet, use CONTAINS
+    console.warn('[Graph] Full-text search failed, falling back to CONTAINS:', (error as Error).message);
+    try {
+      const result = await session.run(
+        `MATCH (cv:CVE)
+         WHERE cv.cveId CONTAINS $query OR toLower(cv.description) CONTAINS toLower($query)
+         RETURN cv
+         ORDER BY cv.cvss DESC
+         LIMIT $limit`,
+        { query: query.trim(), limit },
+      );
+
+      return result.records.map((record) => {
+        const props = record.get('cv').properties;
+        return {
+          cveId: props.cveId,
+          description: props.description,
+          severity: props.severity,
+          cvss: typeof props.cvss === 'object' && props.cvss?.toNumber
+            ? props.cvss.toNumber()
+            : Number(props.cvss ?? 0),
+          exploitedInWild: props.exploitedInWild ?? false,
+          score: 1, // No relevance score for CONTAINS fallback
+        };
+      });
+    } catch (fallbackError) {
+      console.error('[Graph] CVE search fallback also failed:', (fallbackError as Error).message);
+      return [];
+    }
+  } finally {
+    await session.close();
+  }
+}

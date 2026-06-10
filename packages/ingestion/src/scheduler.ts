@@ -1,4 +1,4 @@
-import { SYSTEM_PROMPTS, USER_PROMPTS, buildPrompt, chat, indexCVE } from '@argus/ai';
+import { SYSTEM_PROMPTS, USER_PROMPTS, buildPrompt, chat } from '@argus/ai';
 import { getCacheClient } from '@argus/cache';
 import { fetchCISAKEV } from './fetchers/cisa-kev';
 import { extractMitreId, extractTactic, fetchMITRETechniques } from './fetchers/mitre';
@@ -44,10 +44,7 @@ export async function syncNVD(): Promise<SyncResult> {
 
     await batchUpsertCVEs(cves);
 
-    // Index in Qdrant for semantic search
-    for (const cve of cves) {
-      await indexCVE(cve.cveId, cve.description, cve.severity, cve.cvss);
-    }
+    // CVEs are automatically indexed by Neo4j's full-text index (cve_fulltext)
 
     return { source: 'NVD', itemsSynced: cves.length, errors, duration: Date.now() - start };
   } catch (e) {
