@@ -36,7 +36,15 @@ function getNodeMeta(node: any) {
 
 function getNodeLabel(node: any): string {
   const p = node.properties || {};
-  return p.name || p.cveId || p.id || p.mitreId || node.label || node.id || 'Unknown';
+  if (p.name) return p.name;
+  if (p.cveId) return p.cveId;
+  if (p.hostname) return p.hostname;
+  if (p.ipAddress) return p.ipAddress;
+  if (p.title) return p.title;
+  if (p.mitreId) return p.mitreId;
+  if (node.label) return node.label;
+  if (node.id) return String(node.id).substring(0, 8) + '...'; // Fallback
+  return 'Unknown';
 }
 
 function getNodeSize(node: any): number {
@@ -55,6 +63,7 @@ export default function MapClient() {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
@@ -103,8 +112,29 @@ export default function MapClient() {
 
     const group = new THREE.Group();
 
-    // Core sphere
-    const geometry = new THREE.SphereGeometry(size, 24, 24);
+    const type = node.type || (node.labels?.[0]?.toLowerCase().replace(/\s+/g, '_')) || 'unknown';
+
+    // Core geometry based on type
+    let geometry;
+    switch (type) {
+      case 'asset':
+        geometry = new THREE.BoxGeometry(size * 1.5, size * 1.5, size * 1.5); // Cube
+        break;
+      case 'cve':
+        geometry = new THREE.TetrahedronGeometry(size * 1.4); // Pyramid
+        break;
+      case 'crown_jewel':
+        geometry = new THREE.OctahedronGeometry(size * 1.4); // Diamond
+        break;
+      case 'threat_actor':
+        geometry = new THREE.ConeGeometry(size, size * 2, 8); // Cone
+        break;
+      case 'attack_technique':
+        geometry = new THREE.TorusGeometry(size, size * 0.4, 16, 32); // Ring
+        break;
+      default:
+        geometry = new THREE.SphereGeometry(size, 24, 24); // Sphere
+    }
     const material = new THREE.MeshStandardMaterial({
       color: meta.color,
       emissive: meta.emissive,
@@ -145,6 +175,16 @@ export default function MapClient() {
 
     return group;
   }, [isDark]);
+
+  // Adjust forces to prevent clumping and support expansion
+  useEffect(() => {
+    const fg = fgRef.current;
+    if (fg) {
+      fg.d3Force('charge')?.strength(expanded ? -600 : -200);
+      fg.d3Force('link')?.distance(expanded ? 150 : 50);
+      fg.d3ReheatSimulation();
+    }
+  }, [expanded, graphData]);
 
   const handleNodeClick = useCallback((node: any) => {
     const fg = fgRef.current;
@@ -227,10 +267,18 @@ export default function MapClient() {
         <p>• Click Node → Focus</p>
       </div>
 
-      {/* Node count */}
-      <div className="absolute top-4 left-4 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground/80 border border-card-border/40 pointer-events-none backdrop-blur-sm"
-           style={{ background: isDark ? 'rgba(5, 10, 21, 0.7)' : 'rgba(255, 255, 255, 0.8)' }}>
-        {graphData.nodes.length} nodes · {graphData.links.length} connections
+      {/* Node count and Expand button */}
+      <div className="absolute top-4 left-4 flex flex-col gap-3 pointer-events-none">
+        <div className="rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground/80 border border-card-border/40 backdrop-blur-sm shadow-sm"
+             style={{ background: isDark ? 'rgba(5, 10, 21, 0.7)' : 'rgba(255, 255, 255, 0.8)' }}>
+          {graphData.nodes.length} nodes · {graphData.links.length} connections
+        </div>
+        <button 
+          className="pointer-events-auto rounded-lg px-3 py-2 text-xs font-medium text-foreground bg-primary-600 hover:bg-primary-500 transition-colors shadow-sm"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? 'Compress Nodes' : 'Expand Nodes'}
+        </button>
       </div>
     </div>
   );
