@@ -15,7 +15,7 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import { motion } from 'framer-motion';
-import { Bug, Download, Filter, Network, Server, Shield, Users, Zap } from 'lucide-react';
+import { Bug, Filter, Network, Server, Shield, Users, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import '@xyflow/react/dist/style.css';
 import { apiFetch } from '@/lib/api';
@@ -262,9 +262,6 @@ export default function GraphPage() {
               </div>
             </div>
           )}
-          <button className="flex items-center gap-2 rounded-lg bg-card/50 px-3 py-2 text-sm text-muted-foreground ring-1 border border-card-border hover:bg-card/60">
-            <Download className="h-4 w-4" /> Export
-          </button>
         </div>
       </div>
 
