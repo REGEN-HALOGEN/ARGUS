@@ -28,10 +28,13 @@ Models Assets, CVEs, Threat Actors, Attack Techniques, Crown Jewels, and Users u
 
 ### 🗺️ Interactive 3D Organisation Map
 Renders the security knowledge graph as an interactive **3D force-directed graph** using **React Three Fiber (R3F)** with **D3-force-3d** physics simulation. Features include:
-- Color-coded entity spheres (Asset, CVE, Crown Jewel, Threat Actor, Attack Technique).
+- **Floating Emoji Billboard Sprites** — Nodes render as 3D-billboarded, high-resolution emojis (🖥️ Asset, 🐛 CVE, 👑 Crown Jewel, 👥 Threat Actor, ⚡ Technique) facing the camera.
+- **Neon Holographic Glow** — Enclosed within glowing, semi-transparent outer shells and inner neon emissive core meshes.
+- **Visual Artifact Remediation** — Advanced alpha-blending and depth-sorting logic (`depthWrite={false}`) to ensure clean rendering overlapping links and sprites.
+- **Interactive Node Distance Slider** — Dynamic UI range slider (`10px` to `100px`) scaling link distance and charge repulsion forces dynamically in the active D3 simulation.
+- **Self-Documenting Legend** — Sidebar entity type legend mapped to active node emojis.
 - Relationship-colored edge lines (HAS_VULNERABILITY, TARGETS, EXPLOITS, USES_TECHNIQUE, CONNECTED_TO, HOSTS).
 - HTML-overlay tooltip panels on hover with entity metadata.
-- Expand/Compress toggle for adjusting physics simulation distance.
 - Full orbit controls (rotate, pan, zoom) with damping.
 - Light/dark theme support.
 
@@ -39,11 +42,20 @@ Renders the security knowledge graph as an interactive **3D force-directed graph
 Full-featured 2D interactive attack graph powered by **@xyflow/react** with **dagre** auto-layout:
 - **Custom Node Components** — Five distinct styled node types: Asset, CVE, Crown Jewel, Threat Actor, and Attack Technique — each with contextual metadata (OS, CVSS score, severity badge, internet-facing indicator, exploitation status, business impact, country, sophistication level, MITRE ID).
 - **Intelligent CVE Deduplication** — Automatically groups multiple CVEs per asset, showing only the top-risk CVE while displaying a count badge on the asset node.
+- **Dynamic Node Labeling** — Generates human-readable labels based on asset metadata (`role` and database `purpose` e.g., "auth DB", "production server") rather than default hostname strings.
+- **Click-to-Open Details** — Opaque, click-to-open details popovers that stay visible until explicitly closed, resolving previous transparency and overlap issues.
 - **Styled Edge System** — Risk-aware edge styling: animated critical vulnerability links, dashed access-path lines, color-coded relationship types with inline labels.
 - **Node Visibility Filters** — Toggle visibility of entity types with live node counts.
 - **Layout Switching** — One-click toggle between horizontal (LR) and vertical (TB) dagre layouts.
 - **Theme-Aware Rendering** — Complete dark and light mode palettes for nodes, edges, canvas, grid, and minimap.
 - **MiniMap & Controls** — Embedded minimap with color-coded nodes, zoom/pan controls.
+
+### 🧹 Vulnerability Rectifier Dashboard
+A specialized workspace designed for operators and admins to triage, analyze, and resolve vulnerability vectors on the organization's databases and crown jewels:
+- **Crown Jewel Telemetry** — Displays database crown jewel assets along with their OS information, criticality level, and all linked CVE vulnerability details.
+- **AI-Powered Remediation Plans** — Instantly generates detailed, structured markdown remediation guides powered by Google Gemini, tailored to the specific database OS and CVE details. Includes robust rate-limit (429) fallback simulations.
+- **One-Click Remediation** — A "Mark Resolved & Safe" action that deletes the `[:HAS_VULNERABILITY]` relationships from Neo4j, flags the asset as resolved, and instantly propagates updates to both the 2D and 3D graph visuals.
+- **Direct NVD References** — Direct links for individual CVE detail lookups on the National Vulnerability Database.
 
 ### 📰 AI-Enhanced Cybersecurity Newsfeed
 Real-time top-10 daily cybersecurity news integrated into the sidebar as an "Intelligence Feed":
@@ -344,7 +356,7 @@ ARGUS implements a layered security model:
 
 Navigation items are dynamically filtered based on the user's role:
 - Dashboard, Organisation Map, AI Analyst, CVE Intelligence, Settings → Viewer+
-- Graph Explorer, Threat Actors → Analyst+
+- Graph Explorer, Threat Actors, Rectifier → Analyst+
 - Platform Admin → Super Admin only
 - News Widget → Hidden for Super Admin (admin sees platform management instead)
 
@@ -353,7 +365,7 @@ Navigation items are dynamically filtered based on the user's role:
 | Middleware | Applied To | Effect |
 |-----------|-----------|--------|
 | `requireAuth()` | `/me`, `/onboarding`, `/news`, `/health` | Validates session, sets `userId` |
-| `requireTenant()` | `/graph`, `/ai`, `/cve`, `/assets`, `/dashboard`, `/threat-actors`, `/organization` | Validates org membership, sets `tenantId`, `orgRole` |
+| `requireTenant()` | `/graph`, `/rectifier`, `/ai`, `/cve`, `/assets`, `/dashboard`, `/threat-actors`, `/organization` | Validates org membership, sets `tenantId`, `orgRole` |
 | `requirePlatformAdmin()` | `/admin/*` | Validates `super_admin` role |
 | `requireOrgRole('operator', 'org_admin')` | `/ingestion/*` | Restricts ingestion trigger to operators+ |
 
@@ -448,6 +460,9 @@ Navigation items are dynamically filtered based on the user's role:
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/v1/graph` | Full graph data (nodes + edges) for the tenant |
+| `GET` | `/api/v1/rectifier` | Retrieve critical database crown jewels and their vulnerabilities |
+| `POST` | `/api/v1/rectifier/resolve` | Clear asset vulnerabilities in Neo4j and mark server safe |
+| `POST` | `/api/v1/rectifier/analyze` | Generate AI remediation instructions for an asset CVE |
 | `POST` | `/api/v1/ai/nl-to-cypher` | Natural language to Cypher translation + execution |
 | `POST` | `/api/v1/ai/chat/stream` | Streaming AI chat response |
 | `GET` | `/api/v1/ai/threat-brief` | AI-generated threat briefing |
@@ -604,7 +619,17 @@ See `DEPLOYMENT.md` for full instructions.
 
 ## 📋 Changelog
 
-### 2026-06-10 — Comprehensive Feature Documentation Update
+### 2026-06-10 — Vulnerability Rectifier, 3D Map Visual Upgrades & Graph Optimizations
+
+#### ✨ New Features
+- **Vulnerability Rectifier (`/rectifier`)** — Dedicated dashboard for crown jewel database vulnerability triage, complete with Gemini-powered AI remediation analysis, 429 rate limit fallback simulations, and single-click live resolutions updating the Neo4j database topology.
+- **3D Map Emojis & Billboarding (`/org-map`)** — Replaced solid sphere nodes with floating billboard emojis (🖥️, 🐛, 👑, 👥, ⚡) inside glowing holographic outer frames and emissive cores. Resolved transparency depth-clipping glitches via material configuration (`depthWrite={false}`).
+- **Interactive Force Slider** — Added a dynamic node spacing range slider (`10px` to `100px`) replacing the binary toggle to control network expansion.
+- **Graph Explorer Popovers & Labels (`/graph`)** — Replaced transparent hover popups with opaque click-to-open overlays that stay persistent, and implemented metadata-driven node labelling (e.g. server roles and database purposes).
+
+#### 🔧 Improvements & Optimizations
+- **Cypher Query Pruning** — Implemented Hono `/graph` endpoint optimization using a nested `CALL {} UNION` Neo4j query. Restricts vulnerability nodes to the top 3 highest-risk CVEs per asset to prevent rendering lag caused by star topology overload.
+- **Platform Admin Restrictions** — Strictly isolated platform admins from tenant organizations, reordered the sidebar navigation hierarchy, and added cascade user deletes.
 
 #### 📝 Documentation
 - **Complete README rewrite** covering all current platform features, architecture, API endpoints, security model, graph data model, AI system design, and deployment configuration.
