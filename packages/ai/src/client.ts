@@ -31,14 +31,16 @@ export function getGeminiClient(): GoogleGenerativeAI {
 // ─── Model Constants ─────────────────────────────────────────────
 
 export const MODELS = {
-  PRO: 'gemini-2.5-flash',
-  FLASH: 'gemini-2.5-flash',
+  // gemini-2.0-flash has significantly higher free-tier limits (~1500 RPD vs 20 RPD)
+  FLASH: 'gemini-2.0-flash',
+  // gemini-2.5-flash has a 20 RPD free-tier limit — use sparingly
+  THINKING: 'gemini-2.5-flash',
 } as const;
 
 export type ModelId = (typeof MODELS)[keyof typeof MODELS];
 
 // ─── Get Model Instance ──────────────────────────────────────────
 
-export function getModel(modelId: ModelId = MODELS.PRO): GenerativeModel {
+export function getModel(modelId: ModelId = MODELS.FLASH): GenerativeModel {
   return getGeminiClient().getGenerativeModel({ model: modelId });
 }
