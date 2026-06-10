@@ -3,23 +3,21 @@
 import { useAuth } from '@/components/providers/auth-provider';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell,
   CheckCircle2,
   ChevronRight,
   Database,
-  Eye,
-  EyeOff,
   Info,
-  Key,
   Palette,
-  Save,
   Settings as SettingsIcon,
   Shield,
   X,
+  RefreshCw,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useTheme } from 'next-themes';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 
@@ -32,16 +30,10 @@ interface SettingsSection {
 
 const sections: SettingsSection[] = [
   {
-    id: 'api-keys',
-    label: 'API Keys',
-    icon: Key,
-    description: 'Manage Anthropic, NVD, and external API keys',
-  },
-  {
     id: 'appearance',
     label: 'Appearance',
     icon: Palette,
-    description: 'Customize theme, colors, and display preferences',
+    description: 'Customize theme and display preferences',
   },
   {
     id: 'access',
@@ -53,80 +45,11 @@ const sections: SettingsSection[] = [
     id: 'database',
     label: 'Database',
     icon: Database,
-    description: 'Neo4j, Qdrant, and Valkey connection settings',
-  },
-  {
-    id: 'notifications',
-    label: 'Notifications',
-    icon: Bell,
-    description: 'Alert preferences and notification channels',
+    description: 'Neo4j, Qdrant, and Valkey connection status',
   },
 ];
 
 /* ─── Helpers ────────────────────────────────────────────────────── */
-
-function MaskedKey({ value }: { value: string }) {
-  const [visible, setVisible] = useState(false);
-  return (
-    <div className="flex items-center gap-2 font-mono text-xs">
-      <span className="text-muted-foreground select-all">
-        {visible
-          ? value
-          : value.slice(0, 4) + '•'.repeat(Math.max(value.length - 8, 4)) + value.slice(-4)}
-      </span>
-      <button
-        onClick={() => setVisible(!visible)}
-        className="text-muted-foreground/70 hover:text-muted-foreground/80 transition-colors"
-      >
-        {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-      </button>
-    </div>
-  );
-}
-
-function SaveButton({
-  onClick,
-  saving,
-  saved,
-}: { onClick: () => void; saving: boolean; saved: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={saving}
-      className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-        saved
-          ? 'bg-success-500/20 text-success-400 ring-1 ring-success-500/30'
-          : 'bg-primary-500/20 text-primary-300 ring-1 ring-primary-500/30 hover:bg-primary-500/30'
-      }`}
-    >
-      {saving ? (
-        <Spinner size="sm" className="mr-0.5" />
-      ) : saved ? (
-        <CheckCircle2 className="h-4 w-4" />
-      ) : (
-        <Save className="h-4 w-4" />
-      )}
-      {saving ? 'Saving…' : saved ? 'Saved' : 'Save Changes'}
-    </button>
-  );
-}
-
-function ToggleSwitch({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      onClick={() => onChange(!enabled)}
-      className={`relative h-6 w-11 rounded-full transition-colors ${
-        enabled ? 'bg-primary-500' : 'bg-card/80'
-      }`}
-    >
-      <span
-        className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-          enabled ? 'translate-x-5' : 'translate-x-0'
-        }`}
-      />
-    </button>
-  );
-}
 
 function InfoBanner({ text }: { text: string }) {
   return (
@@ -137,75 +60,10 @@ function InfoBanner({ text }: { text: string }) {
   );
 }
 
-/* ─── Panel: API Keys ────────────────────────────────────────────── */
-
-function ApiKeysPanel() {
-  const [keys, setKeys] = useState({
-    nvd: 'nvd-api-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-    anthropic: 'sk-ant-api-xxxx-xxxxxxxxxxxxxxxxxxxxxxx',
-    openai: '',
-  });
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  const handleSave = async () => {
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
-
-  return (
-    <div>
-      <InfoBanner text="API keys are encrypted at rest and used only for server-side integrations. They are never exposed to the browser." />
-      <div className="space-y-4">
-        {[
-          { id: 'nvd', label: 'NVD API Key', desc: 'National Vulnerability Database' },
-          { id: 'anthropic', label: 'Anthropic API Key', desc: 'Claude AI integration' },
-          { id: 'openai', label: 'OpenAI API Key', desc: 'Optional — GPT fallback' },
-        ].map((item) => (
-          <div key={item.id} className="rounded-xl bg-background/50 border border-card-border p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <h4 className="text-sm font-semibold text-foreground">{item.label}</h4>
-                <p className="text-[11px] text-muted-foreground/70">{item.desc}</p>
-              </div>
-              {(keys as any)[item.id] && <MaskedKey value={(keys as any)[item.id]} />}
-            </div>
-            <input
-              type="password"
-              value={(keys as any)[item.id]}
-              onChange={(e) => setKeys((prev) => ({ ...prev, [item.id]: e.target.value }))}
-              placeholder={`Enter ${item.label.toLowerCase()}…`}
-              className="w-full mt-2 rounded-lg bg-card/50 px-3 py-2 text-sm text-muted-foreground/80 placeholder:text-muted-foreground/50 ring-1 border border-card-border focus:outline-none focus:ring-primary-500/40 transition-all"
-            />
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-end mt-5">
-        <SaveButton onClick={handleSave} saving={saving} saved={saved} />
-      </div>
-    </div>
-  );
-}
-
 /* ─── Panel: Appearance ──────────────────────────────────────────── */
 
 function AppearancePanel() {
   const { theme, setTheme } = useTheme();
-  const [density, setDensity] = useState<'compact' | 'comfortable'>('comfortable');
-  const [animationsEnabled, setAnimationsEnabled] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  const handleSave = async () => {
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
 
   return (
     <div>
@@ -234,39 +92,11 @@ function AppearancePanel() {
           </div>
         </div>
 
-        {/* Density */}
-        <div className="rounded-xl bg-card/50 ring-1 ring-card-border p-4">
-          <h4 className="text-sm font-semibold text-foreground mb-3">Display Density</h4>
-          <div className="flex gap-3">
-            {(['compact', 'comfortable'] as const).map((d) => (
-              <button
-                key={d}
-                onClick={() => setDensity(d)}
-                className={`flex-1 rounded-lg py-3 text-sm font-medium capitalize transition-all ring-1 ${
-                  density === d
-                    ? 'bg-primary-500/15 text-primary-500 ring-primary-500/30'
-                    : 'bg-background/50 text-muted-foreground/70 ring-card-border hover:bg-background/80'
-                }`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
+        {/* Theme applies immediately — info note */}
+        <div className="flex items-center gap-2 px-1">
+          <CheckCircle2 className="h-3.5 w-3.5 text-success-400" />
+          <span className="text-[11px] text-muted-foreground/70">Theme changes apply instantly across all pages</span>
         </div>
-
-        {/* Animations */}
-        <div className="rounded-xl bg-card/50 ring-1 ring-card-border p-4 flex items-center justify-between">
-          <div>
-            <h4 className="text-sm font-semibold text-foreground">Animations</h4>
-            <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-              Enable motion and transition effects
-            </p>
-          </div>
-          <ToggleSwitch enabled={animationsEnabled} onChange={setAnimationsEnabled} />
-        </div>
-      </div>
-      <div className="flex justify-end mt-5">
-        <SaveButton onClick={handleSave} saving={saving} saved={saved} />
       </div>
     </div>
   );
@@ -285,13 +115,13 @@ function AccessControlPanel() {
         <div className="rounded-xl bg-background/50 border border-card-border p-4">
           <h4 className="text-sm font-semibold text-foreground mb-3">Your Permissions</h4>
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-background/40 border border-card-border">
+            <div className="rounded-lg bg-background/40 border border-card-border p-3">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
                 Platform Role
               </p>
               <p className="text-sm font-semibold text-foreground">{platformRole ?? 'Standard'}</p>
             </div>
-            <div className="rounded-lg bg-background/40 border border-card-border">
+            <div className="rounded-lg bg-background/40 border border-card-border p-3">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
                 Organization Role
               </p>
@@ -299,13 +129,13 @@ function AccessControlPanel() {
                 {orgRole ?? 'None'}
               </p>
             </div>
-            <div className="rounded-lg bg-background/40 border border-card-border">
+            <div className="rounded-lg bg-background/40 border border-card-border p-3">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
                 Email
               </p>
               <p className="text-sm text-muted-foreground/80 truncate">{user?.email ?? '—'}</p>
             </div>
-            <div className="rounded-lg bg-background/40 border border-card-border">
+            <div className="rounded-lg bg-background/40 border border-card-border p-3">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mb-1">
                 Name
               </p>
@@ -362,123 +192,127 @@ function AccessControlPanel() {
 
 /* ─── Panel: Database ────────────────────────────────────────────── */
 
-function DatabasePanel() {
-  const [connections] = useState([
-    {
-      name: 'Neo4j',
-      uri: process.env.NEXT_PUBLIC_NEO4J_URI || 'bolt://localhost:7687',
-      status: 'connected',
-    },
-    {
-      name: 'Qdrant',
-      uri: process.env.NEXT_PUBLIC_QDRANT_URL || 'http://localhost:6333',
-      status: 'connected',
-    },
-    { name: 'Valkey (Redis)', uri: 'redis://localhost:6379', status: 'connected' },
-    { name: 'Supabase (Auth)', uri: 'PostgreSQL', status: 'connected' },
-  ]);
-
-  return (
-    <div>
-      <InfoBanner text="Database connections are configured via environment variables on the API server. These values are read-only in the dashboard." />
-      <div className="space-y-3">
-        {connections.map((conn) => (
-          <div
-            key={conn.name}
-            className="rounded-xl bg-background/50 border border-card-border p-4 flex items-center justify-between"
-          >
-            <div>
-              <h4 className="text-sm font-semibold text-foreground">{conn.name}</h4>
-              <p className="text-xs text-muted-foreground/70 font-mono mt-0.5">{conn.uri}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div
-                className={`h-2 w-2 rounded-full ${conn.status === 'connected' ? 'bg-success-400' : 'bg-threat-400'} animate-pulse`}
-              />
-              <span
-                className={`text-[10px] uppercase tracking-wider font-bold ${conn.status === 'connected' ? 'text-success-400' : 'text-threat-400'}`}
-              >
-                {conn.status}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+interface ServiceStatus {
+  name: string;
+  status: 'connected' | 'disconnected';
+  latencyMs: number | null;
+  uri: string;
 }
 
-/* ─── Panel: Notifications ───────────────────────────────────────── */
+function DatabasePanel() {
+  const [services, setServices] = useState<ServiceStatus[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastChecked, setLastChecked] = useState<string | null>(null);
 
-function NotificationsPanel() {
-  const [prefs, setPrefs] = useState({
-    criticalAlerts: true,
-    newCves: true,
-    threatActorUpdates: false,
-    weeklyDigest: true,
-    ingestionStatus: false,
-  });
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const fetchHealth = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
 
-  const toggle = (key: keyof typeof prefs) => {
-    setPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+      const res = await fetch(`${API_BASE}/health/services`, {
+        credentials: 'include',
+      });
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setServices(json.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch health status:', err);
+      // Set all as disconnected on failure
+      setServices([
+        { name: 'Neo4j', status: 'disconnected', latencyMs: null, uri: 'unknown' },
+        { name: 'Qdrant', status: 'disconnected', latencyMs: null, uri: 'unknown' },
+        { name: 'Valkey (Redis)', status: 'disconnected', latencyMs: null, uri: 'unknown' },
+        { name: 'Supabase (Auth)', status: 'disconnected', latencyMs: null, uri: 'unknown' },
+      ]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+      setLastChecked(new Date().toLocaleTimeString());
+    }
+  }, []);
 
-  const handleSave = async () => {
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
+  useEffect(() => {
+    fetchHealth(false);
+  }, [fetchHealth]);
+
+  const connectedCount = services.filter((s) => s.status === 'connected').length;
 
   return (
     <div>
-      <InfoBanner text="Notification preferences are stored per-user and apply across all organizations you belong to." />
-      <div className="space-y-3">
-        {[
-          {
-            key: 'criticalAlerts' as const,
-            label: 'Critical Severity Alerts',
-            desc: 'Immediate notification for CVSS ≥ 9.0 vulnerabilities',
-          },
-          {
-            key: 'newCves' as const,
-            label: 'New CVE Ingestion',
-            desc: 'Notify when new vulnerabilities are ingested',
-          },
-          {
-            key: 'threatActorUpdates' as const,
-            label: 'Threat Actor Activity',
-            desc: 'Updates on tracked APT groups',
-          },
-          {
-            key: 'weeklyDigest' as const,
-            label: 'Weekly Digest',
-            desc: 'Summary of your organization\u2019s risk posture',
-          },
-          {
-            key: 'ingestionStatus' as const,
-            label: 'Ingestion Pipeline Status',
-            desc: 'Alerts on data pipeline failures or delays',
-          },
-        ].map((item) => (
-          <div
-            key={item.key}
-            className="rounded-xl bg-background/50 border border-card-border p-4 flex items-center justify-between"
-          >
-            <div>
-              <h4 className="text-sm font-semibold text-foreground">{item.label}</h4>
-              <p className="text-[11px] text-muted-foreground/70 mt-0.5">{item.desc}</p>
+      <InfoBanner text="Database connections are configured via environment variables on the API server. Health checks run live against each service." />
+
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground/70">
+            {connectedCount}/{services.length} services online
+          </span>
+          {lastChecked && (
+            <span className="text-[10px] text-muted-foreground/50">
+              · last checked {lastChecked}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => fetchHealth(true)}
+          disabled={refreshing}
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground border border-card-border hover:bg-card/50 hover:text-foreground transition-all disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Spinner size="md" />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {services.map((svc) => (
+            <div
+              key={svc.name}
+              className="rounded-xl bg-background/50 border border-card-border p-4 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                  svc.status === 'connected'
+                    ? 'bg-success-500/10 ring-1 ring-success-500/20'
+                    : 'bg-threat-500/10 ring-1 ring-threat-500/20'
+                }`}>
+                  {svc.status === 'connected'
+                    ? <Wifi className="h-4 w-4 text-success-400" />
+                    : <WifiOff className="h-4 w-4 text-threat-400" />
+                  }
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">{svc.name}</h4>
+                  <p className="text-xs text-muted-foreground/70 font-mono mt-0.5">{svc.uri}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {svc.latencyMs !== null && svc.status === 'connected' && (
+                  <span className="text-[10px] text-muted-foreground/50 font-mono">
+                    {svc.latencyMs}ms
+                  </span>
+                )}
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`h-2 w-2 rounded-full ${svc.status === 'connected' ? 'bg-success-400' : 'bg-threat-400'} animate-pulse`}
+                  />
+                  <span
+                    className={`text-[10px] uppercase tracking-wider font-bold ${svc.status === 'connected' ? 'text-success-400' : 'text-threat-400'}`}
+                  >
+                    {svc.status}
+                  </span>
+                </div>
+              </div>
             </div>
-            <ToggleSwitch enabled={prefs[item.key]} onChange={() => toggle(item.key)} />
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-end mt-5">
-        <SaveButton onClick={handleSave} saving={saving} saved={saved} />
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -486,11 +320,9 @@ function NotificationsPanel() {
 /* ─── Settings Page ──────────────────────────────────────────────── */
 
 const panelMap: Record<string, React.FC> = {
-  'api-keys': ApiKeysPanel,
   appearance: AppearancePanel,
   access: AccessControlPanel,
   database: DatabasePanel,
-  notifications: NotificationsPanel,
 };
 
 export default function SettingsPage() {

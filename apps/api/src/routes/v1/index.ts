@@ -12,6 +12,7 @@ import { authRoutes } from './auth';
 import { cveRoutes } from './cve';
 import { dashboardRoutes } from './dashboard';
 import { graphRoutes } from './graph';
+import { healthRoutes } from './health';
 import { ingestionRoutes } from './ingestion';
 import { meRoutes } from './me';
 import { newsRoutes } from './news';
@@ -72,6 +73,10 @@ v1Routes.route('/ingestion', ingestionRoutes);
 v1Routes.use('/admin', requirePlatformAdmin());
 v1Routes.use('/admin/*', requirePlatformAdmin());
 v1Routes.route('/admin', adminRoutes);
+
+v1Routes.use('/health', requireAuth());
+v1Routes.use('/health/*', requireAuth());
+v1Routes.route('/health', healthRoutes);
 
 // ─── V1 Info ─────────────────────────────────────────────────────
 
