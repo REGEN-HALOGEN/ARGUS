@@ -57,13 +57,17 @@ const navItems = [
     label: 'CVE Intelligence',
     icon: Shield,
     orgRoles: ['viewer', 'analyst', 'operator', 'org_admin'],
-    platformRoles: ['super_admin'],
   },
   {
     href: '/threats',
     label: 'Threat Actors',
     icon: Users,
     orgRoles: ['analyst', 'operator', 'org_admin'],
+  },
+  {
+    href: '/admin',
+    label: 'Platform Admin',
+    icon: SlidersHorizontal,
     platformRoles: ['super_admin'],
   },
   {
@@ -71,12 +75,6 @@ const navItems = [
     label: 'Settings',
     icon: Settings,
     orgRoles: ['viewer', 'analyst', 'operator', 'org_admin'],
-    platformRoles: ['super_admin'],
-  },
-  {
-    href: '/admin',
-    label: 'Platform Admin',
-    icon: SlidersHorizontal,
     platformRoles: ['super_admin'],
   },
 ] as const;

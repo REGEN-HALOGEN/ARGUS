@@ -128,8 +128,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Don't redirect on public/setup paths
     if (isPublicPath) return;
 
-    // Super admin on /dashboard → go to /admin
-    if (account.platformRole === 'super_admin' && pathname === '/dashboard') {
+    // Super admin should only access /admin and /settings
+    if (
+      account.platformRole === 'super_admin' &&
+      !pathname.startsWith('/admin') &&
+      !pathname.startsWith('/settings')
+    ) {
       router.replace('/admin');
       return;
     }
