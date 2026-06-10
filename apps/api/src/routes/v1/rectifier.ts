@@ -16,12 +16,13 @@ rectifierRoutes.get('/', async (c) => {
   const session = getNeo4jDriver().session();
   try {
     const result = await session.run(
-      `MATCH (a:Asset {tenantId: $tenantId})
-       WHERE a.type = 'database' OR a.type = 'Database'
+      `MATCH (a:Asset)
+       WHERE (a.type = 'database' OR a.type = 'Database') AND (a.tenantId = $tenantId OR a.tenantId IS NULL)
        OPTIONAL MATCH (a)-[r:HAS_VULNERABILITY]->(cv:CVE)
        RETURN a, collect(cv) AS vulnerabilities`,
       { tenantId }
     );
+    console.log(`[RECTIFIER] tenantId: ${tenantId}, records: ${result.records.length}`);
 
     const data = result.records.map((r) => {
       const asset = r.get('a').properties;

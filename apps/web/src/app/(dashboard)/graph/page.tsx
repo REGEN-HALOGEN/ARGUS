@@ -185,7 +185,7 @@ const AssetNode = memo(({ data }: any) => {
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-[320px] rounded-xl p-4 border border-card-border shadow-2xl bg-card text-foreground text-xs space-y-3 cursor-default">
+        <div className="absolute z-50 bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-[320px] rounded-xl p-4 border border-card-border shadow-2xl bg-slate-100 dark:bg-slate-950 text-foreground text-xs space-y-3 cursor-default">
           <div className="font-bold border-b border-card-border pb-2 mb-2 flex items-center justify-between">
             <span className="truncate text-sm">{label}</span>
             <div className="flex items-center gap-2">
@@ -284,7 +284,7 @@ const CVENode = memo(({ data }: any) => {
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-[320px] rounded-xl p-4 border border-card-border shadow-2xl bg-card text-foreground text-xs space-y-3 cursor-default">
+        <div className="absolute z-50 bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-[320px] rounded-xl p-4 border border-card-border shadow-2xl bg-slate-100 dark:bg-slate-950 text-foreground text-xs space-y-3 cursor-default">
           <div className="font-bold border-b border-card-border pb-2 mb-2 flex items-center justify-between">
             <span className="font-mono text-red-300 text-sm">{label}</span>
             <div className="flex items-center gap-2">
