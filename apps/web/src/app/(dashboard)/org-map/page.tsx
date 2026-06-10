@@ -1,6 +1,5 @@
 'use client';
 import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
 import { Spinner } from '@/components/ui/spinner';
 
 const MapClient = dynamic(() => import('./map-client'), {
@@ -14,15 +13,15 @@ const MapClient = dynamic(() => import('./map-client'), {
 
 export default function OrgMapPage() {
   return (
-    <div className="h-[calc(100vh-6rem)] w-full flex flex-col">
-      <div className="mb-4">
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 5rem)' }}>
+      <div className="mb-3 shrink-0">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Organisation Map</h1>
-        <p className="text-sm text-muted-foreground mt-1">3D topology of your network assets, users, and vulnerabilities</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          3D topology of your network assets, users, and vulnerabilities
+        </p>
       </div>
-      <div className="flex-1 glass-card overflow-hidden relative border border-card-border/50 rounded-xl">
-        <Suspense fallback={<Spinner />}>
-          <MapClient />
-        </Suspense>
+      <div className="flex-1 min-h-0 rounded-xl overflow-hidden border border-card-border/50 relative">
+        <MapClient />
       </div>
     </div>
   );
