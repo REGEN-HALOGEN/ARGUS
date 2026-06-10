@@ -3,7 +3,7 @@
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { signIn, signUp } from '@/lib/auth';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, UserCircle2 } from 'lucide-react';
+import { UserCircle2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

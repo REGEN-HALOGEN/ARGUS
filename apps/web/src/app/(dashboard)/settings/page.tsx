@@ -255,7 +255,11 @@ function AccessControlPanel() {
 
   return (
     <div>
-      <InfoBanner text="Access control is managed per-organization. Contact your org admin to modify roles." />
+      {isOrgAdmin ? (
+        <InfoBanner text="As an Organization Administrator, you can manage organization membership, send invitations, and update member roles." />
+      ) : (
+        <InfoBanner text="Access control is managed per-organization. Contact your org admin to modify roles." />
+      )}
       <div className="space-y-6">
         {/* Current user */}
         <div className="rounded-xl bg-background/50 border border-card-border p-4">
