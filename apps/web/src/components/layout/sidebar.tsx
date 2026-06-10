@@ -16,6 +16,7 @@ import {
   Shield,
   SlidersHorizontal,
   Users,
+  Wrench,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -44,6 +45,12 @@ const navItems = [
     href: '/graph',
     label: 'Graph Explorer',
     icon: Network,
+    orgRoles: ['analyst', 'operator', 'org_admin'],
+  },
+  {
+    href: '/rectifier',
+    label: 'Rectifier',
+    icon: Wrench,
     orgRoles: ['analyst', 'operator', 'org_admin'],
   },
   {

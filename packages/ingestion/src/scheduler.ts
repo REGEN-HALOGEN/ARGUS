@@ -1,5 +1,6 @@
 import { SYSTEM_PROMPTS, USER_PROMPTS, buildPrompt, chat } from '@argus/ai';
 import { getCacheClient } from '@argus/cache';
+import { getNeo4jDriver } from '@argus/graph';
 import { fetchCISAKEV } from './fetchers/cisa-kev';
 import { extractMitreId, extractTactic, fetchMITRETechniques } from './fetchers/mitre';
 import { fetchTopNews } from './fetchers/news';
@@ -10,6 +11,60 @@ import {
   markExploitedCVEs,
   upsertTechnique,
 } from './writers/neo4j';
+
+export async function autoLinkCVEsToAssets(cves: any[]) {
+  const session = getNeo4jDriver().session();
+  try {
+    for (const cve of cves) {
+      const desc = (cve.description || '').toLowerCase();
+      // Match servers by OS
+      const osList = ['ubuntu', 'windows', 'debian', 'rhel', 'centos', 'amazon linux'];
+      for (const os of osList) {
+        if (desc.includes(os)) {
+          const cvss = Number(cve.cvss || 0);
+          await session.run(
+            `MATCH (s:Asset {type: 'server'})
+             WHERE toLower(s.os) CONTAINS $os
+             MATCH (c:CVE {cveId: $cveId})
+             MERGE (s)-[r:HAS_VULNERABILITY]->(c)
+             SET r.riskScore = $riskScore, r.riskRating = $riskRating`,
+            {
+              os,
+              cveId: cve.cveId,
+              riskScore: Math.min(100, Math.round(cvss * 10)),
+              riskRating: cve.severity || (cvss >= 9 ? 'critical' : cvss >= 7 ? 'high' : cvss >= 4 ? 'medium' : 'low'),
+            }
+          );
+        }
+      }
+      
+      // Match databases by DB type/purpose
+      const dbList = ['postgresql', 'mongodb', 'mysql', 'redis'];
+      for (const db of dbList) {
+        if (desc.includes(db)) {
+          const cvss = Number(cve.cvss || 0);
+          await session.run(
+            `MATCH (s:Asset {type: 'database'})
+             WHERE toLower(s.dbType) CONTAINS $db OR toLower(s.purpose) CONTAINS $db
+             MATCH (c:CVE {cveId: $cveId})
+             MERGE (s)-[r:HAS_VULNERABILITY]->(c)
+             SET r.riskScore = $riskScore, r.riskRating = $riskRating`,
+            {
+              db,
+              cveId: cve.cveId,
+              riskScore: Math.min(100, Math.round(cvss * 10)),
+              riskRating: cve.severity || (cvss >= 9 ? 'critical' : cvss >= 7 ? 'high' : cvss >= 4 ? 'medium' : 'low'),
+            }
+          );
+        }
+      }
+    }
+  } catch (error) {
+    console.error('[Ingestion] Failed to auto-link CVEs to assets:', error);
+  } finally {
+    await session.close();
+  }
+}
 
 export interface SyncResult {
   source: string;
@@ -43,6 +98,9 @@ export async function syncNVD(): Promise<SyncResult> {
     }));
 
     await batchUpsertCVEs(cves);
+
+    // Auto-link newly fetched CVEs to assets
+    await autoLinkCVEsToAssets(cves);
 
     // CVEs are automatically indexed by Neo4j's full-text index (cve_fulltext)
 

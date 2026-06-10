@@ -110,6 +110,7 @@ function getLayoutedElements(nodes: any[], edges: any[], direction: LayoutDir) {
 // ─── Node Components ─────────────────────────────────────────────
 
 const AssetNode = memo(({ data }: any) => {
+  const [isHovered, setIsHovered] = useState(false);
   let { label } = data;
   const { properties, colors, sourcePosition, targetPosition } = data;
   const c = colors?.asset;
@@ -129,60 +130,107 @@ const AssetNode = memo(({ data }: any) => {
   }
 
   return (
-    <div className="graph-node-asset w-[220px] rounded-xl overflow-hidden"
-         style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}>
-      <Handle type="target" position={targetPosition ?? Position.Left}
-              style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
-      {/* Left accent bar */}
-      <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: c?.accent }} />
-      <div className="p-3 pl-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-               style={{ background: `${c?.accent}20`, border: `1px solid ${c?.accent}30` }}>
-            <Server className="h-4 w-4" style={{ color: c?.icon }} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold truncate" style={{ color: c?.text }}>{label}</p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              {properties?.os && (
-                <span className="text-[9px] opacity-60" style={{ color: c?.text }}>
-                  {properties.os}
-                </span>
-              )}
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="graph-node-asset w-[220px] rounded-xl overflow-hidden"
+           style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}>
+        <Handle type="target" position={targetPosition ?? Position.Left}
+                style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
+        {/* Left accent bar */}
+        <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: c?.accent }} />
+        <div className="p-3 pl-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                 style={{ background: `${c?.accent}20`, border: `1px solid ${c?.accent}30` }}>
+              <Server className="h-4 w-4" style={{ color: c?.icon }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold truncate" style={{ color: c?.text }}>{label}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                {properties?.os && (
+                  <span className="text-[9px] opacity-60" style={{ color: c?.text }}>
+                    {properties.os}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+          <div className="flex items-center gap-1.5 mt-2">
+            {isInternetFacing && (
+              <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    style={{ background: `${c?.accent}20`, color: c?.icon }}>
+                <Globe className="h-2.5 w-2.5" /> WAN
+              </span>
+            )}
+            {vulnCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
+                    style={{ background: topCvss >= 9 ? '#dc262620' : topCvss >= 7 ? '#f59e0b20' : '#6b728020',
+                             color: topCvss >= 9 ? '#fca5a5' : topCvss >= 7 ? '#fcd34d' : '#9ca3af' }}>
+                <Bug className="h-2.5 w-2.5" />
+                {vulnCount} CVE{vulnCount > 1 ? 's' : ''}
+              </span>
+            )}
+            {properties?.criticality === 'critical' && (
+              <span className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded"
+                    style={{ background: '#dc262620', color: '#fca5a5' }}>
+                CRITICAL
+              </span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 mt-2">
-          {isInternetFacing && (
-            <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                  style={{ background: `${c?.accent}20`, color: c?.icon }}>
-              <Globe className="h-2.5 w-2.5" /> WAN
-            </span>
-          )}
-          {vulnCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded"
-                  style={{ background: topCvss >= 9 ? '#dc262620' : topCvss >= 7 ? '#f59e0b20' : '#6b728020',
-                           color: topCvss >= 9 ? '#fca5a5' : topCvss >= 7 ? '#fcd34d' : '#9ca3af' }}>
-              <Bug className="h-2.5 w-2.5" />
-              {vulnCount} CVE{vulnCount > 1 ? 's' : ''}
-            </span>
-          )}
-          {properties?.criticality === 'critical' && (
-            <span className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded"
-                  style={{ background: '#dc262620', color: '#fca5a5' }}>
-              CRITICAL
-            </span>
-          )}
-        </div>
+        <Handle type="source" position={sourcePosition ?? Position.Right}
+                style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
       </div>
-      <Handle type="source" position={sourcePosition ?? Position.Right}
-              style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
+
+      {isHovered && (
+        <div className="absolute z-50 bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-[280px] rounded-xl p-3 border border-card-border shadow-2xl backdrop-blur-xl bg-card/95 text-foreground text-xs space-y-2">
+          <div className="font-bold border-b border-card-border pb-1 mb-1.5 flex items-center justify-between">
+            <span className="truncate">{label}</span>
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-black"
+                  style={{ background: properties?.criticality === 'critical' ? '#dc262620' : '#4b556320',
+                           color: properties?.criticality === 'critical' ? '#fca5a5' : '#9ca3af' }}>
+              {properties?.criticality || 'medium'}
+            </span>
+          </div>
+          <div className="space-y-1 opacity-90 text-[11px]">
+            <p><strong className="opacity-75">Hostname:</strong> <span className="font-mono text-primary-300">{properties?.hostname || 'N/A'}</span></p>
+            <p><strong className="opacity-75">OS:</strong> {properties?.os} {properties?.osVersion}</p>
+            <p><strong className="opacity-75">Internet-Facing:</strong> {properties?.internetFacing ? 'Yes (WAN)' : 'No'}</p>
+            {properties?.type === 'database' && (
+              <>
+                <p><strong className="opacity-75">DB Type:</strong> <span className="font-semibold text-emerald-400">{properties?.dbType}</span></p>
+                <p><strong className="opacity-75">Purpose:</strong> {properties?.purpose}</p>
+              </>
+            )}
+          </div>
+          {data.cves && data.cves.length > 0 && (
+            <div className="border-t border-card-border pt-1.5 mt-1.5">
+              <p className="font-bold text-[11px] mb-1 text-red-400">Affecting Vulnerabilities ({data.cves.length}):</p>
+              <div className="max-h-[120px] overflow-y-auto space-y-1.5 pr-1">
+                {data.cves.map((cve: any) => (
+                  <div key={cve.cveId} className="p-1.5 rounded bg-red-950/20 border border-red-900/30">
+                    <div className="flex justify-between items-center text-[10px] font-bold">
+                      <span className="font-mono text-red-300">{cve.cveId}</span>
+                      <span className="px-1.5 py-0.2 rounded bg-red-600 text-white font-mono text-[9px]">{cve.cvss?.toFixed(1)}</span>
+                    </div>
+                    <p className="text-[10px] opacity-75 line-clamp-2 mt-0.5 text-muted-foreground">{cve.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 });
 AssetNode.displayName = 'AssetNode';
 
 const CVENode = memo(({ data }: any) => {
+  const [isHovered, setIsHovered] = useState(false);
   const { label, properties, colors, sourcePosition, targetPosition } = data;
   const c = colors?.cve;
   const severity = properties?.severity ?? 'medium';
@@ -192,39 +240,70 @@ const CVENode = memo(({ data }: any) => {
   const isCritical = severity === 'critical' || cvss >= 9;
 
   return (
-    <div className={`w-[200px] rounded-xl overflow-hidden ${isCritical ? 'graph-node-cve-critical' : ''}`}
-         style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}>
-      <Handle type="target" position={targetPosition ?? Position.Left}
-              style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
-      <div className="p-2.5">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-               style={{ background: `${c?.accent}20`, border: `1px solid ${c?.accent}30` }}>
-            <Bug className="h-3.5 w-3.5" style={{ color: c?.icon }} />
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className={`w-[200px] rounded-xl overflow-hidden ${isCritical ? 'graph-node-cve-critical' : ''}`}
+           style={{ background: c?.bg, border: `1px solid ${c?.border}40` }}>
+        <Handle type="target" position={targetPosition ?? Position.Left}
+                style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
+        <div className="p-2.5">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                 style={{ background: `${c?.accent}20`, border: `1px solid ${c?.accent}30` }}>
+              <Bug className="h-3.5 w-3.5" style={{ color: c?.icon }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-bold font-mono truncate" style={{ color: c?.text }}>{label}</p>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold font-mono truncate" style={{ color: c?.text }}>{label}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5 mt-2">
-          <span className="text-[10px] font-black px-2 py-0.5 rounded-md"
-                style={{ background: cvss >= 9 ? '#dc2626' : cvss >= 7 ? '#d97706' : cvss >= 4 ? '#2563eb' : '#4b5563',
-                         color: '#fff' }}>
-            {cvss.toFixed(1)}
-          </span>
-          <span className="text-[9px] font-bold uppercase tracking-wider"
-                style={{ color: severity === 'critical' ? '#fca5a5' : severity === 'high' ? '#fcd34d' : '#9ca3af' }}>
-            {severity}
-          </span>
-          {exploited && (
-            <span className="inline-flex items-center gap-0.5" title="Exploited in the wild">
-              <Flame className="h-3 w-3" style={{ color: '#f87171' }} />
+          <div className="flex items-center gap-1.5 mt-2">
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-md"
+                  style={{ background: cvss >= 9 ? '#dc2626' : cvss >= 7 ? '#d97706' : cvss >= 4 ? '#2563eb' : '#4b5563',
+                           color: '#fff' }}>
+              {cvss.toFixed(1)}
             </span>
-          )}
+            <span className="text-[9px] font-bold uppercase tracking-wider"
+                  style={{ color: severity === 'critical' ? '#fca5a5' : severity === 'high' ? '#fcd34d' : '#9ca3af' }}>
+              {severity}
+            </span>
+            {exploited && (
+              <span className="inline-flex items-center gap-0.5" title="Exploited in the wild">
+                <Flame className="h-3 w-3" style={{ color: '#f87171' }} />
+              </span>
+            )}
+          </div>
         </div>
+        <Handle type="source" position={sourcePosition ?? Position.Right}
+                style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
       </div>
-      <Handle type="source" position={sourcePosition ?? Position.Right}
-              style={{ background: c?.accent, border: 'none', width: 6, height: 6 }} />
+
+      {isHovered && (
+        <div className="absolute z-50 bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-[280px] rounded-xl p-3 border border-card-border shadow-2xl backdrop-blur-xl bg-card/95 text-foreground text-xs space-y-2">
+          <div className="font-bold border-b border-card-border pb-1 mb-1.5 flex items-center justify-between">
+            <span className="font-mono text-red-300">{label}</span>
+            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-600 text-white">
+              CVSS {cvss.toFixed(1)}
+            </span>
+          </div>
+          <div className="space-y-1 text-[11px]">
+            <p className="opacity-95 leading-relaxed text-muted-foreground">{properties?.description || 'No description available.'}</p>
+            <p className="pt-1"><strong className="opacity-75">Exploited in Wild:</strong> {exploited ? '🔥 Yes' : 'No'}</p>
+          </div>
+          <div className="border-t border-card-border pt-2 flex justify-end">
+            <a
+              href={`https://nvd.nist.gov/vuln/detail/${label}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded bg-red-600 hover:bg-red-700 text-white font-semibold text-[10px] px-2 py-1 transition-colors"
+            >
+              View NVD Page →
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 });
@@ -420,7 +499,7 @@ function deduplicateGraph(rawNodes: any[], rawEdges: any[]) {
   const otherEdges = rawEdges.filter((e: any) => e.type !== 'HAS_VULNERABILITY');
 
   // For each asset, find all connected CVEs
-  const assetCveMap = new Map<string, { cveNodeId: string; edge: any; cvss: number; severity: string }[]>();
+  const assetCveMap = new Map<string, { cveNodeId: string; edge: any; cvss: number; severity: string; cveId: string; description: string }[]>();
   for (const edge of vulnEdges) {
     const assetId = edge.source;
     const cveNode = rawNodes.find((n: any) => n.id === edge.target);
@@ -433,13 +512,15 @@ function deduplicateGraph(rawNodes: any[], rawEdges: any[]) {
       edge,
       cvss,
       severity: cveNode.properties?.severity ?? 'medium',
+      cveId: cveNode.properties?.cveId ?? cveNode.id,
+      description: cveNode.properties?.description ?? '',
     });
   }
 
   // Keep only the top CVE per asset, collect IDs of the rest for removal
   const keptCveIds = new Set<string>();
   const keptVulnEdges: any[] = [];
-  const assetMeta = new Map<string, { vulnCount: number; topCvss: number }>();
+  const assetMeta = new Map<string, { vulnCount: number; topCvss: number; cves: any[] }>();
 
   for (const [assetId, cves] of assetCveMap) {
     // Sort by CVSS descending
@@ -450,7 +531,7 @@ function deduplicateGraph(rawNodes: any[], rawEdges: any[]) {
       keptCveIds.add(top.cveNodeId);
       keptVulnEdges.push(top.edge);
     }
-    assetMeta.set(assetId, { vulnCount: cves.length, topCvss: top?.cvss ?? 0 });
+    assetMeta.set(assetId, { vulnCount: cves.length, topCvss: top?.cvss ?? 0, cves });
   }
 
   // Also keep CVE nodes referenced by non-HAS_VULNERABILITY edges (e.g. EXPLOITS)
@@ -467,7 +548,7 @@ function deduplicateGraph(rawNodes: any[], rawEdges: any[]) {
     .map((n: any) => {
       if (n.type === 'asset' && assetMeta.has(n.id)) {
         const meta = assetMeta.get(n.id)!;
-        return { ...n, vulnCount: meta.vulnCount, topCvss: meta.topCvss };
+        return { ...n, vulnCount: meta.vulnCount, topCvss: meta.topCvss, cves: meta.cves };
       }
       return n;
     });
@@ -548,6 +629,7 @@ export default function GraphPage() {
         properties: n.properties,
         vulnCount: n.vulnCount,
         topCvss: n.topCvss,
+        cves: n.cves,
         colors: nodeColors,
       },
       position: { x: 0, y: 0 },

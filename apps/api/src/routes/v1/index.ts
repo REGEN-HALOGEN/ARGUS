@@ -19,6 +19,7 @@ import { newsRoutes } from './news';
 import { onboardingRoutes } from './onboarding';
 import { organizationRoutes } from './organization';
 import { threatActorsRoutes } from './threat-actors';
+import { rectifierRoutes } from './rectifier';
 
 // ─── V1 API Router ───────────────────────────────────────────────
 
@@ -65,6 +66,10 @@ v1Routes.route('/news', newsRoutes);
 v1Routes.use('/dashboard', requireTenant());
 v1Routes.use('/dashboard/*', requireTenant());
 v1Routes.route('/dashboard', dashboardRoutes);
+
+v1Routes.use('/rectifier', requireTenant());
+v1Routes.use('/rectifier/*', requireTenant());
+v1Routes.route('/rectifier', rectifierRoutes);
 
 v1Routes.use('/ingestion', requireTenant(), requireOrgRole('operator', 'org_admin'));
 v1Routes.use('/ingestion/*', requireTenant(), requireOrgRole('operator', 'org_admin'));
