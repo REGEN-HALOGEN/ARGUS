@@ -360,9 +360,14 @@ export default function SettingsPage() {
                       : 'bg-background/30 border border-card-border group-hover:ring-muted-foreground/20'
                   }`}
                 >
-                  <section.icon
-                    className={`h-4.5 w-4.5 ${isActive ? 'text-primary-400' : 'text-muted-foreground'}`}
-                  />
+                  {(() => {
+                    const Icon = section.icon as any;
+                    return (
+                      <Icon
+                        className={`h-4.5 w-4.5 ${isActive ? 'text-primary-400' : 'text-muted-foreground'}`}
+                      />
+                    );
+                  })()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3
@@ -398,7 +403,10 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 ring-1 ring-primary-500/20">
-                    <activeInfo.icon className="h-5 w-5 text-primary-400" />
+                    {(() => {
+                      const Icon = activeInfo.icon as any;
+                      return <Icon className="h-5 w-5 text-primary-400" />;
+                    })()}
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-foreground">{activeInfo.label}</h2>

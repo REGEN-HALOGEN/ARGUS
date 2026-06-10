@@ -1,10 +1,14 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { apiFetch } from '@/lib/api';
-import ForceGraph3D, { type ForceGraphMethods } from 'react-force-graph-3d';
 import { useTheme } from 'next-themes';
 import { Spinner } from '@/components/ui/spinner';
+import * as THREE from 'three';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Html } from '@react-three/drei';
+// @ts-ignore
+import { forceSimulation, forceLink, forceManyBody, forceCenter } from 'd3-force-3d';
 
 // ─── Config ──────────────────────────────────────────────────────
 
@@ -43,34 +47,170 @@ function getName(node: any): string {
   return p.name || p.hostname || p.cveId || p.ipAddress || p.title || p.mitreId || node.label || '';
 }
 
-// ─── Component ───────────────────────────────────────────────────
+function getSize(node: any): number {
+  const t = getType(node);
+  if (t === 'crown_jewel') return 8;
+  if (t === 'threat_actor') return 7;
+  if (t === 'asset') return 6;
+  return 4;
+}
+
+// ─── 3D Scene Components ─────────────────────────────────────────
+
+function Edge({ link, linkRef, isDark }: { link: any; linkRef: any; isDark: boolean }) {
+  const color = LINK_COLORS[link.type] || (isDark ? '#334155' : '#94a3b8');
+  
+  const points = useMemo(() => {
+    // Initial dummy points
+    return [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0)];
+  }, []);
+
+  const lineGeometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    return geo;
+  }, [points]);
+
+  return (
+    <line ref={(el) => { if (el) linkRef.current[link.id] = el; }}>
+      <primitive object={lineGeometry} attach="geometry" />
+      <lineBasicMaterial color={color} opacity={0.4} transparent />
+    </line>
+  );
+}
+
+function Node({ node, nodeRef, isDark, hovered, setHovered }: { node: any; nodeRef: any; isDark: boolean; hovered: any; setHovered: any }) {
+  const color = TYPE_COLORS[getType(node)] || '#64748b';
+  const size = getSize(node);
+  const isHovered = hovered?.id === node.id;
+  const panelBg = isDark ? 'rgba(6,11,24,0.9)' : 'rgba(255,255,255,0.95)';
+  const panelBorder = isDark ? 'rgba(51,65,85,0.8)' : 'rgba(203,213,225,1)';
+  const txt = isDark ? '#f1f5f9' : '#0f172a';
+  const txtDim = isDark ? '#94a3b8' : '#64748b';
+
+  return (
+    <mesh
+      ref={(el) => { if (el) nodeRef.current[node.id] = el; }}
+      onPointerOver={(e) => { e.stopPropagation(); setHovered(node); }}
+      onPointerOut={() => setHovered(null)}
+    >
+      <sphereGeometry args={[size, 24, 24]} />
+      <meshLambertMaterial color={color} emissive={color} emissiveIntensity={isHovered ? 0.6 : 0.2} transparent opacity={0.9} />
+      
+      {/* HTML Overlay using Drei (Native DOM layer) */}
+      {isHovered && (
+        <Html distanceFactor={250} position={[0, size + 2, 0]} center zIndexRange={[100, 0]}>
+          <div style={{
+            background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: '8px', 
+            padding: '8px 14px', fontFamily: 'Inter, system-ui, sans-serif', backdropFilter: 'blur(8px)',
+            pointerEvents: 'none', whiteSpace: 'nowrap', userSelect: 'none',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: txt }}>{getName(node) || 'Unknown'}</div>
+            <div style={{ fontSize: '11px', color: txtDim, marginTop: '2px' }}>
+              {TYPE_LABELS[getType(node)] || getType(node)}
+              {node.properties?.severity ? ` · ${node.properties.severity}` : ''}
+              {node.properties?.criticality ? ` · ${node.properties.criticality}` : ''}
+            </div>
+          </div>
+        </Html>
+      )}
+    </mesh>
+  );
+}
+
+function GraphScene({ nodes, links, expanded, isDark }: { nodes: any[]; links: any[]; expanded: boolean; isDark: boolean }) {
+  const simulationRef = useRef<any>(null);
+  const nodeRefs = useRef<Record<string, THREE.Mesh>>({});
+  const linkRefs = useRef<Record<string, THREE.Line>>({});
+  const [hovered, setHovered] = useState<any>(null);
+
+  // Initialize D3 physics simulation
+  useEffect(() => {
+    // Give nodes initial random positions to prevent zero-distance errors
+    nodes.forEach(n => {
+      if (n.x == null) n.x = (Math.random() - 0.5) * 100;
+      if (n.y == null) n.y = (Math.random() - 0.5) * 100;
+      if (n.z == null) n.z = (Math.random() - 0.5) * 100;
+    });
+
+    const simulation = forceSimulation(nodes)
+      .force('link', forceLink(links).id((d: any) => d.id).distance(expanded ? 250 : 80))
+      .force('charge', forceManyBody().strength(expanded ? -800 : -250))
+      .force('center', forceCenter(0, 0, 0));
+    
+    simulationRef.current = simulation;
+
+    return () => {
+      simulation.stop();
+    };
+  }, [nodes, links]); // Run once when graphData changes
+
+  // Update forces when `expanded` state changes
+  useEffect(() => {
+    if (simulationRef.current) {
+      simulationRef.current.force('link').distance(expanded ? 250 : 80);
+      simulationRef.current.force('charge').strength(expanded ? -800 : -250);
+      simulationRef.current.alpha(1).restart();
+    }
+  }, [expanded]);
+
+  // Sync D3 positions to Three.js meshes on every frame
+  useFrame(() => {
+    if (!simulationRef.current) return;
+
+    nodes.forEach(node => {
+      const mesh = nodeRefs.current[node.id];
+      if (mesh && node.x != null && node.y != null && node.z != null) {
+        mesh.position.set(node.x, node.y, node.z);
+      }
+    });
+
+    links.forEach(link => {
+      const line = linkRefs.current[link.id];
+      if (line && link.source.x != null && link.target.x != null) {
+        const positionAttr = line.geometry.attributes.position;
+        if (positionAttr && positionAttr.array) {
+          const positions = positionAttr.array as Float32Array;
+          positions[0] = link.source.x;
+          positions[1] = link.source.y;
+          positions[2] = link.source.z;
+          positions[3] = link.target.x;
+          positions[4] = link.target.y;
+          positions[5] = link.target.z;
+          positionAttr.needsUpdate = true;
+        }
+      }
+    });
+  });
+
+  return (
+    <group>
+      {/* Lights */}
+      <ambientLight intensity={isDark ? 0.4 : 0.8} />
+      <pointLight position={[100, 100, 100]} intensity={isDark ? 0.8 : 0.5} />
+      
+      {/* Links */}
+      {links.map((link, i) => (
+        <Edge key={`link-${i}`} link={link} linkRef={linkRefs} isDark={isDark} />
+      ))}
+
+      {/* Nodes */}
+      {nodes.map((node, i) => (
+        <Node key={`node-${node.id || i}`} node={node} nodeRef={nodeRefs} isDark={isDark} hovered={hovered} setHovered={setHovered} />
+      ))}
+    </group>
+  );
+}
+
+// ─── Main Component ──────────────────────────────────────────────
 
 export default function MapClient() {
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
-  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
-  const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
-  const wrapRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== 'light';
-
-  // ─── Resize Observer ───────────────────────────────────────────
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      const contentRect = entries[0]?.contentRect;
-      if (!contentRect) return;
-      const { width, height } = contentRect;
-      if (width > 0 && height > 0) {
-        setContainerSize({ w: width, h: height });
-      }
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   // ─── Load data ─────────────────────────────────────────────────
   useEffect(() => {
@@ -78,15 +218,15 @@ export default function MapClient() {
       try {
         const res = await apiFetch<{ nodes: any[]; edges: any[] }>('/graph');
         if (res?.nodes && res?.edges) {
-          setGraphData({
-            nodes: res.nodes,
-            links: res.edges.map((e: any) => ({
-              source: e.source,
-              target: e.target,
-              type: e.type,
-              id: e.id,
-            })),
-          });
+          // Clone arrays because d3-force mutates the objects
+          const nodes = res.nodes.map((n: any) => ({ ...n }));
+          const links = res.edges.map((e: any) => ({
+            ...e,
+            source: e.source,
+            target: e.target,
+            id: e.id,
+          }));
+          setGraphData({ nodes, links });
         }
       } catch (err) {
         console.error('[OrgMap] Load failed:', err);
@@ -96,28 +236,6 @@ export default function MapClient() {
     })();
   }, []);
 
-  // ─── D3 forces ─────────────────────────────────────────────────
-  useEffect(() => {
-    const fg = fgRef.current;
-    if (!fg) return;
-    fg.d3Force('charge')?.strength(expanded ? -500 : -120);
-    fg.d3Force('link')?.distance(expanded ? 200 : 60);
-    fg.d3ReheatSimulation();
-  }, [expanded, graphData]);
-
-  // ─── Click-to-focus ────────────────────────────────────────────
-  const onNodeClick = useCallback((node: any) => {
-    const fg = fgRef.current;
-    if (!fg || node.x == null) return;
-    const d = 100;
-    const r = 1 + d / Math.hypot(node.x, node.y, node.z || 0);
-    fg.cameraPosition(
-      { x: node.x * r, y: node.y * r, z: (node.z || 0) * r },
-      { x: node.x, y: node.y, z: node.z || 0 },
-      1200,
-    );
-  }, []);
-
   // ─── Theme ─────────────────────────────────────────────────────
   const bg = isDark ? '#060b18' : '#f8fafc';
   const panelBg = isDark ? 'rgba(6,11,24,0.88)' : 'rgba(255,255,255,0.95)';
@@ -125,7 +243,7 @@ export default function MapClient() {
   const txt = isDark ? '#f1f5f9' : '#0f172a';
   const txtDim = isDark ? '#94a3b8' : '#64748b';
 
-  // ─── Loading ───────────────────────────────────────────────────
+  // ─── Loading / Empty ───────────────────────────────────────────
   if (loading) {
     return (
       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: bg }}>
@@ -134,7 +252,6 @@ export default function MapClient() {
     );
   }
 
-  // ─── Empty ─────────────────────────────────────────────────────
   if (!graphData.nodes.length) {
     return (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: bg }}>
@@ -146,51 +263,15 @@ export default function MapClient() {
 
   // ─── Render ────────────────────────────────────────────────────
   return (
-    <div ref={wrapRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
-      {containerSize.w > 0 && containerSize.h > 0 && (
-        <ForceGraph3D
-          width={containerSize.w}
-          height={containerSize.h}
-          ref={fgRef}
-        graphData={graphData}
-        backgroundColor={bg}
-        // ─── Use built-in node rendering (proven to work) ──────
-        nodeColor={(node: any) => TYPE_COLORS[getType(node)] || '#64748b'}
-        nodeVal={(node: any) => {
-          const t = getType(node);
-          if (t === 'crown_jewel') return 12;
-          if (t === 'threat_actor') return 10;
-          if (t === 'asset') return 8;
-          return 5;
-        }}
-        nodeLabel={(node: any) => {
-          const name = getName(node);
-          const type = TYPE_LABELS[getType(node)] || getType(node);
-          return `<div style="background:${panelBg};border:1px solid ${panelBorder};border-radius:8px;padding:8px 14px;font-family:Inter,system-ui,sans-serif;backdrop-filter:blur(8px);">
-            <div style="font-size:13px;font-weight:600;color:${txt}">${name || 'Unknown'}</div>
-            <div style="font-size:11px;color:${txtDim};margin-top:2px">${type}${node.properties?.severity ? ' · ' + node.properties.severity : ''}${node.properties?.criticality ? ' · ' + node.properties.criticality : ''}</div>
-          </div>`;
-        }}
-        nodeOpacity={0.95}
-        nodeResolution={16}
-        // ─── Links ─────────────────────────────────────────────
-        linkColor={(link: any) => LINK_COLORS[link.type] || (isDark ? '#334155' : '#94a3b8')}
-        linkWidth={1.2}
-        linkOpacity={0.5}
-        linkDirectionalParticles={2}
-        linkDirectionalParticleWidth={2}
-        linkDirectionalParticleSpeed={0.005}
-        linkDirectionalParticleColor={(link: any) => LINK_COLORS[link.type] || '#64748b'}
-        // ─── Interactions ──────────────────────────────────────
-        onNodeClick={onNodeClick}
-        enableNodeDrag
-        cooldownTicks={200}
-        d3AlphaDecay={0.015}
-        d3VelocityDecay={0.25}
-      />
-      )}
+    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', background: bg }}>
+      
+      {/* R3F Canvas */}
+      <Canvas camera={{ position: [0, 0, 400], fov: 60 }}>
+        <OrbitControls makeDefault enableDamping dampingFactor={0.1} />
+        <GraphScene nodes={graphData.nodes} links={graphData.links} expanded={expanded} isDark={isDark} />
+      </Canvas>
 
-      {/* ── Top-left: stats + expand ────────────────────────────── */}
+      {/* ── Top-left UI ─────────────────────────────────────────── */}
       <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 10 }}>
         <div style={{ background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: txtDim, backdropFilter: 'blur(12px)' }}>
           <span style={{ color: txt, fontWeight: 700 }}>{graphData.nodes.length}</span> nodes ·{' '}
@@ -211,8 +292,8 @@ export default function MapClient() {
         </button>
       </div>
 
-      {/* ── Top-right: legend ───────────────────────────────────── */}
-      <div style={{ position: 'absolute', top: 16, right: 16, background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 12, padding: 16, backdropFilter: 'blur(12px)', zIndex: 10 }}>
+      {/* ── Top-right UI ────────────────────────────────────────── */}
+      <div style={{ position: 'absolute', top: 16, right: 16, background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 12, padding: 16, backdropFilter: 'blur(12px)', zIndex: 10, pointerEvents: 'none' }}>
         <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: txtDim, marginBottom: 10 }}>Entity Types</div>
         {Object.entries(TYPE_COLORS).map(([key, color]) => (
           <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -222,12 +303,11 @@ export default function MapClient() {
         ))}
       </div>
 
-      {/* ── Bottom-left: controls ───────────────────────────────── */}
-      <div style={{ position: 'absolute', bottom: 16, left: 16, background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 8, padding: '8px 14px', fontSize: 11, color: txtDim, backdropFilter: 'blur(12px)', zIndex: 10, display: 'flex', gap: 16 }}>
+      {/* ── Bottom-left UI ──────────────────────────────────────── */}
+      <div style={{ position: 'absolute', bottom: 16, left: 16, background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 8, padding: '8px 14px', fontSize: 11, color: txtDim, backdropFilter: 'blur(12px)', zIndex: 10, display: 'flex', gap: 16, pointerEvents: 'none' }}>
         <span>🖱 Drag → Rotate</span>
         <span>⌥ Drag → Pan</span>
         <span>Scroll → Zoom</span>
-        <span>Click → Focus</span>
       </div>
     </div>
   );
