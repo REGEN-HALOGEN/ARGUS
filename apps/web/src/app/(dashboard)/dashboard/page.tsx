@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Bug,
   Building2,
+  Loader2,
   Network,
   Shield,
   TrendingUp,
@@ -15,6 +16,7 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface DashboardStats {
@@ -108,11 +110,22 @@ interface AttackPath {
 
 // ─── Dashboard Page ──────────────────────────────────────────────
 
+interface ThreatBrief {
+  title: string;
+  summary: string;
+  severity: string;
+  affectedAssets: number;
+  relatedCVEs: string[];
+}
+
 export default function DashboardPage() {
   const { activeOrganizationId, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [paths, setPaths] = useState<AttackPath[]>([]);
+  const [threatBrief, setThreatBrief] = useState<ThreatBrief | null>(null);
+  const [briefLoading, setBriefLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -124,10 +137,11 @@ export default function DashboardPage() {
 
     async function loadData() {
       try {
-        const [statsResult, alertsResult, pathsResult] = await Promise.allSettled([
+        const [statsResult, alertsResult, pathsResult, briefResult] = await Promise.allSettled([
           apiFetch<DashboardStats>('/dashboard/stats'),
           apiFetch<Alert[]>('/dashboard/alerts'),
           apiFetch<AttackPath[]>('/dashboard/attack-paths'),
+          (async () => { setBriefLoading(true); return apiFetch<ThreatBrief>('/ai/threat-brief'); })(),
         ]);
 
         if (statsResult.status === 'fulfilled') {
@@ -147,6 +161,13 @@ export default function DashboardPage() {
         } else {
           console.warn('Failed to load attack paths:', pathsResult.reason);
         }
+
+        if (briefResult.status === 'fulfilled') {
+          setThreatBrief(briefResult.value);
+        } else {
+          console.warn('Failed to load threat brief:', briefResult.reason);
+        }
+        setBriefLoading(false);
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
       } finally {
@@ -394,15 +415,50 @@ export default function DashboardPage() {
             <span className="text-xs font-semibold uppercase tracking-wider text-accent-400">
               AI Insight
             </span>
+            {briefLoading && (
+              <Loader2 className="h-3 w-3 text-accent-400 animate-spin" />
+            )}
           </div>
-          <p className="text-sm text-foreground max-w-2xl leading-relaxed">
-            ARGUS has identified{' '}
-            <strong className="text-primary-400">{paths.length} critical attack paths</strong> to
-            your crown jewels. The most critical path has a risk score of{' '}
-            <strong className="text-threat-400">{paths[0]?.risk || 0}</strong> and involves{' '}
-            {paths[0]?.nodes || 0} nodes.
-          </p>
-          <button className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-500/15 px-4 py-2 text-sm font-medium text-primary-300 ring-1 ring-primary-500/30 transition-all hover:bg-primary-500/25 hover:ring-primary-500/50">
+          {briefLoading ? (
+            <div className="space-y-2 max-w-2xl">
+              <div className="h-4 w-3/4 rounded bg-primary-500/10 animate-pulse" />
+              <div className="h-4 w-1/2 rounded bg-primary-500/10 animate-pulse" />
+            </div>
+          ) : threatBrief ? (
+            <>
+              <p className="text-sm text-foreground max-w-2xl leading-relaxed line-clamp-3">
+                {threatBrief.summary.split('\n')[0]}
+              </p>
+              <div className="flex items-center gap-3 mt-2">
+                {threatBrief.relatedCVEs.length > 0 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {threatBrief.relatedCVEs.length} CVEs analyzed
+                  </span>
+                )}
+                {threatBrief.affectedAssets > 0 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    · {threatBrief.affectedAssets} critical assets
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-foreground max-w-2xl leading-relaxed">
+              ARGUS has identified{' '}
+              <strong className="text-primary-400">{paths.length} attack paths</strong> to
+              your crown jewels.
+              {paths.length > 0 && <>
+                {' '}The most critical path has a risk score of{' '}
+                <strong className="text-threat-400">{paths[0]?.risk || 0}</strong> and involves{' '}
+                {paths[0]?.nodes || 0} nodes.
+              </>}
+              {paths.length === 0 && ' No critical paths detected — your perimeter looks secure.'}
+            </p>
+          )}
+          <button
+            onClick={() => router.push('/analyst')}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-500/15 px-4 py-2 text-sm font-medium text-primary-300 ring-1 ring-primary-500/30 transition-all hover:bg-primary-500/25 hover:ring-primary-500/50"
+          >
             View Full Analysis →
           </button>
         </div>

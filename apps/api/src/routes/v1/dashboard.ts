@@ -235,34 +235,41 @@ dashboardRoutes.get('/attack-paths', async (c) => {
       try {
         const result = await session.run(
           `
-          MATCH path = (entry:Asset {tenantId: $tenantId, internetFacing: true})-[rels*1..6]->(crown:CrownJewel {tenantId: $tenantId})
+          MATCH path = (entry:Asset {tenantId: $tenantId, internetFacing: true})-[:CAN_ACCESS|CONNECTED_TO|HOSTS*1..6]->(crown:CrownJewel {tenantId: $tenantId})
           WITH path, entry, crown,
-               [n IN nodes(path) | COALESCE(n.hostname, n.cveId, n.name, '')] AS nodeNames,
-               reduce(score = 0, n IN nodes(path) | score + COALESCE(n.cvss, 0)) AS pathRisk,
+               [n IN nodes(path) | COALESCE(n.hostname, n.name, '')] AS nodeNames,
                length(path) AS hops
-          RETURN nodeNames, pathRisk, hops, entry.hostname AS entryPoint, crown.name AS target
-          ORDER BY pathRisk DESC
+          WITH path, nodeNames, hops, entry, crown
+          OPTIONAL MATCH (a)-[v:HAS_VULNERABILITY]->(c:CVE)
+          WHERE a IN nodes(path) AND v.riskScore IS NOT NULL
+          WITH nodeNames, hops, entry.hostname AS entryPoint, crown.name AS target,
+               COALESCE(max(CASE WHEN v.riskScore IS NOT NULL
+                 THEN CASE WHEN v.riskScore.low IS NOT NULL THEN v.riskScore.low ELSE v.riskScore END
+                 ELSE 0 END), 0) AS maxRisk,
+               count(DISTINCT c) AS vulnCount
+          RETURN nodeNames, maxRisk, vulnCount, hops, entryPoint, target
+          ORDER BY maxRisk DESC, hops ASC
           LIMIT 5
-        `,
+          `,
           { tenantId },
         );
 
         return result.records.map((record, i) => {
           const nodeNames = record.get('nodeNames') as string[];
-          const pathRisk = record.get('pathRisk');
+          const maxRisk = record.get('maxRisk');
           const hops = record.get('hops');
+          const vulnCount = record.get('vulnCount');
           const riskNum =
-            typeof pathRisk === 'object' && pathRisk?.toNumber
-              ? pathRisk.toNumber()
-              : Number(pathRisk);
+            typeof maxRisk === 'object' && maxRisk?.toNumber
+              ? maxRisk.toNumber()
+              : Number(maxRisk);
           const hopsNum = typeof hops === 'object' && hops?.toNumber ? hops.toNumber() : Number(hops);
-
-          const normalizedRisk = Math.min(100, Math.round((riskNum / 20) * 100));
+          const vulnNum = typeof vulnCount === 'object' && vulnCount?.toNumber ? vulnCount.toNumber() : Number(vulnCount);
 
           return {
             id: i + 1,
             name: nodeNames.filter(Boolean).join(' \u2192 '),
-            risk: normalizedRisk,
+            risk: Math.max(riskNum, Math.min(100, vulnNum * 15 + hopsNum * 5)),
             nodes: hopsNum + 1,
           };
         });
