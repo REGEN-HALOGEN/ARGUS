@@ -10,9 +10,17 @@ export function getNeo4jDriver(): Driver {
 
   const env = getEnv();
 
+  console.info(`[Neo4j] Initializing driver for: ${env.NEO4J_URI}`);
+
   _driver = neo4j.driver(env.NEO4J_URI, neo4j.auth.basic(env.NEO4J_USER, env.NEO4J_PASSWORD), {
     maxConnectionPoolSize: 50,
-    connectionAcquisitionTimeout: 10000,
+    connectionAcquisitionTimeout: 30000,  // 30s — AuraDB free tier can be slow to wake
+    connectionTimeout: 30000,             // 30s for initial connection establishment
+    maxTransactionRetryTime: 15000,       // 15s retry for transient errors
+    logging: {
+      level: 'warn',
+      logger: (level, message) => console.warn(`[Neo4j][${level}]`, message),
+    },
   });
 
   return _driver;

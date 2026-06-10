@@ -124,15 +124,29 @@ export default function DashboardPage() {
 
     async function loadData() {
       try {
-        const [statsData, alertsData, pathsData] = await Promise.all([
+        const [statsResult, alertsResult, pathsResult] = await Promise.allSettled([
           apiFetch<DashboardStats>('/dashboard/stats'),
           apiFetch<Alert[]>('/dashboard/alerts'),
           apiFetch<AttackPath[]>('/dashboard/attack-paths'),
         ]);
 
-        setStats(statsData);
-        setAlerts(alertsData);
-        setPaths(pathsData);
+        if (statsResult.status === 'fulfilled') {
+          setStats(statsResult.value);
+        } else {
+          console.warn('Failed to load stats:', statsResult.reason);
+        }
+
+        if (alertsResult.status === 'fulfilled') {
+          setAlerts(alertsResult.value);
+        } else {
+          console.warn('Failed to load alerts:', alertsResult.reason);
+        }
+
+        if (pathsResult.status === 'fulfilled') {
+          setPaths(pathsResult.value);
+        } else {
+          console.warn('Failed to load attack paths:', pathsResult.reason);
+        }
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
       } finally {
