@@ -6,6 +6,10 @@ import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { stream } from 'hono/streaming';
 
+// In-memory fallback for threat brief (survives Redis outage)
+let _threatBriefCache: { data: any; expiresAt: number } | null = null;
+const BRIEF_TTL_SECONDS = 86400; // 24 hours
+
 export const aiRoutes = new Hono();
 
 // ─── Chat ────────────────────────────────────────────────────────
@@ -143,7 +147,12 @@ aiRoutes.post(
 
 aiRoutes.get('/threat-brief', async (c) => {
   try {
-    const data = await withCache('ai:threat-brief', 3600, async () => {
+    // Check in-memory cache first (Redis might be down)
+    if (_threatBriefCache && Date.now() < _threatBriefCache.expiresAt) {
+      return c.json({ success: true, data: _threatBriefCache.data });
+    }
+
+    const data = await withCache('ai:threat-brief', BRIEF_TTL_SECONDS, async () => {
       // Gather data from Neo4j
       const [cveResult, actorResult, assetResult] = await Promise.all([
         executeReadOnlyQuery(
@@ -184,6 +193,9 @@ aiRoutes.get('/threat-brief', async (c) => {
         generatedAt: new Date().toISOString(),
       };
     });
+
+    // Store in memory as fallback
+    _threatBriefCache = { data, expiresAt: Date.now() + BRIEF_TTL_SECONDS * 1000 };
 
     return c.json({ success: true, data });
   } catch (error) {
