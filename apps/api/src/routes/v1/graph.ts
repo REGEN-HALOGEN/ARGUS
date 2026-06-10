@@ -12,6 +12,14 @@ type TenantEnv = {
 
 export const graphRoutes = new Hono<TenantEnv>();
 
+// ─── Tenant Boundary Helper ──────────────────────────────────────
+// A node is visible to a tenant if:
+//   1. node.tenantId = $tenantId  (directly owned by tenant)
+//   2. node.tenantId IS NULL      (global/shared, no owner)
+//   3. node is connected to a tenant-owned Asset via HAS_VULNERABILITY
+//      (handles shared CVEs whose tenantId was overwritten by another
+//       tenant's MERGE during onboarding)
+
 // ─── Get Full Graph ──────────────────────────────────────────────
 
 graphRoutes.get('/', async (c) => {
@@ -21,10 +29,16 @@ graphRoutes.get('/', async (c) => {
       fetchGraphData(
         `
         MATCH (n)-[r]->(m)
-        WHERE n.tenantId = $tenantId
-           OR m.tenantId = $tenantId
-           OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(n) }
-           OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(m) }
+        WHERE (
+             n.tenantId = $tenantId
+             OR m.tenantId = $tenantId
+             OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(n) }
+             OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(m) }
+          )
+          AND (n.tenantId = $tenantId OR n.tenantId IS NULL
+               OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(n) })
+          AND (m.tenantId = $tenantId OR m.tenantId IS NULL
+               OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(m) })
         RETURN n, r, m
         LIMIT 200
         `,
@@ -56,6 +70,7 @@ graphRoutes.get('/node/:nodeId', async (c) => {
         WHERE elementId(n) = $nodeId
           AND (
             n.tenantId = $tenantId
+            OR n.tenantId IS NULL
             OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(n) }
           )
         RETURN n
@@ -103,11 +118,18 @@ graphRoutes.get(
           WHERE elementId(n) = $nodeId
             AND (
               n.tenantId = $tenantId
+              OR n.tenantId IS NULL
               OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(n) }
             )
             AND (
               m.tenantId = $tenantId
+              OR m.tenantId IS NULL
               OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(m) }
+            )
+            AND ALL(x IN nodes(path) WHERE
+              x.tenantId = $tenantId
+              OR x.tenantId IS NULL
+              OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(x) }
             )
           RETURN path
           LIMIT 100
@@ -116,8 +138,9 @@ graphRoutes.get(
           ),
       );
       return c.json({ success: true, data });
-    } catch {
-      return c.json({ success: true, data: { nodes: [], edges: [] } });
+    } catch (error) {
+      console.error('[Graph] Neighborhood query failed:', error);
+      return c.json({ success: false, error: { code: 'GRAPH_QUERY_FAILED', message: 'Failed to load neighborhood data' }, data: { nodes: [], edges: [] } }, 500);
     }
   },
 );
@@ -138,17 +161,23 @@ graphRoutes.post(
     const body = c.req.valid('json');
     const tenantId = c.get('tenantId');
     try {
+      const safeMaxHops = Math.max(1, Math.min(10, Math.floor(Number(body.maxHops))));
       const data = await withCache(
-        `tenant:${tenantId}:graph:paths:${body.sourceId}:${body.targetId}:${body.maxHops}`,
+        `tenant:${tenantId}:graph:paths:${body.sourceId}:${body.targetId}:${safeMaxHops}`,
         60,
         () =>
           fetchGraphData(
             `
-            MATCH path = (source)-[*1..${body.maxHops}]->(target)
+            MATCH path = (source)-[*1..${safeMaxHops}]->(target)
             WHERE elementId(source) = $sourceId
               AND elementId(target) = $targetId
               AND source.tenantId = $tenantId
               AND target.tenantId = $tenantId
+              AND ALL(x IN nodes(path) WHERE
+                x.tenantId = $tenantId
+                OR x.tenantId IS NULL
+                OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(x) }
+              )
             RETURN path
             LIMIT 50
             `,
@@ -163,11 +192,13 @@ graphRoutes.post(
           target: body.targetId,
         },
       });
-    } catch {
+    } catch (error) {
+      console.error('[Graph] Attack path query failed:', error);
       return c.json({
-        success: true,
+        success: false,
+        error: { code: 'GRAPH_QUERY_FAILED', message: 'Failed to find attack paths' },
         data: { nodes: [], edges: [], source: body.sourceId, target: body.targetId },
-      });
+      }, 500);
     }
   },
 );
@@ -181,6 +212,11 @@ graphRoutes.get('/attack-paths/crown-jewels', async (c) => {
       fetchGraphData(
         `
         MATCH path = (entry:Asset {tenantId: $tenantId, internetFacing: true})-[*1..8]->(crown:CrownJewel {tenantId: $tenantId})
+        WHERE ALL(x IN nodes(path) WHERE
+          x.tenantId = $tenantId
+          OR x.tenantId IS NULL
+          OR EXISTS { MATCH (:Asset {tenantId: $tenantId})-[:HAS_VULNERABILITY]->(x) }
+        )
         RETURN path
         LIMIT 10
         `,

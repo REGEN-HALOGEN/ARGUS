@@ -5,6 +5,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
 import { secureHeaders } from 'hono/secure-headers';
+import { startScheduler } from '@argus/ingestion';
 import { errorHandler } from './middleware/error-handler';
 import { v1Routes } from './routes/v1';
 
@@ -122,7 +123,6 @@ rootApp.route('/api', app);
 // ─── Start Server ────────────────────────────────────────────────
 const port = env.PORT;
 
-import { startScheduler } from '@argus/ingestion';
 startScheduler();
 
 console.info(`
@@ -134,6 +134,46 @@ console.info(`
   ║  📡 Health:   /api/health${' '.repeat(16)}║
   ╚═══════════════════════════════════════════╝
 `);
+
+// ─── Graceful Shutdown ───────────────────────────────────────────
+
+async function gracefulShutdown(signal: string) {
+  console.info(`\n[SHUTDOWN] Received ${signal}. Shutting down gracefully...`);
+
+  try {
+    // Close Neo4j driver
+    const { closeDriver } = await import('@argus/graph');
+    await closeDriver();
+    console.info('[SHUTDOWN] Neo4j driver closed.');
+  } catch (e) {
+    console.warn('[SHUTDOWN] Error closing Neo4j:', e);
+  }
+
+  try {
+    // Close Redis/Valkey client
+    const { getCacheClient } = await import('@argus/cache');
+    const client = getCacheClient();
+    client.disconnect();
+    console.info('[SHUTDOWN] Redis/Valkey client closed.');
+  } catch (e) {
+    console.warn('[SHUTDOWN] Error closing Redis:', e);
+  }
+
+  try {
+    // Drain PostgreSQL pool
+    const { getAuthDbPool } = await import('./auth-db-pool');
+    const pool = getAuthDbPool();
+    await pool.end();
+    console.info('[SHUTDOWN] PostgreSQL pool drained.');
+  } catch (e) {
+    console.warn('[SHUTDOWN] Error closing PostgreSQL:', e);
+  }
+
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 export default {
   port,

@@ -1,13 +1,14 @@
 import Redis from 'ioredis';
 
-const VALKEY_URL = process.env.VALKEY_URL || 'redis://localhost:6379';
-
 class CacheClient {
   private static instance: Redis | null = null;
 
   public static getInstance(): Redis {
     if (!CacheClient.instance) {
-      CacheClient.instance = new Redis(VALKEY_URL, {
+      // Read URL lazily to ensure loadRootEnv() from @argus/config has populated process.env
+      const valkeyUrl = process.env.VALKEY_URL || 'redis://localhost:6379';
+
+      CacheClient.instance = new Redis(valkeyUrl, {
         maxRetriesPerRequest: 3,
         retryStrategy: (times) => {
           if (times > 3) {

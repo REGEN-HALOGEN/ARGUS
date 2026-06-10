@@ -2,6 +2,7 @@ import { getNeo4jDriver } from '@argus/graph';
 import { PaginationSchema } from '@argus/types';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
+import neo4j from 'neo4j-driver';
 
 type TenantEnv = {
   Variables: {
@@ -22,7 +23,7 @@ assetsRoutes.get('/', zValidator('query', PaginationSchema), async (c) => {
   try {
     const dataResult = await session.run(
       'MATCH (a:Asset {tenantId: $tenantId}) RETURN a ORDER BY a.criticality SKIP $skip LIMIT $limit',
-      { tenantId, skip, limit },
+      { tenantId, skip: neo4j.int(skip), limit: neo4j.int(limit) },
     );
     const countResult = await session.run(
       'MATCH (a:Asset {tenantId: $tenantId}) RETURN count(a) AS total',

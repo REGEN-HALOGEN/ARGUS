@@ -10,8 +10,11 @@ function resolveApiKey(): string {
   const key = process.env.GEMINI_API_KEY;
   if (key) return key;
 
+  // Synchronous fallback: the env file should already be loaded by the time
+  // the AI client is used, since the API entry point calls getEnv() early.
   try {
-    const { getEnv } = require('@argus/config');
+    // Use dynamic import pattern compatible with Bun's module system
+    const { getEnv } = require('@argus/config') as typeof import('@argus/config');
     const env = getEnv();
     if (env.GEMINI_API_KEY) return env.GEMINI_API_KEY;
   } catch {}

@@ -1,5 +1,70 @@
 import { MODELS, getModel } from './client';
+import type { ModelId } from './client';
 import { SYSTEM_PROMPTS } from './prompts';
+
+// ─── Global Rate Limiter ─────────────────────────────────────────
+// Ensures we never exceed Gemini free-tier limits (15 RPM for flash).
+// All Gemini calls go through this gate — queued, not rejected.
+
+const RATE_LIMIT_RPM = 10; // stay under the 15 RPM free-tier ceiling
+const RATE_WINDOW_MS = 60_000;
+
+const _requestTimestamps: number[] = [];
+let _requestQueue: Array<{ resolve: () => void }> = [];
+let _draining = false;
+
+async function drainQueue() {
+  if (_draining) return;
+  _draining = true;
+  while (_requestQueue.length > 0) {
+    const now = Date.now();
+    // Purge timestamps older than the window
+    while (_requestTimestamps.length > 0 && _requestTimestamps[0]! < now - RATE_WINDOW_MS) {
+      _requestTimestamps.shift();
+    }
+    if (_requestTimestamps.length < RATE_LIMIT_RPM) {
+      // Slot available — release the next queued request
+      const next = _requestQueue.shift();
+      if (next) {
+        _requestTimestamps.push(Date.now());
+        next.resolve();
+      }
+    } else {
+      // Wait until the oldest timestamp expires
+      const waitMs = _requestTimestamps[0]! + RATE_WINDOW_MS - now + 100;
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
+  }
+  _draining = false;
+}
+
+async function acquireSlot(): Promise<void> {
+  const now = Date.now();
+  // Purge old timestamps
+  while (_requestTimestamps.length > 0 && _requestTimestamps[0]! < now - RATE_WINDOW_MS) {
+    _requestTimestamps.shift();
+  }
+  if (_requestTimestamps.length < RATE_LIMIT_RPM) {
+    _requestTimestamps.push(Date.now());
+    return; // immediate
+  }
+  // Queue up
+  return new Promise<void>((resolve) => {
+    _requestQueue.push({ resolve });
+    drainQueue();
+  });
+}
+
+// ─── In-Flight Deduplication ─────────────────────────────────────
+// If two components request the same thing simultaneously, only one
+// Gemini call is made. The second caller piggybacks on the first.
+
+const _inflight = new Map<string, Promise<string>>();
+
+function deduplicationKey(messages: ChatMessage[], options: ChatOptions): string {
+  const last = messages[messages.length - 1]?.content ?? '';
+  return `${options.systemPrompt?.slice(0, 40) ?? 'default'}::${last.slice(0, 120)}`;
+}
 
 // ─── Rate Limit Retry Helper ────────────────────────────────────
 
@@ -40,7 +105,29 @@ export interface ChatMessage {
 }
 
 export async function chat(messages: ChatMessage[], options: ChatOptions = {}): Promise<string> {
+  // Deduplicate concurrent identical requests
+  const dedupKey = deduplicationKey(messages, options);
+  const existing = _inflight.get(dedupKey);
+  if (existing) {
+    console.info('[AI] Deduplicating concurrent request');
+    return existing;
+  }
+
+  const promise = _chatInternal(messages, options);
+  _inflight.set(dedupKey, promise);
+
+  try {
+    return await promise;
+  } finally {
+    _inflight.delete(dedupKey);
+  }
+}
+
+async function _chatInternal(messages: ChatMessage[], options: ChatOptions): Promise<string> {
   const modelId = options.model ?? MODELS.FLASH;
+
+  // Wait for a rate-limit slot before calling Gemini
+  await acquireSlot();
 
   const model = getModel(modelId);
   const chatSession = model.startChat({
@@ -74,6 +161,9 @@ export async function* streamChat(
   options: ChatOptions = {},
 ): AsyncGenerator<string> {
   const modelId = options.model ?? MODELS.FLASH;
+
+  // Wait for a rate-limit slot before calling Gemini
+  await acquireSlot();
 
   const model = getModel(modelId);
   const chatSession = model.startChat({

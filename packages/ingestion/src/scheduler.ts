@@ -107,44 +107,55 @@ export async function syncNews(): Promise<SyncResult> {
   try {
     const news = await fetchTopNews(10);
 
-    // AI Summarization & Entity Extraction
-    console.info(`[Ingestion] Analyzing ${news.length} news items...`);
-    for (const item of news) {
-      try {
-        const response = await chat(
-          [
+    // In development, skip AI summarization to avoid exhausting free-tier quota.
+    // Each news item = 1 Gemini call, and with --hot reload this fires on every save.
+    const isDev = process.env.NODE_ENV !== 'production';
+
+    if (isDev) {
+      console.info(`[Ingestion] DEV MODE — skipping AI news analysis to preserve Gemini quota`);
+      for (const item of news) {
+        item.summary = item.contentSnippet;
+      }
+    } else {
+      // AI Summarization & Entity Extraction (production only)
+      console.info(`[Ingestion] Analyzing ${news.length} news items...`);
+      for (const item of news) {
+        try {
+          const response = await chat(
+            [
+              {
+                role: 'user',
+                content: buildPrompt(USER_PROMPTS.SUMMARIZE_NEWS, {
+                  title: item.title,
+                  snippet: item.contentSnippet ?? '',
+                }),
+              },
+            ],
             {
-              role: 'user',
-              content: buildPrompt(USER_PROMPTS.SUMMARIZE_NEWS, {
-                title: item.title,
-                snippet: item.contentSnippet ?? '',
-              }),
+              systemPrompt: SYSTEM_PROMPTS.NEWS_SUMMARY,
+              maxTokens: 300,
+              temperature: 0.1,
             },
-          ],
-          {
-            systemPrompt: SYSTEM_PROMPTS.NEWS_SUMMARY,
-            maxTokens: 300,
-            temperature: 0.1,
-          },
-        );
+          );
 
-        // Extract JSON using a more robust method
-        const jsonMatch = response.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON object found in response');
+          // Extract JSON using a more robust method
+          const jsonMatch = response.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) throw new Error('No JSON object found in response');
 
-        const parsed = JSON.parse(jsonMatch[0]);
+          const parsed = JSON.parse(jsonMatch[0]);
 
-        item.summary = parsed.summary;
-        const entities: string[] = parsed.entities || [];
-        item.entities = entities;
+          item.summary = parsed.summary;
+          const entities: string[] = parsed.entities || [];
+          item.entities = entities;
 
-        if (entities.length > 0) {
-          const matches = await checkEntityPresence(entities);
-          item.hasMatch = matches.length > 0;
+          if (entities.length > 0) {
+            const matches = await checkEntityPresence(entities);
+            item.hasMatch = matches.length > 0;
+          }
+        } catch (e) {
+          console.warn(`[AI-NEWS] Failed to analyze news: ${item.title}`, e);
+          item.summary = item.contentSnippet; // Fallback
         }
-      } catch (e) {
-        console.warn(`[AI-NEWS] Failed to analyze news: ${item.title}`, e);
-        item.summary = item.contentSnippet; // Fallback
       }
     }
 
@@ -179,11 +190,20 @@ export async function runFullSync(): Promise<SyncResult[]> {
 // Schedule periodic sync (every 6 hours)
 export function startScheduler() {
   const SIX_HOURS = 6 * 60 * 60 * 1000;
+  const STARTUP_DELAY = 30_000; // 30s — let DB connections establish first
+
+  // Initial sync after startup delay
+  setTimeout(() => {
+    console.info('[Ingestion] Running initial sync after startup...');
+    runFullSync().catch((err) =>
+      console.error('[Ingestion] Initial sync failed:', err),
+    );
+  }, STARTUP_DELAY);
 
   // Periodic sync only — use POST /api/v1/ingestion/sync for manual trigger
   setInterval(() => runFullSync(), SIX_HOURS);
 
   console.info(
-    '[Ingestion] Scheduler started — syncing every 6 hours (use API to trigger manually)',
+    '[Ingestion] Scheduler started — initial sync in 30s, then every 6 hours (use API to trigger manually)',
   );
 }

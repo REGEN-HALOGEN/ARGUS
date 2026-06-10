@@ -19,20 +19,18 @@ if (baseURL.includes('localhost') && process.env.RAILWAY_STATIC_URL) {
 }
 
 const origins = [
-  env.WEB_URL,
-  'https://argus-web-three.vercel.app',
-  'https://argus-web.vercel.app',
-  'https://argus-ngzfjupwf-ashwins-projects-90bc185c.vercel.app', // From logs
-  'http://localhost:3000',
-]
-  .filter(Boolean)
-  .map((url) => url!.trim().replace(/\/+$/, ''));
-
-// DYNAMIC VERCEL TRUST: If we are in production, trust common Vercel patterns
-if (process.env.NODE_ENV === 'production' || env.NODE_ENV === 'production') {
-  origins.push('https://argus-web-three.vercel.app');
-  // Add wildcards or more specific patterns if needed
-}
+  ...new Set(
+    [
+      env.WEB_URL,
+      'https://argus-web-three.vercel.app',
+      'https://argus-web.vercel.app',
+      'https://argus-ngzfjupwf-ashwins-projects-90bc185c.vercel.app', // From logs
+      'http://localhost:3000',
+    ]
+      .filter(Boolean)
+      .map((url) => url!.trim().replace(/\/+$/, '')),
+  ),
+];
 
 console.info(`[AUTH] INITIALIZING WITH BASE URL: ${baseURL}`);
 console.info(`[AUTH] TRUSTED ORIGINS: ${origins.join(', ')}`);
