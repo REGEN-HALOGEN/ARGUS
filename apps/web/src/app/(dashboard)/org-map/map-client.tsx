@@ -188,7 +188,7 @@ function Node({ node, nodeRef, isDark, hovered, setHovered }: { node: any; nodeR
   );
 }
 
-function GraphScene({ nodes, links, expanded, isDark }: { nodes: any[]; links: any[]; expanded: boolean; isDark: boolean }) {
+function GraphScene({ nodes, links, nodeDistance, isDark }: { nodes: any[]; links: any[]; nodeDistance: number; isDark: boolean }) {
   const simulationRef = useRef<any>(null);
   const nodeRefs = useRef<Record<string, THREE.Object3D>>({});
   const linkRefs = useRef<Record<string, THREE.Line>>({});
@@ -204,8 +204,8 @@ function GraphScene({ nodes, links, expanded, isDark }: { nodes: any[]; links: a
     });
 
     const simulation = forceSimulation(nodes)
-      .force('link', forceLink(links).id((d: any) => d.id).distance(expanded ? 250 : 80))
-      .force('charge', forceManyBody().strength(expanded ? -800 : -250))
+      .force('link', forceLink(links).id((d: any) => d.id).distance(nodeDistance))
+      .force('charge', forceManyBody().strength(-3 * nodeDistance))
       .force('center', forceCenter(0, 0, 0));
     
     simulationRef.current = simulation;
@@ -215,14 +215,14 @@ function GraphScene({ nodes, links, expanded, isDark }: { nodes: any[]; links: a
     };
   }, [nodes, links]); // Run once when graphData changes
 
-  // Update forces when `expanded` state changes
+  // Update forces when `nodeDistance` state changes
   useEffect(() => {
     if (simulationRef.current) {
-      simulationRef.current.force('link').distance(expanded ? 250 : 80);
-      simulationRef.current.force('charge').strength(expanded ? -800 : -250);
-      simulationRef.current.alpha(1).restart();
+      simulationRef.current.force('link').distance(nodeDistance);
+      simulationRef.current.force('charge').strength(-3 * nodeDistance);
+      simulationRef.current.alpha(0.5).restart();
     }
-  }, [expanded]);
+  }, [nodeDistance]);
 
   // Sync D3 positions to Three.js meshes on every frame
   useFrame(() => {
@@ -277,7 +277,7 @@ function GraphScene({ nodes, links, expanded, isDark }: { nodes: any[]; links: a
 export default function MapClient() {
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState(false);
+  const [nodeDistance, setNodeDistance] = useState(120);
 
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== 'light';
@@ -338,7 +338,7 @@ export default function MapClient() {
       {/* R3F Canvas */}
       <Canvas camera={{ position: [0, 0, 400], fov: 60 }}>
         <OrbitControls makeDefault enableDamping dampingFactor={0.1} />
-        <GraphScene nodes={graphData.nodes} links={graphData.links} expanded={expanded} isDark={isDark} />
+        <GraphScene nodes={graphData.nodes} links={graphData.links} nodeDistance={nodeDistance} isDark={isDark} />
       </Canvas>
 
       {/* ── Top-left UI ─────────────────────────────────────────── */}
@@ -347,19 +347,31 @@ export default function MapClient() {
           <span style={{ color: txt, fontWeight: 700 }}>{graphData.nodes.length}</span> nodes ·{' '}
           <span style={{ color: txt, fontWeight: 700 }}>{graphData.links.length}</span> connections
         </div>
-        <button
-          onClick={() => setExpanded(p => !p)}
-          style={{
-            background: expanded ? (isDark ? 'rgba(37,99,235,0.3)' : 'rgba(37,99,235,0.12)') : panelBg,
-            border: `1px solid ${expanded ? (isDark ? 'rgba(96,165,250,0.5)' : 'rgba(37,99,235,0.4)') : panelBorder}`,
-            borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 600,
-            color: expanded ? (isDark ? '#93c5fd' : '#2563eb') : txt,
-            cursor: 'pointer', backdropFilter: 'blur(12px)',
-            transition: 'all 0.2s',
-          }}
-        >
-          {expanded ? '⟵ Compress Nodes' : '⟶ Expand Nodes'}
-        </button>
+        <div style={{
+          background: panelBg,
+          border: `1px solid ${panelBorder}`,
+          borderRadius: 8, padding: '10px 14px', fontSize: 12,
+          color: txt, backdropFilter: 'blur(12px)',
+          display: 'flex', flexDirection: 'column', gap: 6,
+          width: 170
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+            <span>Node Distance</span>
+            <span style={{ color: txtDim }}>{nodeDistance}px</span>
+          </div>
+          <input
+            type="range"
+            min="50"
+            max="400"
+            value={nodeDistance}
+            onChange={(e) => setNodeDistance(Number(e.target.value))}
+            style={{
+              width: '100%',
+              cursor: 'pointer',
+              accentColor: '#3b82f6',
+            }}
+          />
+        </div>
       </div>
 
       {/* ── Top-right UI ────────────────────────────────────────── */}
