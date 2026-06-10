@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Command,
+  Globe,
   LayoutDashboard,
   Network,
   Search,
@@ -31,6 +32,12 @@ const navItems = [
     href: '/dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard,
+    orgRoles: ['viewer', 'analyst', 'operator', 'org_admin'],
+  },
+  {
+    href: '/org-map',
+    label: 'Organisation Map',
+    icon: Globe,
     orgRoles: ['viewer', 'analyst', 'operator', 'org_admin'],
   },
   {
