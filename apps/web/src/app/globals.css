@@ -397,6 +397,65 @@ body {
   border: 2px solid var(--background) !important;
 }
 
+/* ─── Graph Explorer Node Animations ──────────────────────────── */
+
+@keyframes crown-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3), 0 0 24px rgba(16, 185, 129, 0.15), 0 0 48px rgba(16, 185, 129, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.25), 0 0 72px rgba(16, 185, 129, 0.1);
+  }
+}
+
+@keyframes crown-ring-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes threat-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.2), 0 0 16px rgba(239, 68, 68, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.4), 0 0 28px rgba(239, 68, 68, 0.15);
+  }
+}
+
+.graph-node-crown-jewel {
+  animation: crown-pulse 2.5s ease-in-out infinite;
+  border: 1.5px solid rgba(16, 185, 129, 0.5) !important;
+}
+
+.graph-node-cve-critical {
+  animation: threat-pulse 2s ease-in-out infinite;
+}
+
+.graph-node-asset {
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.graph-node-asset:hover {
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.2), 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.graph-node-threat-actor {
+  transition: box-shadow 0.3s ease;
+}
+
+.graph-node-threat-actor:hover {
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25), 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.react-flow__controls-button svg {
+  fill: var(--muted-foreground) !important;
+}
+
+.react-flow__controls-button:hover svg {
+  fill: var(--foreground) !important;
+}
+
 /* ─── Custom Scrollbar Utility ────────────────────────────────── */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
