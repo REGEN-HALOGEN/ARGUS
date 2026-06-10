@@ -78,8 +78,45 @@ function Edge({ link, linkRef, isDark }: { link: any; linkRef: any; isDark: bool
   );
 }
 
+const textureCache: Record<string, THREE.CanvasTexture> = {};
+
+function getEmojiTexture(emoji: string): THREE.CanvasTexture {
+  if (textureCache[emoji]) return textureCache[emoji];
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.font = '84px "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 4;
+    ctx.fillText(emoji, 64, 64);
+  }
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.needsUpdate = true;
+  textureCache[emoji] = texture;
+  return texture;
+}
+
+const EMOJI_MAP: Record<string, string> = {
+  asset: '🖥️',
+  cve: '🐛',
+  crown_jewel: '👑',
+  threat_actor: '👥',
+  attack_technique: '⚡',
+};
+
 function Node({ node, nodeRef, isDark, hovered, setHovered }: { node: any; nodeRef: any; isDark: boolean; hovered: any; setHovered: any }) {
-  const color = TYPE_COLORS[getType(node)] || '#64748b';
+  const type = getType(node);
+  const color = TYPE_COLORS[type] || '#64748b';
   const size = getSize(node);
   const isHovered = hovered?.id === node.id;
   const panelBg = isDark ? 'rgba(6,11,24,0.9)' : 'rgba(255,255,255,0.95)';
@@ -87,14 +124,47 @@ function Node({ node, nodeRef, isDark, hovered, setHovered }: { node: any; nodeR
   const txt = isDark ? '#f1f5f9' : '#0f172a';
   const txtDim = isDark ? '#94a3b8' : '#64748b';
 
+  const emoji = EMOJI_MAP[type] || '❓';
+  const texture = getEmojiTexture(emoji);
+
   return (
-    <mesh
-      ref={(el) => { if (el) nodeRef.current[node.id] = el; }}
+    <group
+      ref={(el) => { if (el) nodeRef.current[node.id] = el as any; }}
       onPointerOver={(e) => { e.stopPropagation(); setHovered(node); }}
       onPointerOut={() => setHovered(null)}
     >
-      <sphereGeometry args={[size, 24, 24]} />
-      <meshLambertMaterial color={color} emissive={color} emissiveIntensity={isHovered ? 0.6 : 0.2} transparent opacity={0.9} />
+      {/* Outer Glow Ring / Semi-transparent Sphere */}
+      <mesh>
+        <sphereGeometry args={[size * 1.3, 16, 16]} />
+        <meshBasicMaterial 
+          color={color} 
+          transparent 
+          opacity={isHovered ? 0.35 : 0.12} 
+          wireframe={isHovered}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Inner Emissive Core for Neon Depth */}
+      <mesh>
+        <sphereGeometry args={[size * 0.4, 8, 8]} />
+        <meshBasicMaterial 
+          color={color} 
+          transparent 
+          opacity={isHovered ? 0.75 : 0.35} 
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Floating Emoji Sprite */}
+      <sprite scale={[size * 2.2, size * 2.2, 1]}>
+        <spriteMaterial 
+          map={texture} 
+          transparent 
+          opacity={isHovered ? 1.0 : 0.85}
+          depthWrite={false}
+        />
+      </sprite>
       
       {/* HTML Overlay using Drei (Native DOM layer) */}
       {isHovered && (
@@ -114,13 +184,13 @@ function Node({ node, nodeRef, isDark, hovered, setHovered }: { node: any; nodeR
           </div>
         </Html>
       )}
-    </mesh>
+    </group>
   );
 }
 
 function GraphScene({ nodes, links, expanded, isDark }: { nodes: any[]; links: any[]; expanded: boolean; isDark: boolean }) {
   const simulationRef = useRef<any>(null);
-  const nodeRefs = useRef<Record<string, THREE.Mesh>>({});
+  const nodeRefs = useRef<Record<string, THREE.Object3D>>({});
   const linkRefs = useRef<Record<string, THREE.Line>>({});
   const [hovered, setHovered] = useState<any>(null);
 
@@ -295,9 +365,11 @@ export default function MapClient() {
       {/* ── Top-right UI ────────────────────────────────────────── */}
       <div style={{ position: 'absolute', top: 16, right: 16, background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 12, padding: 16, backdropFilter: 'blur(12px)', zIndex: 10, pointerEvents: 'none' }}>
         <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: txtDim, marginBottom: 10 }}>Entity Types</div>
-        {Object.entries(TYPE_COLORS).map(([key, color]) => (
+        {Object.entries(TYPE_COLORS).map(([key]) => (
           <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}60` }} />
+            <span style={{ fontSize: '14px', width: '20px', display: 'inline-flex', justifyContent: 'center' }}>
+              {EMOJI_MAP[key] || '❓'}
+            </span>
             <span style={{ fontSize: 12, fontWeight: 500, color: txt }}>{TYPE_LABELS[key] || key}</span>
           </div>
         ))}
