@@ -49,10 +49,28 @@ export default function MapClient() {
   const [graphData, setGraphData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== 'light';
+
+  // ─── Resize Observer ───────────────────────────────────────────
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const contentRect = entries[0]?.contentRect;
+      if (!contentRect) return;
+      const { width, height } = contentRect;
+      if (width > 0 && height > 0) {
+        setContainerSize({ w: width, h: height });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // ─── Load data ─────────────────────────────────────────────────
   useEffect(() => {
@@ -128,9 +146,12 @@ export default function MapClient() {
 
   // ─── Render ────────────────────────────────────────────────────
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
-      <ForceGraph3D
-        ref={fgRef}
+    <div ref={wrapRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      {containerSize.w > 0 && containerSize.h > 0 && (
+        <ForceGraph3D
+          width={containerSize.w}
+          height={containerSize.h}
+          ref={fgRef}
         graphData={graphData}
         backgroundColor={bg}
         // ─── Use built-in node rendering (proven to work) ──────
@@ -167,6 +188,7 @@ export default function MapClient() {
         d3AlphaDecay={0.015}
         d3VelocityDecay={0.25}
       />
+      )}
 
       {/* ── Top-left: stats + expand ────────────────────────────── */}
       <div style={{ position: 'absolute', top: 16, left: 16, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 10 }}>
