@@ -53,6 +53,9 @@ logs/
 creds.txt
 default.txt
 instructions.md
+migrationplan.md
+implementation-dynamic-graph.md
+DEPLOYMENT.md
 *.db
 *.db-journal
 *.sqlite
