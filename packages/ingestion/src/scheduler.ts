@@ -165,56 +165,11 @@ export async function syncNews(): Promise<SyncResult> {
   try {
     const news = await fetchTopNews(10);
 
-    // In development, skip AI summarization to avoid exhausting free-tier quota.
-    // Each news item = 1 Gemini call, and with --hot reload this fires on every save.
-    const isDev = process.env.NODE_ENV !== 'production';
-
-    if (isDev) {
-      console.info(`[Ingestion] DEV MODE — skipping AI news analysis to preserve Gemini quota`);
-      for (const item of news) {
-        item.summary = item.contentSnippet;
-      }
-    } else {
-      // AI Summarization & Entity Extraction (production only)
-      console.info(`[Ingestion] Analyzing ${news.length} news items...`);
-      for (const item of news) {
-        try {
-          const response = await chat(
-            [
-              {
-                role: 'user',
-                content: buildPrompt(USER_PROMPTS.SUMMARIZE_NEWS, {
-                  title: item.title,
-                  snippet: item.contentSnippet ?? '',
-                }),
-              },
-            ],
-            {
-              systemPrompt: SYSTEM_PROMPTS.NEWS_SUMMARY,
-              maxTokens: 300,
-              temperature: 0.1,
-            },
-          );
-
-          // Extract JSON using a more robust method
-          const jsonMatch = response.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) throw new Error('No JSON object found in response');
-
-          const parsed = JSON.parse(jsonMatch[0]);
-
-          item.summary = parsed.summary;
-          const entities: string[] = parsed.entities || [];
-          item.entities = entities;
-
-          if (entities.length > 0) {
-            const matches = await checkEntityPresence(entities);
-            item.hasMatch = matches.length > 0;
-          }
-        } catch (e) {
-          console.warn(`[AI-NEWS] Failed to analyze news: ${item.title}`, e);
-          item.summary = item.contentSnippet; // Fallback
-        }
-      }
+    // Skip AI summarization during background ingestion to preserve Gemini quota.
+    // AI summarization will only be triggered by explicit user prompts in the Analyst.
+    console.info(`[Ingestion] Fetching 10 news items (skipping background AI analysis)...`);
+    for (const item of news) {
+      item.summary = item.contentSnippet;
     }
 
     const client = getCacheClient();

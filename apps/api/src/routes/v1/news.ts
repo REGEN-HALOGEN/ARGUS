@@ -38,7 +38,7 @@ newsRoutes.get('/', async (c) => {
     if (!_newsSyncing) {
       _newsSyncing = true;
       syncNews()
-        .then((result) => {
+        .then(() => {
           // If sync was successful, we should probably fetch the new cache from redis,
           // but we can also just let the next request hit redis. We'll just update the lock.
           // Wait, syncNews doesn't return the news items, it returns SyncResult.
