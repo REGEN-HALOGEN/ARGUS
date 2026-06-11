@@ -1,4 +1,3 @@
-import { SYSTEM_PROMPTS, USER_PROMPTS, buildPrompt, chat } from '@argus/ai';
 import { getCacheClient } from '@argus/cache';
 import { getNeo4jDriver } from '@argus/graph';
 import { fetchCISAKEV } from './fetchers/cisa-kev';
@@ -7,7 +6,6 @@ import { fetchTopNews } from './fetchers/news';
 import { fetchAllNVDCVEs } from './fetchers/nvd';
 import {
   batchUpsertCVEs,
-  checkEntityPresence,
   markExploitedCVEs,
   upsertTechnique,
 } from './writers/neo4j';
