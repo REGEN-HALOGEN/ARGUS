@@ -34,10 +34,10 @@ export function getGeminiClient(): GoogleGenerativeAI {
 // ─── Model Constants ─────────────────────────────────────────────
 
 export const MODELS = {
-  // Use gemini-1.5-flash as the fast reliable free-tier model
-  FLASH: 'gemini-1.5-flash',
-  // Use gemini-1.5-pro for advanced thinking tasks
-  THINKING: 'gemini-1.5-pro',
+  // Use gemini-3.1-flash-lite which has 500 RPD available
+  FLASH: 'gemini-3.1-flash-lite',
+  // Use gemini-3.1-flash-lite for thinking as well to share the large quota
+  THINKING: 'gemini-3.1-flash-lite',
 } as const;
 
 export type ModelId = (typeof MODELS)[keyof typeof MODELS];
