@@ -292,19 +292,7 @@ argus/
 │   ├── seed-admin.ts                  # Admin user creation
 │   ├── seed-threat-actors.ts          # Threat actor data seeding
 │   ├── migrate-default-tenant.ts      # Tenant migration script
-│   └── test-supabase.ts              # PostgreSQL connectivity test
-│
-├── docs/
-│   ├── architecture.md                # Architecture overview
-│   └── implementation/                # Implementation phase documents
-│       ├── 01-external-data-ingestion.md
-│       ├── 02-attack-path-simulation.md
-│       ├── 03-ai-analyst-enhancements.md
-│       ├── 04-risk-engine-maturity.md
-│       ├── 05-ai-threat-briefings.md
-│       ├── 06-advanced-security.md
-│       ├── 07-devops-production-readiness.md
-│       └── 08-upgrade-multi-tenancy.md
+│   └── test-supabase.ts               # PostgreSQL connectivity test
 │
 ├── Dockerfile.api                     # Production API container
 ├── DEPLOYMENT.md                      # Deployment guide
