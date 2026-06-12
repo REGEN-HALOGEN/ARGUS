@@ -164,7 +164,10 @@ async function _chatInternal(messages: ChatMessage[], options: ChatOptions): Pro
     }
 
     const data = await response.json();
-    return data.choices[0]?.message?.content || '';
+    if (data.error) {
+      throw new Error(data.error.message || 'Unknown API error');
+    }
+    return data.choices?.[0]?.message?.content || '';
   }, 'Chat');
 
   return result;
@@ -227,7 +230,11 @@ export async function* streamChat(
       if (line.startsWith('data: ')) {
         try {
           const data = JSON.parse(line.slice(6));
-          const content = data.choices[0]?.delta?.content;
+          if (data.error) {
+            console.error('Stream error payload:', data.error);
+            break;
+          }
+          const content = data.choices?.[0]?.delta?.content;
           if (content) yield content;
         } catch (e) {
           // ignore invalid json from stream chunk boundaries
