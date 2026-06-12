@@ -1,4 +1,4 @@
-import { MODELS, resolveApiKey } from './client';
+import { MODELS, resolveApiKey, resolveBaseUrl, resolveModelId } from './client';
 import type { ModelId } from './client';
 import { SYSTEM_PROMPTS } from './prompts';
 
@@ -134,7 +134,7 @@ async function _chatInternal(messages: ChatMessage[], options: ChatOptions): Pro
   }));
 
   const payload = {
-    model: modelId,
+    model: resolveModelId(modelId),
     messages: [
       ...(options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : []),
       ...mappedMessages,
@@ -144,7 +144,7 @@ async function _chatInternal(messages: ChatMessage[], options: ChatOptions): Pro
   };
 
   const result = await withRetry(async () => {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(resolveBaseUrl(), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${resolveApiKey()}`,
@@ -186,7 +186,7 @@ export async function* streamChat(
   }));
 
   const payload = {
-    model: modelId,
+    model: resolveModelId(modelId),
     messages: [
       ...(options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : []),
       ...mappedMessages,
@@ -196,7 +196,7 @@ export async function* streamChat(
     stream: true,
   };
 
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const response = await fetch(resolveBaseUrl(), {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${resolveApiKey()}`,
