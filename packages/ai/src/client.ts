@@ -1,19 +1,11 @@
-import { type GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
+// ─── Api Key Resolution ────────────────────────────────────────────
 
-// ─── Singleton Client ────────────────────────────────────────────
-
-let _genAI: GoogleGenerativeAI | undefined;
-
-function resolveApiKey(): string {
-  // Try process.env directly first (bun auto-loads .env from CWD),
-  // then fall back to getEnv() which parses via zod.
+export function resolveApiKey(): string {
+  // Try process.env directly first (bun auto-loads .env from CWD)
   const key = process.env.GEMINI_API_KEY;
   if (key) return key;
 
-  // Synchronous fallback: the env file should already be loaded by the time
-  // the AI client is used, since the API entry point calls getEnv() early.
   try {
-    // Use dynamic import pattern compatible with Bun's module system
     const { getEnv } = require('@argus/config') as typeof import('@argus/config');
     const env = getEnv();
     if (env.GEMINI_API_KEY) return env.GEMINI_API_KEY;
@@ -22,28 +14,12 @@ function resolveApiKey(): string {
   throw new Error('GEMINI_API_KEY is required for AI features');
 }
 
-export function getGeminiClient(): GoogleGenerativeAI {
-  if (_genAI) return _genAI;
-
-  const apiKey = resolveApiKey();
-  console.info(`[AI] Gemini client initialized (key: ${apiKey.substring(0, 8)}...)`);
-  _genAI = new GoogleGenerativeAI(apiKey);
-  return _genAI;
-}
-
 // ─── Model Constants ─────────────────────────────────────────────
 
 export const MODELS = {
-  // Use gemini-3.1-flash-lite which has 500 RPD available
-  FLASH: 'gemini-3.1-flash-lite',
-  // Use gemini-3.1-flash-lite for thinking as well to share the large quota
-  THINKING: 'gemini-3.1-flash-lite',
+  // OpenRouter free models
+  FLASH: 'google/gemini-2.0-flash-lite-preview-02-05:free',
+  THINKING: 'google/gemini-2.0-pro-exp-02-05:free',
 } as const;
 
 export type ModelId = (typeof MODELS)[keyof typeof MODELS];
-
-// ─── Get Model Instance ──────────────────────────────────────────
-
-export function getModel(modelId: ModelId = MODELS.FLASH): GenerativeModel {
-  return getGeminiClient().getGenerativeModel({ model: modelId });
-}

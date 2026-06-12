@@ -1,4 +1,4 @@
-import { MODELS, getModel } from './client';
+import { MODELS, resolveApiKey } from './client';
 import type { ModelId } from './client';
 import { SYSTEM_PROMPTS } from './prompts';
 
@@ -126,32 +126,48 @@ export async function chat(messages: ChatMessage[], options: ChatOptions = {}): 
 async function _chatInternal(messages: ChatMessage[], options: ChatOptions): Promise<string> {
   const modelId = options.model ?? MODELS.FLASH;
 
-  // Wait for a rate-limit slot before calling Gemini
   await acquireSlot();
 
-  const model = getModel(modelId);
-  const chatSession = model.startChat({
-    history: messages.slice(0, -1).map((msg) => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }],
-    })),
-    systemInstruction: {
-      role: 'user',
-      parts: [{ text: options.systemPrompt ?? SYSTEM_PROMPTS.SECURITY_ANALYST }],
-    },
-    generationConfig: {
-      maxOutputTokens: options.maxTokens ?? 4096,
-      temperature: options.temperature ?? 0.3,
-    },
-  });
+  const mappedMessages = messages.map((msg) => ({
+    role: msg.role === 'model' ? 'assistant' : 'user',
+    content: msg.content,
+  }));
 
-  const lastMessage = messages[messages.length - 1];
-  if (!lastMessage) return '';
-  const result = await withRetry(
-    () => chatSession.sendMessage(lastMessage.content),
-    'Chat',
-  );
-  return result.response.text();
+  const payload = {
+    model: modelId,
+    messages: [
+      ...(options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : []),
+      ...mappedMessages,
+    ],
+    max_tokens: options.maxTokens ?? 4096,
+    temperature: options.temperature ?? 0.3,
+  };
+
+  const result = await withRetry(async () => {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resolveApiKey()}`,
+        'HTTP-Referer': 'https://argus-local.com', // Optional for openrouter rankings
+        'X-Title': 'ARGUS',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = errData.error?.message || response.statusText;
+      const err = new Error(errMsg);
+      (err as any).status = response.status;
+      throw err;
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content || '';
+  }, 'Chat');
+
+  return result;
 }
 
 // ─── Streaming Chat ──────────────────────────────────────────────
@@ -162,33 +178,61 @@ export async function* streamChat(
 ): AsyncGenerator<string> {
   const modelId = options.model ?? MODELS.FLASH;
 
-  // Wait for a rate-limit slot before calling Gemini
   await acquireSlot();
 
-  const model = getModel(modelId);
-  const chatSession = model.startChat({
-    history: messages.slice(0, -1).map((msg) => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }],
-    })),
-    systemInstruction: {
-      role: 'user',
-      parts: [{ text: options.systemPrompt ?? SYSTEM_PROMPTS.SECURITY_ANALYST }],
+  const mappedMessages = messages.map((msg) => ({
+    role: msg.role === 'model' ? 'assistant' : 'user',
+    content: msg.content,
+  }));
+
+  const payload = {
+    model: modelId,
+    messages: [
+      ...(options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : []),
+      ...mappedMessages,
+    ],
+    max_tokens: options.maxTokens ?? 4096,
+    temperature: options.temperature ?? 0.3,
+    stream: true,
+  };
+
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${resolveApiKey()}`,
+      'HTTP-Referer': 'https://argus-local.com',
+      'X-Title': 'ARGUS',
+      'Content-Type': 'application/json',
     },
-    generationConfig: {
-      maxOutputTokens: options.maxTokens ?? 4096,
-      temperature: options.temperature ?? 0.3,
-    },
+    body: JSON.stringify(payload),
   });
 
-  const lastMessage = messages[messages.length - 1];
-  if (!lastMessage) return;
-  const result = await chatSession.sendMessageStream(lastMessage.content);
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.error?.message || response.statusText);
+  }
 
-  for await (const chunk of result.stream) {
-    const text = chunk.text();
-    if (text) {
-      yield text;
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('No stream available');
+  const decoder = new TextDecoder('utf-8');
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    const lines = chunk.split('\n').filter((line) => line.trim() !== '');
+
+    for (const line of lines) {
+      if (line === 'data: [DONE]') return;
+      if (line.startsWith('data: ')) {
+        try {
+          const data = JSON.parse(line.slice(6));
+          const content = data.choices[0]?.delta?.content;
+          if (content) yield content;
+        } catch (e) {
+          // ignore invalid json from stream chunk boundaries
+        }
+      }
     }
   }
 }
