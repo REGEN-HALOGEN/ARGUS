@@ -49,6 +49,26 @@ The overall risk posture is **elevated**. The combination of internet-facing vul
 
 export const aiRoutes = new Hono();
 
+function getFriendlyErrorMessage(message: string): string {
+  const isTransient = 
+    message.toLowerCase().includes('provider returned error') || 
+    message.includes('429') || 
+    message.toLowerCase().includes('rate limit') || 
+    message.toLowerCase().includes('resource has been exhausted') || 
+    message.toLowerCase().includes('overloaded') ||
+    message.includes('502') ||
+    message.includes('503') ||
+    message.toLowerCase().includes('timeout') ||
+    message.toLowerCase().includes('bad gateway') ||
+    message.toLowerCase().includes('service unavailable');
+    
+  if (isTransient) {
+    return `### ⚠️ AI Provider Congestion\n\nThe AI model provider is currently experiencing high traffic or a temporary outage. This is a transient error from the free-tier model on OpenRouter and usually resolves once the endpoint is less congested. Please try again in a few moments.`;
+  }
+  
+  return `I apologize, but I encountered an issue: ${message}. Please check if your API configuration is correct.`;
+}
+
 // ─── Chat ────────────────────────────────────────────────────────
 
 aiRoutes.post('/chat', zValidator('json', AIChatRequestSchema), async (c) => {
@@ -70,6 +90,7 @@ aiRoutes.post('/chat', zValidator('json', AIChatRequestSchema), async (c) => {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'AI chat failed';
+    const friendlyContent = getFriendlyErrorMessage(message);
     return c.json({
       success: false,
       error: {
@@ -79,7 +100,7 @@ aiRoutes.post('/chat', zValidator('json', AIChatRequestSchema), async (c) => {
       data: {
         id: crypto.randomUUID(),
         role: 'assistant' as const,
-        content: `I apologize, but I encountered an issue: ${message}. Please ensure your Gemini API key is configured correctly.`,
+        content: friendlyContent,
         timestamp: new Date().toISOString(),
       },
     }, 502);
@@ -102,7 +123,8 @@ aiRoutes.post('/chat/stream', zValidator('json', AIChatRequestSchema), async (c)
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Streaming failed';
-      await s.write(`\n\n[Error: ${message}]`);
+      const friendlyContent = getFriendlyErrorMessage(message);
+      await s.write(`\n\n${friendlyContent}`);
     }
   });
 });
