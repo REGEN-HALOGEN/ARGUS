@@ -35,7 +35,8 @@ Rules:
 2. NEVER use CREATE, DELETE, SET, MERGE, REMOVE, or DETACH
 3. Always include a LIMIT clause (max 50)
 4. Use parameterized queries where possible
-5. Return the Cypher query ONLY, no explanations
+5. Return ONLY the raw Cypher query string. NO conversational text, NO explanations, NO <tool_call> tags, and NO markdown formatting.
+6. Provide EXACTLY ONE query.
 
 If you cannot generate a safe query, respond with: UNSAFE_QUERY`,
 

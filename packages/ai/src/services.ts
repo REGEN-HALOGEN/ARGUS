@@ -260,6 +260,21 @@ export async function nlToCypher(query: string): Promise<{ cypher: string; safe:
   });
 
   let cypher = response.trim();
+
+  // 1. Try to extract from <tool_call> tags if the model hallucinated them
+  const toolCallMatch = cypher.match(/<tool_call>\s*cypher\s*([\s\S]*?)(?:<\/tool_call>|<tool_call>|$)/i);
+  if (toolCallMatch && toolCallMatch[1]) {
+    cypher = toolCallMatch[1].trim();
+  } else {
+    // 2. Try to extract from markdown code blocks
+    const mdMatch = cypher.match(/```[a-zA-Z]*\n([\s\S]*?)```/i);
+    if (mdMatch && mdMatch[1]) {
+      cypher = mdMatch[1].trim();
+    }
+  }
+
+  // 3. Fallback cleanup just in case
+  cypher = cypher.replace(/<tool_call>[\s\S]*?\n/gi, '').replace(/<\/tool_call>/gi, '').trim();
   cypher = cypher.replace(/^```[a-zA-Z]*\n?/i, '').replace(/\n?```$/i, '').trim();
 
   // Safety validation
