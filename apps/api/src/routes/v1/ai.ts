@@ -77,6 +77,7 @@ aiRoutes.post('/chat', zValidator('json', AIChatRequestSchema), async (c) => {
   try {
     const response = await chat([{ role: 'user', content: body.message }], {
       systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST,
+      maxTokens: 500,
     });
 
     return c.json({
@@ -116,6 +117,7 @@ aiRoutes.post('/chat/stream', zValidator('json', AIChatRequestSchema), async (c)
     try {
       const gen = streamChat([{ role: 'user', content: body.message }], {
         systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST,
+        maxTokens: 500,
       });
 
       for await (const chunk of gen) {
@@ -173,7 +175,7 @@ aiRoutes.post(
                 content: `The user asked: "${message}"\n\nThe database query returned these results:\n${JSON.stringify(results, null, 2)}\n\nPlease interpret these results in plain language for a security analyst. IMPORTANT: DO NOT repeat or display the Cypher query in your response.`,
               },
             ],
-            { systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST },
+            { systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST, maxTokens: 400 },
           );
         } catch {
           interpretation = 'Could not generate interpretation.';
@@ -259,6 +261,7 @@ aiRoutes.get('/threat-brief', async (c) => {
 
           const briefContent = await chat([{ role: 'user', content: prompt }], {
             systemPrompt: SYSTEM_PROMPTS.THREAT_BRIEFING,
+            maxTokens: 800,
           });
 
           return {

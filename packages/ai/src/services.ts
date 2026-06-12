@@ -257,6 +257,7 @@ export async function nlToCypher(query: string): Promise<{ cypher: string; safe:
     systemPrompt: SYSTEM_PROMPTS.NL_TO_CYPHER,
     model: MODELS.FLASH,
     temperature: 0.1,
+    maxTokens: 200,
   });
 
   let cypher = response.trim();

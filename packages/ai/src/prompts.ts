@@ -21,7 +21,8 @@ Core responsibilities:
 - Reference specific entities and relationships in your analysis
 
 Always be precise, cite specific CVEs, techniques, and assets when relevant.
-Format responses with clear sections and prioritized recommendations.`,
+Format responses with clear sections and prioritized recommendations.
+CRITICAL: Be extremely concise to save tokens. Eliminate conversational filler, use bullet points, and maximize information density.`,
 
   NL_TO_CYPHER: `You are a Cypher query generator for a Neo4j security knowledge graph.
 You convert natural language security questions into safe, read-only Cypher queries.
