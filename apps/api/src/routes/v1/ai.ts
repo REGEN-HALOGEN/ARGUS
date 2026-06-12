@@ -63,7 +63,7 @@ function getFriendlyErrorMessage(message: string): string {
     message.toLowerCase().includes('service unavailable');
     
   if (isTransient) {
-    return `### ⚠️ AI Provider Congestion\n\nThe AI model provider is currently experiencing high traffic or a temporary outage. This is a transient error from the free-tier model on OpenRouter and usually resolves once the endpoint is less congested. Please try again in a few moments.`;
+    return `### ⚠️ AI Provider Congestion\n\nThe AI model provider is currently experiencing high traffic or a temporary outage. This is a transient error from the free-tier model on Gemini and usually resolves once the endpoint is less congested. Please try again in a few moments.`;
   }
   
   return `I apologize, but I encountered an issue: ${message}. Please check if your API configuration is correct.`;
