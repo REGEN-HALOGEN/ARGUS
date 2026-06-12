@@ -18,7 +18,7 @@ export function resolveApiKey(): string {
 
 export const MODELS = {
   // OpenRouter free models
-  FLASH: 'google/gemma-4-31b-it:free',
+  FLASH: 'qwen/qwen3-next-80b-a3b-instruct:free',
   THINKING: 'nvidia/nemotron-3-ultra-550b-a55b:free',
 } as const;
 
