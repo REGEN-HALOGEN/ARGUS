@@ -53,7 +53,7 @@ export default function AnalystPage() {
 
       let finalContent = '';
       if (data.interpretation) {
-        finalContent = `**Graph Query Generated:**\n\`\`\`cypher\n${data.cypher}\n\`\`\`\n\n${data.interpretation}`;
+        finalContent = data.interpretation;
       } else {
         // Fallback to chat stream if NL-to-Cypher didn't work well
         const streamRes = await fetch(`${API_BASE}/ai/chat/stream`, {
@@ -104,13 +104,13 @@ export default function AnalystPage() {
 
       // Fallbacks for suggested prompts if API fails (e.g., Gemini Quota Exceeded)
       if (text === 'Show attack paths to production database') {
-        fallbackContent = `**Graph Query Generated:**\n\`\`\`cypher\nMATCH p=(a:Asset {is_external: true})-[*1..3]->(d:Database {env: 'production'})\nRETURN p LIMIT 5\n\`\`\`\n\nI found **3 potential attack paths** from external-facing assets to the production database. The most critical path involves an unpatched web server (\`web-frontend-01\`) that has an active connection to an internal service with database read/write access.`;
+        fallbackContent = `I found **3 potential attack paths** from external-facing assets to the production database. The most critical path involves an unpatched web server (\`web-frontend-01\`) that has an active connection to an internal service with database read/write access.`;
       } else if (text === 'Which CVEs are actively exploited?') {
-        fallbackContent = `**Graph Query Generated:**\n\`\`\`cypher\nMATCH (c:CVE)-[:AFFECTS]->(a:Asset)\nWHERE c.cisa_kev = true OR c.epss_score > 0.8\nRETURN c.id, c.cvss_score, count(a) as affected_assets ORDER BY c.cvss_score DESC\n\`\`\`\n\nThere are **2 actively exploited CVEs** (CISA KEV) affecting your infrastructure. The most severe is **CVE-2023-46805** (CVSS 8.2) affecting 2 internet-facing gateways.`;
+        fallbackContent = `There are **2 actively exploited CVEs** (CISA KEV) affecting your infrastructure. The most severe is **CVE-2023-46805** (CVSS 8.2) affecting 2 internet-facing gateways.`;
       } else if (text === 'What is the blast radius of CVE-2024-0001?') {
-        fallbackContent = `**Graph Query Generated:**\n\`\`\`cypher\nMATCH (c:CVE {id: 'CVE-2024-0001'})-[:AFFECTS]->(start:Asset)\nMATCH paths = (start)-[:COMMUNICATES_WITH|HAS_ACCESS*1..2]->(impacted:Asset)\nRETURN paths\n\`\`\`\n\nThe blast radius for **CVE-2024-0001** spans across **12 distinct assets**. If the initial vulnerable asset (\`auth-service-dev\`) is compromised, attackers could potentially pivot to 3 internal APIs and 8 containerized workloads in the development cluster.`;
+        fallbackContent = `The blast radius for **CVE-2024-0001** spans across **12 distinct assets**. If the initial vulnerable asset (\`auth-service-dev\`) is compromised, attackers could potentially pivot to 3 internal APIs and 8 containerized workloads in the development cluster.`;
       } else if (text === 'List all internet-facing assets with critical vulnerabilities') {
-        fallbackContent = `**Graph Query Generated:**\n\`\`\`cypher\nMATCH (a:Asset {internet_facing: true})<-[:AFFECTS]-(c:CVE)\nWHERE c.cvss_score >= 9.0\nRETURN a.name, a.ip_address, collect(c.id) as cves\n\`\`\`\n\nI identified **2 internet-facing assets** with critical vulnerabilities (CVSS 9.0+):\n- \`api-gateway-01\` (Public IP): CVE-2024-21626\n- \`vpn-endpoint-nyc\` (Public IP): CVE-2023-46805`;
+        fallbackContent = `I identified **2 internet-facing assets** with critical vulnerabilities (CVSS 9.0+):\n- \`api-gateway-01\` (Public IP): CVE-2024-21626\n- \`vpn-endpoint-nyc\` (Public IP): CVE-2023-46805`;
       }
 
       setMessages((prev) => {
