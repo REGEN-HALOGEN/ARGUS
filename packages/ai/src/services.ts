@@ -259,7 +259,8 @@ export async function nlToCypher(query: string): Promise<{ cypher: string; safe:
     temperature: 0.1,
   });
 
-  const cypher = response.trim();
+  let cypher = response.trim();
+  cypher = cypher.replace(/^```[a-zA-Z]*\n?/i, '').replace(/\n?```$/i, '').trim();
 
   // Safety validation
   if (cypher === 'UNSAFE_QUERY') {
