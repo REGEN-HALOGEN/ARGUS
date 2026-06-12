@@ -88,9 +88,10 @@ rectifierRoutes.post('/analyze', async (c) => {
   try {
     const prompt = `Provide a short, direct and highly actionable remediation plan to secure the database asset "${assetName}" which is affected by vulnerability "${cveId}". The plan should include specific technical steps to fix/mitigate the problem, patching details, and configuration best practices. Please use clean markdown structure.`;
     
-    // Add a 15-second timeout to prevent the UI from hanging on rate limit retries
+    // Add a 60-second timeout to prevent the UI from hanging on rate limit retries,
+    // allowing sufficient time for queuing and exponential retry backoffs.
     const timeoutPromise = new Promise<string>((_, reject) => 
-      setTimeout(() => reject(new Error('Rate limit timeout: Gemini API is overloaded (429)')), 15000)
+      setTimeout(() => reject(new Error('Rate limit timeout: Gemini API is overloaded (429)')), 60000)
     );
 
     const response = await Promise.race([

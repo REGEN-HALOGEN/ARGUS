@@ -10,22 +10,7 @@ type TenantEnv = {
 
 export const dashboardRoutes = new Hono<TenantEnv>();
 
-// ─── Neo4j Connection Health Check ───────────────────────────────
-
-async function verifyNeo4jConnection(): Promise<boolean> {
-  try {
-    const session = getNeo4jDriver().session();
-    try {
-      await session.run('RETURN 1 AS ok');
-      return true;
-    } finally {
-      await session.close();
-    }
-  } catch (error) {
-    console.error('[Dashboard] Neo4j connection check failed:', error instanceof Error ? error.message : error);
-    return false;
-  }
-}
+// ─── Neo4j Connection Health Check (Unused) ───────────────────────
 
 // Helper: run a count query in its own session (with error handling)
 async function countQuery(cypher: string, params?: Record<string, unknown>): Promise<number> {
