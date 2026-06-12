@@ -18,8 +18,8 @@ export function resolveApiKey(): string {
 
 export const MODELS = {
   // OpenRouter free models
-  FLASH: 'google/gemini-2.0-flash-lite-preview-02-05:free',
-  THINKING: 'google/gemini-2.0-pro-exp-02-05:free',
+  FLASH: 'google/gemma-4-31b-it:free',
+  THINKING: 'nvidia/nemotron-3-ultra-550b-a55b:free',
 } as const;
 
 export type ModelId = (typeof MODELS)[keyof typeof MODELS];
