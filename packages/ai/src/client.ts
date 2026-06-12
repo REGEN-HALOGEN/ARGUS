@@ -18,8 +18,8 @@ export function resolveApiKey(): string {
 
 export const MODELS = {
   // OpenRouter free models
-  FLASH: 'google/gemma-4-31b-it:free',
-  THINKING: 'poolside/laguna-m.1:free',
+  FLASH: 'openrouter/free',
+  THINKING: 'openrouter/free',
 } as const;
 
 export type ModelId = (typeof MODELS)[keyof typeof MODELS];
