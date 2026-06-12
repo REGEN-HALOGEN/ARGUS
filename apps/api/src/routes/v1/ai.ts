@@ -148,7 +148,7 @@ aiRoutes.post(
             [
               {
                 role: 'user',
-                content: `The user asked: "${message}"\n\nThe Cypher query "${cypher}" returned these results:\n${JSON.stringify(results, null, 2)}\n\nPlease interpret these results in plain language for a security analyst.`,
+                content: `The user asked: "${message}"\n\nThe database query returned these results:\n${JSON.stringify(results, null, 2)}\n\nPlease interpret these results in plain language for a security analyst. IMPORTANT: DO NOT repeat or display the Cypher query in your response.`,
               },
             ],
             { systemPrompt: SYSTEM_PROMPTS.SECURITY_ANALYST },

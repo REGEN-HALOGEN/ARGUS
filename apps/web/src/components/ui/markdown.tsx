@@ -18,21 +18,21 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = '' }) =
         if (line.startsWith('### ')) {
           return (
             <h3 key={i} className="text-lg font-bold text-foreground mt-4 mb-2">
-              {line.replace('### ', '')}
+              {renderInline(line.replace('### ', ''))}
             </h3>
           );
         }
         if (line.startsWith('## ')) {
           return (
             <h2 key={i} className="text-xl font-bold text-foreground mt-6 mb-3">
-              {line.replace('## ', '')}
+              {renderInline(line.replace('## ', ''))}
             </h2>
           );
         }
         if (line.startsWith('# ')) {
           return (
             <h1 key={i} className="text-2xl font-bold text-foreground mt-8 mb-4">
-              {line.replace('# ', '')}
+              {renderInline(line.replace('# ', ''))}
             </h1>
           );
         }
