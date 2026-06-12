@@ -1,6 +1,6 @@
 // ─── AI Package Exports ──────────────────────────────────────────
 
-export { getGeminiClient, getModel, MODELS } from './client';
+export { MODELS, resolveApiKey } from './client';
 export type { ModelId } from './client';
 
 export { chat, streamChat, nlToCypher } from './services';
