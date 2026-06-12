@@ -12,7 +12,7 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = '' }) =
   const lines = content.split('\n');
 
   return (
-    <div className={`markdown-content space-y-2 ${className}`}>
+    <div className={`markdown-content space-y-2 overflow-x-auto ${className}`}>
       {lines.map((line, i) => {
         if (line.startsWith('#### ')) {
           return (

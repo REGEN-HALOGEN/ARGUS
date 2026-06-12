@@ -181,7 +181,7 @@ export default function AnalystPage() {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[75%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary-500/15 text-foreground ring-1 ring-primary-500/30' : 'bg-card-border/5 text-foreground ring-1 ring-card-border'}`}
+                  className={`max-w-[85%] overflow-x-auto rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-primary-500/30 text-foreground ring-1 ring-primary-500/50' : 'bg-card/60 text-foreground ring-1 ring-card-border shadow-sm backdrop-blur-sm'}`}
                 >
                   {msg.role === 'assistant' ? (
                     msg.content ? (
