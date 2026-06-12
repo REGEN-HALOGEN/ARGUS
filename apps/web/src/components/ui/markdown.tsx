@@ -14,7 +14,13 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = '' }) =
   return (
     <div className={`markdown-content space-y-2 ${className}`}>
       {lines.map((line, i) => {
-        // Headers
+        if (line.startsWith('#### ')) {
+          return (
+            <h4 key={i} className="text-base font-bold text-foreground mt-4 mb-2">
+              {renderInline(line.replace('#### ', ''))}
+            </h4>
+          );
+        }
         if (line.startsWith('### ')) {
           return (
             <h3 key={i} className="text-lg font-bold text-foreground mt-4 mb-2">
@@ -34,6 +40,24 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className = '' }) =
             <h1 key={i} className="text-2xl font-bold text-foreground mt-8 mb-4">
               {renderInline(line.replace('# ', ''))}
             </h1>
+          );
+        }
+
+        // Tables
+        if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+          const isSeparator = line.includes('|---') || line.includes('|:---');
+          if (isSeparator) return null;
+          
+          const cells = line.split('|').map(s => s.trim()).filter((_, index, arr) => index !== 0 && index !== arr.length - 1);
+          
+          return (
+            <div key={i} className="flex flex-wrap md:flex-nowrap border-b border-card-border/40 py-1.5">
+              {cells.map((cell, idx) => (
+                <div key={idx} className="flex-1 px-2 py-1 text-sm text-muted-foreground/90 min-w-[120px]">
+                  {renderInline(cell)}
+                </div>
+              ))}
+            </div>
           );
         }
 
